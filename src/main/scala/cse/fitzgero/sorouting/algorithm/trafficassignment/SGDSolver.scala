@@ -9,5 +9,5 @@ import org.apache.spark.rdd.RDD
   * SGD traffic assignment solver
   */
 object SGDSolver {
-
+  def foo(): String = "bar"
 }
