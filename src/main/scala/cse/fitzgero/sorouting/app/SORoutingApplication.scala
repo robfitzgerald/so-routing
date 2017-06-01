@@ -2,7 +2,6 @@ package cse.fitzgero.sorouting.app
 
 import org.apache.spark.{SparkConf, SparkContext}
 
-import cse.fitzgero.sorouting.network.graph.MATSimEdgeListRoadNetwork
 import cse.fitzgero.sorouting.algorithm.trafficassignment.SGDSolver
 
 /**
