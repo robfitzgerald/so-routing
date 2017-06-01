@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.network
+package cse.fitzgero.sorouting.roadnetwork
 
-import cse.fitzgero.sorouting.network.vertex._
+import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 /**
   * has a method which can be used to map from points to vertex ids

@@ -1,9 +1,9 @@
-package cse.fitzgero.sorouting.network
+package cse.fitzgero.sorouting.roadnetwork
 
 import org.apache.spark.graphx.Graph
 
-import cse.fitzgero.sorouting.network.edge._
-import cse.fitzgero.sorouting.network.vertex._
+import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 /**
   * has a shortest path method which takes vertex objects for origin and desination

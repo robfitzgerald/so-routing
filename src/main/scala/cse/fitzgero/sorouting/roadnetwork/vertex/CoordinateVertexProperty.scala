@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.network.vertex
+package cse.fitzgero.sorouting.roadnetwork.vertex
 
 /**
   * Created by robertfitzgerald on 5/23/17.

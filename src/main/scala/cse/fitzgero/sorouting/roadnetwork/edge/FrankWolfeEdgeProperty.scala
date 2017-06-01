@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.network.edge
+package cse.fitzgero.sorouting.roadnetwork.edge
 
 /**
   * basic requirements for a traffic assignment optimization framework

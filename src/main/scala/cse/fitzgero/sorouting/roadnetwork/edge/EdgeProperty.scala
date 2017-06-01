@@ -1,9 +1,9 @@
-package cse.fitzgero.sorouting.network.edge
+package cse.fitzgero.sorouting.roadnetwork.edge
 
 /**
   * Base class for Edge property classes
   */
-private abstract class EdgeProperty {
+abstract class EdgeProperty {
   def flow: Double
   def cost(): Double
 }
