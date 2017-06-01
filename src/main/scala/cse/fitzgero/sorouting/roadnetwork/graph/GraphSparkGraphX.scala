@@ -1,15 +1,14 @@
 package cse.fitzgero.sorouting.roadnetwork.graph
 
-import org.apache.spark.graphx.{EdgeRDD, Graph, VertexRDD}
+import org.apache.spark.graphx._
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.io.reader._
 import cse.fitzgero.sorouting.roadnetwork.path.Path
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 class GraphSparkGraphX [V <: VertexProperty, E <: EdgeProperty](g: Graph[V, E]) extends RoadNetworkGraph[V, E] {
-  type IdType = String
-//  val vertices: VertexRDD[V]  = g.vertices
-//  val edges: EdgeRDD[E] = g.edges
+  type IdType = Long
+  def getCostFlowValues (linkIds: Seq[IdType]): Seq[Double] = ???
   def shortestPath (OD: Seq[(V, V)]): Seq[Path[IdType]] = ???
 }
 

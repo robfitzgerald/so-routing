@@ -7,11 +7,9 @@ import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 
 abstract class RoadNetworkGraph [V <: VertexProperty, E <: EdgeProperty] {
-//  abstract def vertices
-//  abstract def edges
   def shortestPath (o: Seq[(V, V)]): Seq[Path[_]]
 }
 
-object RoadNetworkGraph {
+object RoadNetworkGraph extends canReadNetworkFiles {
   def fromFile [V <: VertexProperty, E <: EdgeProperty](fileName : String): RoadNetworkGraph[V,E] = ???
 }
