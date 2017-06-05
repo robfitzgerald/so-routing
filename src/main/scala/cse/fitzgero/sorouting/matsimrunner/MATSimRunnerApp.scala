@@ -54,8 +54,8 @@ class MATSimRunnerApp extends App {
   controler.addOverridingModule(new AbstractModule(){
     @Override def install(): Unit = {
       this.addEventHandlerBinding().toInstance( new SnapshotEventHandler((event: SnapshotEvent) => event match {
-        case LinkEnterEvent(link, veh) => currentNetworkState.link(link)
-        case LinkLeaveEvent(link, veh) => currentNetworkState.link(link)
+        case LinkEnterData(link, veh) => currentNetworkState.link(link)
+        case LinkLeaveData(link, veh) => currentNetworkState.link(link)
       }));
     }
   })
