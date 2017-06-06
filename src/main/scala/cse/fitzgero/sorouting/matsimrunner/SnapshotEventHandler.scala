@@ -12,30 +12,30 @@ import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler
 import org.matsim.api.core.v01.network.Link
 
-class SnapshotEvent {}
-case class LinkEnterData(linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEvent
-case class LinkLeaveData(linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEvent
+class SnapshotEventData {}
+case class LinkEnterData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEventData
+case class LinkLeaveData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEventData
 
 /**
   * Grabs data from the simulation which is relevant for building link flow snapshots
-  * @param callback a callback function which takes
+  * @param callback a callback function which takes a SnapshotEvent case class consumed by a NetworkStateCollector.update() operation
   */
-class SnapshotEventHandler (callback: (SnapshotEvent) => Unit) extends VehicleEntersTrafficEventHandler with VehicleLeavesTrafficEventHandler with LinkEnterEventHandler with LinkLeaveEventHandler {
+class SnapshotEventHandler (callback: (SnapshotEventData) => Unit) extends VehicleEntersTrafficEventHandler with VehicleLeavesTrafficEventHandler with LinkEnterEventHandler with LinkLeaveEventHandler {
   override def reset(iteration: Int): Unit = {}
 
   override def handleEvent(event: VehicleEntersTrafficEvent): Unit = {
-    callback(LinkEnterData(event.getLinkId, event.getVehicleId))
+    callback(LinkEnterData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: VehicleLeavesTrafficEvent): Unit = {
-    callback(LinkLeaveData(event.getLinkId, event.getVehicleId))
+    callback(LinkLeaveData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: LinkEnterEvent): Unit = {
-    callback(LinkEnterData(event.getLinkId, event.getVehicleId))
+    callback(LinkEnterData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: LinkLeaveEvent): Unit = {
-    callback(LinkLeaveData(event.getLinkId, event.getVehicleId))
+    callback(LinkLeaveData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 }

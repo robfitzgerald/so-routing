@@ -1,18 +1,18 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import scala.collection.mutable.Map
+import scala.collection.immutable.Map
 
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network.Link
 import org.matsim.vehicles.Vehicle
 
 class NetworkStateCollector (val networkState: Map[Id[Link], LinkData[Id[Vehicle]]] = Map.empty[Id[Link], LinkData[Id[Vehicle]]]) {
-  def update(e: SnapshotEvent): NetworkStateCollector = e match {
-    case LinkEnterData(link, veh) => {
+  def update(e: SnapshotEventData): NetworkStateCollector = e match {
+    case LinkEnterData(t, link, veh) => {
       val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
       new NetworkStateCollector(networkState.updated(link, thisLink.add(veh)))
     }
-    case LinkLeaveData(link, veh) => {
+    case LinkLeaveData(t, link, veh) => {
       val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
       new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
     }

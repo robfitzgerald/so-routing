@@ -53,7 +53,7 @@ class MATSimRunnerApp extends App {
   // add the events handlers
   controler.addOverridingModule(new AbstractModule(){
     @Override def install(): Unit = {
-      this.addEventHandlerBinding().toInstance( new SnapshotEventHandler((event: SnapshotEvent) => {
+      this.addEventHandlerBinding().toInstance( new SnapshotEventHandler((event: SnapshotEventData) => {
         currentNetworkState = currentNetworkState.update(event)
       }))
     }
