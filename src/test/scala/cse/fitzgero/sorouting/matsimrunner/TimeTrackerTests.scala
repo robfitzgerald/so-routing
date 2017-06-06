@@ -15,7 +15,7 @@ class TimeTrackerTests extends SORoutingUnitTests {
       "return true when events fall within the current time delta" in {
         val v = Id.createVehicleId(1)
         val l = Id.createLinkId(1)
-        val e: SnapshotEventData = LinkEnterData(3600, l, v)
+        val e: LinkEnterData = LinkEnterData(3600, l, v)
         val timeTracker = TimeTracker("5", "01:00:00", "12:00:00")
 
         timeTracker.belongsToThisTimeGroup(e) should equal (true)
@@ -23,7 +23,7 @@ class TimeTrackerTests extends SORoutingUnitTests {
       "return false when events fall outside the current time delta" in {
         val v = Id.createVehicleId(1)
         val l = Id.createLinkId(1)
-        val e: SnapshotEventData = LinkEnterData(3600, l, v)
+        val e: LinkEnterData = LinkEnterData(3600, l, v)
         val timeTracker = TimeTracker("5", "00:30:00", "12:00:00")
 
         timeTracker.belongsToThisTimeGroup(e) should equal (false)  // current time group is "1800"

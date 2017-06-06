@@ -4,7 +4,7 @@ import scala.util.{Try, Success, Failure}
 import cse.fitzgero.sorouting.SORoutingUnitTests
 import org.scalatest.PrivateMethodTester
 
-class TimeStringConvertTests extends SORoutingUnitTests with PrivateMethodTester {
+class TimeStringConvertTests extends SORoutingUnitTests {
   "TimeStringConvert" when {
     "fromString" should {
       "correctly convert string time to int time" in {

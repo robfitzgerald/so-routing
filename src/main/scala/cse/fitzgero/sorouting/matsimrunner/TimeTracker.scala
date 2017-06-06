@@ -36,7 +36,7 @@ class TimeTracker (
     * @param e a link enter or link leave event from MATSim
     * @return
     */
-  def belongsToThisTimeGroup(e: SnapshotEventData): Boolean = {
+  def belongsToThisTimeGroup[T <: LinkEventData](e: T): Boolean = {
     belongs(e.time)
   }
 
