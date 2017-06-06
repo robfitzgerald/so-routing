@@ -54,6 +54,27 @@ class TimeStringConvertTests extends SORoutingUnitTests with PrivateMethodTester
         thrown.getMessage should equal (s"Int $badTime does not conform to 24-hour clock specification - failed bounds test [0, 86400).")
       }
     }
+    "windowValue" should {
+      "correctly convert String time deltas to Int" in {
+        TimeStringConvert.windowValue("0") should equal (0)
+        TimeStringConvert.windowValue("86400") should equal (86400)
+      }
+      "throw an error for out of lower bounds time values" in {
+        val badValue: String = "-1"
+        val thrown = the [java.lang.ArithmeticException] thrownBy TimeStringConvert.windowValue(badValue)
+        thrown.getMessage should equal (s"String $badValue does not conform to a valid time delta value - failed bounds test [0, 86400].")
+      }
+      "throw an error for out of upper bounds time values" in {
+        val badValue: String = "86401"
+        val thrown = the [java.lang.ArithmeticException] thrownBy TimeStringConvert.windowValue(badValue)
+        thrown.getMessage should equal (s"String $badValue does not conform to a valid time delta value - failed bounds test [0, 86400].")
+      }
+      "throw an error for strings which cannot be parsed as integers" in {
+        val badValue: String = "foo"
+        val thrown = the [java.lang.IllegalArgumentException] thrownBy TimeStringConvert.windowValue(badValue)
+        thrown.getMessage should equal (s"String $badValue cannot be parsed into a number.")
+      }
+    }
     "stringToInt" should {
       "correctly convert string values to int values" in {
         val stringToInt = PrivateMethod[Int]('stringToInt)

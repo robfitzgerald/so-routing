@@ -2,6 +2,9 @@ package cse.fitzgero.sorouting.util
 
 import scala.util.{Try, Success, Failure}
 
+/**
+  * provides conversion between strings of the form hh:mm:ss and a raw seconds integer representation
+  */
 object TimeStringConvert {
   val TimeUpperBound: Int = 86400
   val HourBase: Int = 24
@@ -11,6 +14,11 @@ object TimeStringConvert {
   val SecBase: Int = 60
   val TimeLowerBound: Int = 0
 
+  /**
+    * converts a string time representation into an Int time value
+    * @param s a string of the form hh:mm:ss
+    * @return a number, [0, 86400)
+    */
   def fromString(s: String): Int = s.split(":") match {
     case Array(hh: String,mm: String,ss: String) => stringsInBounds(hh,mm,ss) match {
       case Success(true) => stringToInt(hh, mm, ss)
@@ -20,9 +28,29 @@ object TimeStringConvert {
     case _ => throw new java.lang.ArithmeticException(s"String $s does not conform to 24-hour clock specification - failed partitioning.")
   }
 
+  /**
+    * converts an Int time value to a string time representation
+    * @param i a number, [0, 86400)
+    * @return a string of the form hh:mm:ss
+    */
   def fromInt(i: Int): String = {
     if (intInBounds(i)) intToString(i)
     else throw new java.lang.ArithmeticException(s"Int $i does not conform to 24-hour clock specification - failed bounds test [0, 86400).")
+  }
+
+  /**
+    * parses a time delta value
+    * @param w a string to be parsed within the range [0, 86400]
+    * @return the Int representation of {w}
+    */
+  def windowValue(w: String): Int = {
+    Try({w.toInt}) match {
+      case Success(x) =>
+        if ((TimeLowerBound to TimeUpperBound).contains(x)) x
+        else throw new java.lang.ArithmeticException(s"String $w does not conform to a valid time delta value - failed bounds test [0, 86400].")
+      case Failure(x) =>
+        throw new java.lang.IllegalArgumentException(s"String $w cannot be parsed into a number.")
+    }
   }
 
   private def intToString(i: Int): String = {

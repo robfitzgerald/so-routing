@@ -12,7 +12,9 @@ import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler
 import org.matsim.api.core.v01.network.Link
 
-class SnapshotEventData {}
+abstract class SnapshotEventData {
+  def time: Int
+}
 case class LinkEnterData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEventData
 case class LinkLeaveData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends SnapshotEventData
 
