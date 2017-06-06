@@ -10,7 +10,7 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
         val network = NetworkStateCollector()
         val v1 = Id.createVehicleId(1)
         val l1 = Id.createLinkId(1)
-        val data = LinkEnterData(null, l1, v1)
+        val data = LinkEnterData(0, l1, v1)
         val updatedNetwork = network.update(data)
         updatedNetwork.networkState.getOrElse(l1, false) should equal (NonEmptyLink(Set(v1)))
       }
@@ -20,8 +20,8 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
         val network = NetworkStateCollector()
         val v1 = Id.createVehicleId(1)
         val l1 = Id.createLinkId(1)
-        val data1 = LinkEnterData(null, l1, v1)
-        val data2 = LinkLeaveData(null, l1, v1)
+        val data1 = LinkEnterData(0, l1, v1)
+        val data2 = LinkLeaveData(0, l1, v1)
         val link1ShouldBeEmpty = network.update(data1).update(data2)
         link1ShouldBeEmpty.networkState.getOrElse(l1, false) should equal (EmptyLink)
       }
@@ -34,9 +34,9 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
         val v3 = Id.createVehicleId(3)
         val l1 = Id.createLinkId(1)
         val l2 = Id.createLinkId(20)
-        val data1 = LinkEnterData(null, l1, v1)
-        val data2 = LinkEnterData(null, l1, v2)
-        val data3 = LinkEnterData(null, l2, v3)
+        val data1 = LinkEnterData(0, l1, v1)
+        val data2 = LinkEnterData(0, l1, v2)
+        val data3 = LinkEnterData(0, l2, v3)
         val smallNetwork = network.update(data1).update(data2).update(data3)
         smallNetwork.toString should equal ("1 2\n20 1")
       }
