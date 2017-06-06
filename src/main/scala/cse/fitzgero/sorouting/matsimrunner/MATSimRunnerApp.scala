@@ -48,15 +48,14 @@ class MATSimRunnerApp extends App {
   //Create an instance of the controler
   val controler: Controler = new Controler(config)
 
-  val currentNetworkState: NetworkStateCollector = NetworkStateCollector()
+  var currentNetworkState: NetworkStateCollector = NetworkStateCollector()
 
   // add the events handlers
   controler.addOverridingModule(new AbstractModule(){
     @Override def install(): Unit = {
-      this.addEventHandlerBinding().toInstance( new SnapshotEventHandler((event: SnapshotEvent) => event match {
-        case LinkEnterData(link, veh) => currentNetworkState.link(link)
-        case LinkLeaveData(link, veh) => currentNetworkState.link(link)
-      }));
+      this.addEventHandlerBinding().toInstance( new SnapshotEventHandler((event: SnapshotEvent) => {
+        currentNetworkState = currentNetworkState.update(event)
+      }))
     }
   })
 

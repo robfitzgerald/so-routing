@@ -31,13 +31,20 @@ class LinkDataTests extends SORoutingUnitTests {
   }
   "NonEmptyLink" when {
     "add" should {
-      "expand the set to include this ID" in {
+      "expand the set to include a new ID" in {
         val id1 = Id.createVehicleId(1)
         val id2 = Id.createVehicleId(2)
         val link: NonEmptyLink = NonEmptyLink(Set(id1))
 
         link.flow should equal (1)
         link.add(id2).flow should equal (2)
+      }
+      "not add an ID that is already on the link" in {
+        val id1 = Id.createVehicleId(1)
+        val link: NonEmptyLink = NonEmptyLink(Set(id1))
+
+        link.flow should equal (1)
+        link.add(id1).flow should equal (1)
       }
     }
     "remove" should {
@@ -49,9 +56,16 @@ class LinkDataTests extends SORoutingUnitTests {
         link.flow should equal (2)
         link.remove(id1).flow should equal (1)
       }
-    }
-    "remove called on link with one vehicle" should {
-      "result in an EmptyLink" in {
+      "have no effect (fail silently) for an ID that isn't present" in {
+        val id1 = Id.createVehicleId(1)
+        val id2 = Id.createVehicleId(2)
+        val id3 = Id.createVehicleId(3)
+        val link: NonEmptyLink = NonEmptyLink(Set(id1, id2))
+
+        link.flow should equal (2)
+        link.remove(id3).flow should equal (2)
+      }
+      "result in an EmptyLink when called on a link with one vehicle" in {
         val id1 = Id.createVehicleId(1)
         val link: NonEmptyLink = NonEmptyLink(Set(id1))
 
