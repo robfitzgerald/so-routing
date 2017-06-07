@@ -12,12 +12,16 @@ import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler
 import org.matsim.api.core.v01.network.Link
 
-abstract class SnapshotEventData {}
+sealed abstract class SnapshotEventData {}
 case class NewIteration(iteration: Int) extends SnapshotEventData
-abstract class LinkEventData () extends SnapshotEventData {
+sealed trait LinkEventData extends SnapshotEventData {
   def time: Int
   def linkID: Id[Link]
   def vehicleID: Id[Vehicle]
+}
+object LinkEventData {
+  def unapply(event: LinkEventData): Option[LinkEventData] =
+    Option(event) map {e => e}
 }
 case class LinkEnterData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends LinkEventData
 case class LinkLeaveData(time: Int, linkID: Id[Link], vehicleID: Id[Vehicle]) extends LinkEventData

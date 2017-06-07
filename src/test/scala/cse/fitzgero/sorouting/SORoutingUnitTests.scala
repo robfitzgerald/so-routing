@@ -1,5 +1,9 @@
 package cse.fitzgero.sorouting
 
+import java.io.File
+
 import org.scalatest._
 
-abstract class SORoutingUnitTests extends WordSpec with Matchers with PrivateMethodTester {}
+import scala.util.Try
+
+abstract class SORoutingUnitTests extends WordSpec with Matchers with PrivateMethodTester with BeforeAndAfter {}

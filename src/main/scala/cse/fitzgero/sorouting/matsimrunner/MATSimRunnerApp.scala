@@ -1,5 +1,8 @@
 package cse.fitzgero.sorouting.matsimrunner
 
+import java.io.{File, PrintWriter}
+
+import cse.fitzgero.sorouting.util.TimeStringConvert
 import org.matsim.api.core.v01.Scenario
 import org.matsim.core.config.Config
 import org.matsim.core.config.ConfigUtils
@@ -8,7 +11,7 @@ import org.matsim.core.controler.Controler
 import org.matsim.core.controler.ControlerUtils
 import org.matsim.core.scenario.ScenarioUtils
 
-class MATSimRunnerApp extends App {
+object MATSimRunnerApp extends App {
 
   val ArgsMissingValues = true
   val ArgsNotMissingValues = false
@@ -29,35 +32,29 @@ class MATSimRunnerApp extends App {
     val controler: Controler = new Controler(config)
 
     var currentNetworkState: NetworkStateCollector = NetworkStateCollector()
+    var currentIteration: Int = 1
     var timeTracker: TimeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
+
 
     // add the events handlers
     controler.addOverridingModule(new AbstractModule(){
-      @Override def install(): Unit = {
+      @Override def install (): Unit = {
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
-          // TODO: hey, maybe you want to abstract this out? would require making addDriver/removeDriver into "update" again..
-            case LinkEnterData(time, link, vehicle) => {
-              if (timeTracker.belongsToThisTimeGroup(time)) // TODO: expects an Event object, not an Int
-                currentNetworkState = currentNetworkState.addDriver(link, vehicle)
-              else {
-                // TODO: write snapshot(s) to file (there could be a few windows where nothing has changed)
+          case LinkEventData(e) =>
+            if (timeTracker.belongsToThisTimeGroup(e))
+              currentNetworkState = currentNetworkState.update(e)
+            else {
+              NetworkStateCollector.toFile(
+                appConfig.outputDirectory,
+                currentIteration,
+                timeTracker.currentTimeString,
+                currentNetworkState
+              )
 
-                timeTracker = timeTracker.advance
-
-                currentNetworkState = currentNetworkState.addDriver(link, vehicle)
-              }
+              timeTracker = timeTracker.advance
+              currentNetworkState = currentNetworkState.update(e)
             }
-            case LinkLeaveData(time, link, vehicle) => {
-              if (timeTracker.belongsToThisTimeGroup(time)) // TODO: expects an Event object, not an Int
-                currentNetworkState = currentNetworkState.removeDriver(link, vehicle)
-              else {
-                // TODO: write snapshot(s) to file (there could be a few windows where nothing has changed)
 
-                timeTracker = timeTracker.advance
-
-                currentNetworkState = currentNetworkState.removeDriver(link, vehicle)
-              }
-            }
             case NewIteration(i) => {
               println(s"start new iteration $i")
 
@@ -66,17 +63,18 @@ class MATSimRunnerApp extends App {
               // start over
               timeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
               currentNetworkState = NetworkStateCollector()
-
+              currentIteration = i
               // TODO: open new directory
             }
           }))
       }
     })
 
-    // TODO: open first file here
+    // get the first file saving directory created
 
     //call run() to start the simulation
     controler.run()
 
   }
 }
+

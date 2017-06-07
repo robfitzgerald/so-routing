@@ -1,10 +1,13 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import scala.collection.immutable.Map
+import java.io.{File, PrintWriter}
 
+import scala.collection.immutable.Map
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network.Link
 import org.matsim.vehicles.Vehicle
+
+import scala.util.Try
 
 /**
   * models the state of the network at the current time through this iteration, designed for easy exporting of a network flow snapshot
@@ -22,6 +25,18 @@ class NetworkStateCollector private ( val networkState: Map[Id[Link], LinkData[I
     new NetworkStateCollector(networkState.updated(link, thisLink.remove(vehicle)))
   }
 
+  def update(e: SnapshotEventData): NetworkStateCollector = e match {
+    case LinkEnterData(t, link, veh) => {
+      val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
+      new NetworkStateCollector(networkState.updated(link, thisLink.add(veh)))
+    }
+    case LinkLeaveData(t, link, veh) => {
+      val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
+      new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
+    }
+  }
+
+
   override def toString: String = {
     networkState.map(t => {
       t._1 + " " + t._2.flow
@@ -33,4 +48,13 @@ class NetworkStateCollector private ( val networkState: Map[Id[Link], LinkData[I
 
 object NetworkStateCollector {
   def apply(): NetworkStateCollector = new NetworkStateCollector(Map.empty[Id[Link], LinkData[Id[Vehicle]]])
+  def toFile(path: String, iteration: Int, timeGroup: String, network: NetworkStateCollector): Try[Unit] = {
+    Try({
+      val file = new File(s"$path/${iteration.toString}/snapshot-$timeGroup.nscData")
+      file.getParentFile.mkdirs
+      val writer: PrintWriter = new PrintWriter(file)
+      writer.write(network.toString)
+      writer.close()
+    })
+  }
 }
