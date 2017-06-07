@@ -1,8 +1,5 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import java.io.{File, PrintWriter}
-
-import cse.fitzgero.sorouting.util.TimeStringConvert
 import org.matsim.api.core.v01.Scenario
 import org.matsim.core.config.Config
 import org.matsim.core.config.ConfigUtils
@@ -12,7 +9,6 @@ import org.matsim.core.controler.ControlerUtils
 import org.matsim.core.scenario.ScenarioUtils
 
 object MATSimRunnerApp extends App {
-
   val ArgsMissingValues = true
   val ArgsNotMissingValues = false
   case class AppConfig(inputDirectory: String = "", outputDirectory: String = "", window: String = "", startTime: String = "", endTime: String = "", incomplete: Boolean = ArgsMissingValues)
@@ -21,13 +17,15 @@ object MATSimRunnerApp extends App {
     case Array(in, out, wD, sT, eT) => AppConfig(in, out, wD, sT, eT, ArgsNotMissingValues)
     case _ => AppConfig()
   }
+  val matsimOutputDirectory: String = s"${appConfig.outputDirectory}/matsim"
+  val snapshotOutputDirectory: String = s"${appConfig.outputDirectory}/snapshot"
 
   if (appConfig.incomplete) {
     println(s"usage: ")
   } else {
     //  ControlerUtils.initializeOutputLogging();
     val config: Config = ConfigUtils.loadConfig(appConfig.inputDirectory)
-    config.controler().setOutputDirectory(appConfig.outputDirectory)
+    config.controler().setOutputDirectory(matsimOutputDirectory)
     val scenario: Scenario = ScenarioUtils.loadScenario(config)
     val controler: Controler = new Controler(config)
 
@@ -41,31 +39,40 @@ object MATSimRunnerApp extends App {
       @Override def install (): Unit = {
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
           case LinkEventData(e) =>
-            if (timeTracker.belongsToThisTimeGroup(e))
-              currentNetworkState = currentNetworkState.update(e)
-            else {
+            if (!timeTracker.isDone && e.time >= timeTracker.currentTimeGroup) {
+              if (timeTracker.belongsToThisTimeGroup(e))
+                currentNetworkState = currentNetworkState.update(e)
+              else {
+                NetworkStateCollector.toFile(
+                  snapshotOutputDirectory,
+                  currentIteration,
+                  timeTracker.currentTimeString,
+                  currentNetworkState
+                )
+
+                while(!timeTracker.belongsToThisTimeGroup(e))
+                  timeTracker = timeTracker.advance
+
+                currentNetworkState = currentNetworkState.update(e)
+              }
+            }
+
+            case NewIteration(i) =>
+              println(s"start new iteration $i")
+
+              // make sure everything's written from the last
               NetworkStateCollector.toFile(
-                appConfig.outputDirectory,
+                snapshotOutputDirectory,
                 currentIteration,
-                timeTracker.currentTimeString,
+                s"${timeTracker.currentTimeString}-final",
                 currentNetworkState
               )
 
-              timeTracker = timeTracker.advance
-              currentNetworkState = currentNetworkState.update(e)
-            }
-
-            case NewIteration(i) => {
-              println(s"start new iteration $i")
-
-              // TODO: make sure everything's written
-
-              // start over
+              // start next iteration
               timeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
               currentNetworkState = NetworkStateCollector()
               currentIteration = i
-              // TODO: open new directory
-            }
+
           }))
       }
     })
@@ -75,6 +82,13 @@ object MATSimRunnerApp extends App {
     //call run() to start the simulation
     controler.run()
 
+    // handle writing final snapshot
+    NetworkStateCollector.toFile(
+      snapshotOutputDirectory,
+      currentIteration,
+      s"${timeTracker.currentTimeString}-final",
+      currentNetworkState
+    )
   }
 }
 

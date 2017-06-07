@@ -1,16 +1,11 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import cse.fitzgero.sorouting.{FileWriteSideEffectTests, SORoutingUnitTests}
-import cse.fitzgero.sorouting.app.SORoutingApplication
+import cse.fitzgero.sorouting.FileWriteSideEffectTests
 import org.matsim.api.core.v01.Id
 
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
 
-/**
-  * Created by robertfitzgerald on 6/7/17.
-  */
-class NetworkStateCollectorE2ETests extends FileWriteSideEffectTests(testName = "NetworkStateCollectorE2ETests") {
+class NetworkStateCollectorE2ETests extends FileWriteSideEffectTests("NetworkStateCollectorE2ETests") {
   "NetworkStateCollector" when {
     "toFile" should {
       "store a file with the current network state" in {
@@ -23,7 +18,7 @@ class NetworkStateCollectorE2ETests extends FileWriteSideEffectTests(testName = 
         val smallNetwork = network.addDriver(l1, v1).addDriver(l1, v2).addDriver(l2, v3)
 
         val timeGroup: String = "00:00:00"
-        val rootPath: String = s"test/temp/$testName"
+        val rootPath: String = testRootPath
         val directoryPath: String = "/1/"
         val name: String = s"snapshot-$timeGroup"
         val extension: String = ".nscData"
