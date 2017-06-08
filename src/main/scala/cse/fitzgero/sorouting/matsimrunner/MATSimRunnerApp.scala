@@ -1,12 +1,15 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import org.matsim.api.core.v01.Scenario
+import scala.collection.JavaConverters._
+
 import org.matsim.core.config.Config
 import org.matsim.core.config.ConfigUtils
-import org.matsim.core.controler.AbstractModule
 import org.matsim.core.controler.Controler
 import org.matsim.core.controler.ControlerUtils
+import org.matsim.core.controler.AbstractModule
 import org.matsim.core.scenario.ScenarioUtils
+import org.matsim.api.core.v01.{Id, Scenario}
+import org.matsim.api.core.v01.network.Link
 
 object MATSimRunnerApp extends App {
   val ArgsMissingValues = true
@@ -29,7 +32,8 @@ object MATSimRunnerApp extends App {
     val scenario: Scenario = ScenarioUtils.loadScenario(config)
     val controler: Controler = new Controler(config)
 
-    var currentNetworkState: NetworkStateCollector = NetworkStateCollector()
+    val networkLinks: scala.collection.mutable.Map[Id[Link], _] = scenario.getNetwork.getLinks.asScala
+    var currentNetworkState: NetworkStateCollector = NetworkStateCollector(networkLinks)
     var currentIteration: Int = 1
     var timeTracker: TimeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
 
@@ -70,7 +74,7 @@ object MATSimRunnerApp extends App {
 
               // start next iteration
               timeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
-              currentNetworkState = NetworkStateCollector()
+              currentNetworkState = NetworkStateCollector(networkLinks)
               currentIteration = i
 
           }))

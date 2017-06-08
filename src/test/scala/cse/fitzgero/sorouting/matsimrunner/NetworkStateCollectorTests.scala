@@ -54,8 +54,25 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
           val l1 = Id.createLinkId(1)
           val l2 = Id.createLinkId(20)
           val smallNetwork = network.addDriver(l1, v1).addDriver(l1, v2).addDriver(l2, v3)
-          smallNetwork.toString should equal ("1 2\n20 1")
+          smallNetwork.toString should equal("1 2\n20 1")
         }
+      }
+    }
+  }
+  "NetworkStateCollector object" when {
+    "apply" when {
+      "called with no parameters" should {
+        "produce an empty map of the network state" in {
+          val network = NetworkStateCollector()
+          network shouldBe a [Map[Id[Link], LinkData[Id[Vehicle]]]]
+        }
+      }
+      "called with a org.matsim.api.core.v01.network.getLinks()" ignore {
+        "produce a map containing all links with flows set to zero" in {}
+          // MATSim does not expose Link or Node stubs for testing, so this cannot be stubbed:
+//          val links: Map[Id[Link], Link] = Map(
+//            (Id.createLinkId(1), new Link)
+//          )
       }
     }
   }
