@@ -7,6 +7,7 @@ import scala.util.{Failure, Success, Try}
 import org.apache.spark.{SparkContext, graphx}
 import org.apache.spark.graphx._
 import cse.fitzgero.sorouting.roadnetwork._
+import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.path.Path
 import cse.fitzgero.sorouting.roadnetwork.vertex._
@@ -18,7 +19,7 @@ class GraphXMacroRoadNetwork (val g: Graph[CoordinateVertexProperty, Macroscopic
   def shortestPath (OD: Seq[(CoordinateVertexProperty, CoordinateVertexProperty)]): Seq[Path[IdType]] = ???
 }
 
-case class GraphXMacroFactory (sc: SparkContext) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
+case class GraphXMacroFactory (sc: SparkContext, costFunctionFactory: CostFunctionFactory) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
   def fromFile (fileName : String): Try[GraphXMacroRoadNetwork] = {
     Try ({
       XML.loadFile(fileName)
@@ -66,13 +67,15 @@ case class GraphXMacroFactory (sc: SparkContext) extends CanReadNetworkFiles wit
       case Success(linkFlows: Map[String, Double]) =>
         sc.parallelize(for (link <- xmlData \ "links" \ "link") yield {
           val attrs: Map[String,String] = link.attributes.asAttrMap
+
           Edge(
             srcId = attrs("from").toLong,
             dstId = attrs("to").toLong,
             attr = MacroscopicEdgeProperty(
               attrs("id"),
               linkFlows.getOrElse(attrs("id"), 0D),
-              (_: Double) => 10D)) // TODO: this should be a valid cost function from (marginal ?) flow to cost
+              costFunctionFactory(attrs).generate
+          ))
         })
     }
   }

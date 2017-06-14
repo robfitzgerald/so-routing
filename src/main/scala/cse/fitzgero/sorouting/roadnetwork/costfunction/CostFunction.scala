@@ -1,10 +1,10 @@
 package cse.fitzgero.sorouting.roadnetwork.costfunction
 
-/**
-  * a list of cost function arguments, such as capacity and free flow speed
-  */
-abstract class CostFunctionCoefficients {}
 
-abstract class CostFunction [T <: CostFunctionCoefficients] {
-  def generate (args: T): (Double) => Double
+abstract class CostFunction extends Serializable {
+  def generate: (Double) => Double
+}
+
+abstract class CostFunctionFactory {
+  def apply(attributes: Map[String, String]): CostFunction
 }
