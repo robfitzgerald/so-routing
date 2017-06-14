@@ -11,13 +11,13 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction._
 
 import scala.xml.XML
 
-class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoadNetwork") {
-  "GraphXMacroRoadNetwork" when {
-    val networkFilePath: String =       "src/test/resources/GraphXMacroRoadNetwork/network.xml"
-    val snapshotFilePath: String =      "src/test/resources/GraphXMacroRoadNetwork/snapshot.xml"
-    val equilNetworkFilePath: String =  "src/test/resources/GraphXMacroRoadNetwork/network-matsim-example-equil.xml"
-    val equilSnapshotFilePath: String = "src/test/resources/GraphXMacroRoadNetwork/snapshot-matsim-example-equil.xml"
-    val missingFilePath: String =       "src/test/resources/GraphXMacroRoadNetwork/blah-invalid.xml"
+class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoadNetworkTests") {
+  "GraphXMacroRoadNetworkTests" when {
+    val networkFilePath: String =       "src/test/resources/GraphXMacroRoadNetworkTests/network.xml"
+    val snapshotFilePath: String =      "src/test/resources/GraphXMacroRoadNetworkTests/snapshot.xml"
+    val equilNetworkFilePath: String =  "src/test/resources/GraphXMacroRoadNetworkTests/network-matsim-example-equil.xml"
+    val equilSnapshotFilePath: String = "src/test/resources/GraphXMacroRoadNetworkTests/snapshot-matsim-example-equil.xml"
+    val missingFilePath: String =       "src/test/resources/GraphXMacroRoadNetworkTests/blah-invalid.xml"
     val testXML: xml.Elem =
       <network>
         <links>
