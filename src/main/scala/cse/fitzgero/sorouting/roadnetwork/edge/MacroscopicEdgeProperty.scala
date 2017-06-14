@@ -7,10 +7,10 @@ package cse.fitzgero.sorouting.roadnetwork.edge
   * @param costFlow a cost/flow function such as BPL, which is a function of
   *                 free flow capacity, free flow speed, and the current flow
   */
-case class FrankWolfeEdgeProperty (
+case class MacroscopicEdgeProperty (
   id: String,
   flow: Double,
   costFlow: (Double) => Double)
   extends EdgeProperty {
-  def cost (): Double = costFlow(flow)
+  override def cost: Double = costFlow(flow)
 }

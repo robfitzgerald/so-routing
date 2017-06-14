@@ -1,7 +1,6 @@
 package cse.fitzgero.sorouting.roadnetwork.vertex
 
-/**
-  * Created by robertfitzgerald on 5/23/17.
-  */
-case class CoordinateVertexProperty (pos: (Double, Double))
-  extends VertexProperty {}
+case class Euclidian (x: Double, y: Double) extends VertexPosition
+
+case class CoordinateVertexProperty (override val position: Euclidian)
+  extends VertexProperty[Euclidian] (position) {}

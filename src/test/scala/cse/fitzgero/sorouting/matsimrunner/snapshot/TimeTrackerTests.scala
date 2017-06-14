@@ -1,9 +1,9 @@
-package cse.fitzgero.sorouting.matsimrunner
+package cse.fitzgero.sorouting.matsimrunner.snapshot
 
-import cse.fitzgero.sorouting.SORoutingUnitTests
+import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import org.matsim.api.core.v01.Id
 
-class TimeTrackerTests extends SORoutingUnitTests {
+class TimeTrackerTests extends SORoutingUnitTestTemplate {
   "TimeTracker" when {
     "constructed" should {
       "take parameters for time batch tracking" in {
