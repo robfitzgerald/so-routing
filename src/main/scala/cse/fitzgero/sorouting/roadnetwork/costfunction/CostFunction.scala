@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.roadnetwork.costfunction
 
 
-abstract class CostFunction {
+abstract class CostFunction extends Serializable {
   def generate: (Double) => Double
 }
 

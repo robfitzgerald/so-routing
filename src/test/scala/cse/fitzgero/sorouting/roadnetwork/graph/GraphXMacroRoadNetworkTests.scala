@@ -57,7 +57,10 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
         "produce a correct EdgeRDD" in {
           val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
           val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
+          // confirm that the flow values in our graph are equivalent to those stored in the test object
           result.map(edge => edge.attr.flow == testFlowsMap(edge.attr.id)).reduce(_&&_) should equal (true)
+          // confirm the TestCostFunction, which should be the identity function
+          result.map(edge => edge.attr.cost == edge.attr.flow).reduce(_&&_) should equal (true)
         }
       }
       "passed an xml.Elem object which has a network with links, but links are malformed (i.e. bad 'id' or 'flow' attributes)" should {
@@ -66,6 +69,13 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           val thrown = the [java.io.IOException] thrownBy {GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabEdges(testXML, badFlows)}
           thrown getMessage() should startWith ("snapshot flow data was malformed")
         }
+      }
+      "passed a real CostFunctionFactory, we can call those from spark" in {
+        val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
+        val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroFactory(sc, BPRCostFunction) invokePrivate grabEdges(testXML, testFlows)
+        // confirm that the costFlow function result is never the same as the flow amount
+        // (a simple check that applying the function yielded a different number)
+        result.map(edge => edge.attr.cost != edge.attr.flow).reduce(_&&_) should equal (true)
       }
     }
     "grabVertices" when {

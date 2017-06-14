@@ -8,6 +8,7 @@ import breeze.linalg.DenseVector
   * latency function from the Bureau of Public Roads, taken from
   * U.S. Bureau of Public Roads. Traffic Assignment Manual. U.S. Department of Commerce, Washington, D.C (1964)
   * linear interpolated for query optimization
+  * @note cannot be used as is in Spark, as breeze.interpolation.LinearInterpolator is not serializable
   */
 class BPRInterpolatedCostFunction (capacity: Double, freeFlowSpeed: Double, numSteps: Int, stepSize: Int) extends CostFunction {
   override def generate: (Double) => Double = {
