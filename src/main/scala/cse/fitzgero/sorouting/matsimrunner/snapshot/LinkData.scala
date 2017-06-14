@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.matsimrunner
+package cse.fitzgero.sorouting.matsimrunner.snapshot
 
 import org.matsim.api.core.v01.Id
 import org.matsim.vehicles.Vehicle

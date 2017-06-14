@@ -3,7 +3,6 @@ package cse.fitzgero.sorouting.app
 import org.apache.spark.{SparkConf, SparkContext}
 
 import cse.fitzgero.sorouting.algorithm.trafficassignment.SGDSolver
-import cse.fitzgero.sorouting.roadnetwork.graph.GraphSparkGraphX
 
 /**
   * Base level application for running SORouting

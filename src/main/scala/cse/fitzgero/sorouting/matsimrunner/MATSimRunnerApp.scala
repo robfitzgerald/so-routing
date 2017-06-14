@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import org.matsim.core.config.Config
 import org.matsim.core.config.ConfigUtils
 import org.matsim.core.controler.Controler
@@ -10,6 +10,8 @@ import org.matsim.core.controler.AbstractModule
 import org.matsim.core.scenario.ScenarioUtils
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.api.core.v01.network.Link
+
+import cse.fitzgero.sorouting.matsimrunner.snapshot._
 
 object MATSimRunnerApp extends App {
   val ArgsMissingValues = true
@@ -47,12 +49,8 @@ object MATSimRunnerApp extends App {
               if (timeTracker.belongsToThisTimeGroup(e))
                 currentNetworkState = currentNetworkState.update(e)
               else {
-                NetworkStateCollector.toFile(
-                  snapshotOutputDirectory,
-                  currentIteration,
-                  timeTracker.currentTimeString,
-                  currentNetworkState
-                )
+                val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeString)
+                NetworkStateCollector.toRawFile(writerData, currentNetworkState)
 
                 while(!timeTracker.belongsToThisTimeGroup(e))
                   timeTracker = timeTracker.advance
@@ -65,12 +63,8 @@ object MATSimRunnerApp extends App {
               println(s"start new iteration $i")
 
               // make sure everything's written from the last
-              NetworkStateCollector.toFile(
-                snapshotOutputDirectory,
-                currentIteration,
-                s"${timeTracker.currentTimeString}-final",
-                currentNetworkState
-              )
+              val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeString}-final")
+              NetworkStateCollector.toRawFile(writerData, currentNetworkState)
 
               // start next iteration
               timeTracker = TimeTracker(appConfig.window, appConfig.startTime, appConfig.endTime)
@@ -87,12 +81,8 @@ object MATSimRunnerApp extends App {
     controler.run()
 
     // handle writing final snapshot
-    NetworkStateCollector.toFile(
-      snapshotOutputDirectory,
-      currentIteration,
-      s"${timeTracker.currentTimeString}-final",
-      currentNetworkState
-    )
+    val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeString}-final")
+    NetworkStateCollector.toRawFile(writerData, currentNetworkState)
   }
 }
 

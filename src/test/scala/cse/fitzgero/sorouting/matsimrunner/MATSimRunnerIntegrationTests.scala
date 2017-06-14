@@ -2,7 +2,8 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import java.io.{File, PrintWriter}
 
-import cse.fitzgero.sorouting.SORoutingUnitTests
+import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network._
 import org.matsim.vehicles.Vehicle
@@ -10,7 +11,7 @@ import org.matsim.vehicles.Vehicle
 /**
   * Created by robertfitzgerald on 6/7/17.
   */
-class MATSimRunnerIntegrationTests extends SORoutingUnitTests {
+class MATSimRunnerIntegrationTests extends SORoutingUnitTestTemplate {
   "MATSimRunner" when {
     "run with a simple mock set of data events" should {
       "run correctly" in {

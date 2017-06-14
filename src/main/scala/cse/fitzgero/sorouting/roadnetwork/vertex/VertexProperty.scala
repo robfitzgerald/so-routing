@@ -1,6 +1,4 @@
 package cse.fitzgero.sorouting.roadnetwork.vertex
 
-/**
-  * Created by robertfitzgerald on 5/23/17.
-  */
-class VertexProperty {}
+abstract class VertexPosition extends Serializable {}
+abstract class VertexProperty [P <: VertexPosition] (val position: P) extends Serializable {}

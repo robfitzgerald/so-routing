@@ -12,5 +12,5 @@ trait MappableNearestVertexByPos {
     * @tparam V graph vertex id type
     * @return the vertex id of the closest vertex to this point
     */
-  def findNearestVertex [V <: VertexProperty](point: (Double, Double)): V
+  def findNearestVertex [V <: VertexProperty[VertexPosition]](point: (Double, Double)): V
 }

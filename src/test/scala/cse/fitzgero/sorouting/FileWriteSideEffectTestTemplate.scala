@@ -8,12 +8,11 @@ import scala.util.{Failure, Success, Try}
   * designed to provide automated cleanup of side effect data
   * @param testName (unique) name of the test suite, which will be used for making the root path (in "testRootPath")
   */
-abstract class FileWriteSideEffectTests (testName: String) extends SORoutingUnitTests {
+abstract class FileWriteSideEffectTestTemplate (testName: String) extends SORoutingUnitTestTemplate {
   /**
     * this value should be used in place of any root directory paths in the test suite
     */
-  val testRootPath: String = s"test/temp/$testName"
-
+  val testRootPath: String = s"src/test/temp/$testName"
 
   private def clearTempData: Try[String]= {
     Try({
