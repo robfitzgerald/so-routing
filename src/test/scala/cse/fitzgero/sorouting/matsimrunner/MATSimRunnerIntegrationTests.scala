@@ -1,7 +1,5 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import java.io.{File, PrintWriter}
-
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import org.matsim.api.core.v01.Id
