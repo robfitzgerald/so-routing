@@ -18,7 +18,7 @@ trait HasVertexBasedSSSP {
     * @tparam E graph edge id type
     * @return sequence of edges describing a path
     */
-  def findShortestPath [V <: VertexProperty, E <: EdgeProperty](o: V, d: V): Seq[E]
+  def findShortestPath [V <: VertexProperty[VertexPosition], E <: EdgeProperty](o: V, d: V): Seq[E]
 
   /**
     * increments the flow at edges used by this o/d pair's shortest path
@@ -28,5 +28,5 @@ trait HasVertexBasedSSSP {
     * @tparam E graph edge type
     * @return the modified road network graph
     */
-  def setShortestPath [V <: VertexProperty, E <: EdgeProperty](o: V, d: V): Graph[V, E]
+  def setShortestPath [V <: VertexProperty[VertexPosition], E <: EdgeProperty](o: V, d: V): Graph[V, E]
 }

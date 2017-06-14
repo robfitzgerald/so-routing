@@ -1,10 +1,10 @@
 package cse.fitzgero.sorouting.util
 
 import scala.util.{Try, Success, Failure}
-import cse.fitzgero.sorouting.SORoutingUnitTests
+import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import org.scalatest.PrivateMethodTester
 
-class TimeStringConvertTests extends SORoutingUnitTests {
+class TimeStringConvertTests extends SORoutingUnitTestTemplate {
   "TimeStringConvert" when {
     "fromString" should {
       "correctly convert string time to int time" in {

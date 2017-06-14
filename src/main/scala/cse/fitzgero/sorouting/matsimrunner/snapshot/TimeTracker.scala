@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.matsimrunner
+package cse.fitzgero.sorouting.matsimrunner.snapshot
 
 import cse.fitzgero.sorouting.util.TimeStringConvert
 

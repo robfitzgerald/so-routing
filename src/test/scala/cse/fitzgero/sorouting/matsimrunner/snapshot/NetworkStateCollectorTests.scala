@@ -1,22 +1,22 @@
-package cse.fitzgero.sorouting.matsimrunner
+package cse.fitzgero.sorouting.matsimrunner.snapshot
 
-import cse.fitzgero.sorouting.SORoutingUnitTests
+import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import org.matsim.api.core.v01.Id
-import org.matsim.api.core.v01.network.Link
-import org.matsim.vehicles.Vehicle
 
-import scala.collection.immutable.Map
+import scala.xml.Elem
 
-class NetworkStateCollectorTests extends SORoutingUnitTests {
+class NetworkStateCollectorTests extends SORoutingUnitTestTemplate {
   "NetworkStateCollector class" when {
+    val v1 = Id.createVehicleId(1)
+    val v2 = Id.createVehicleId(2)
+    val v3 = Id.createVehicleId(3)
+    val l1 = Id.createLinkId(1)
+    val l2 = Id.createLinkId(20)
     "addDriver" when {
       "called on a valid LinkEnterEvent" should {
         "contain the correctly added vehicle" in {
-          val network = NetworkStateCollector()
-          val v1 = Id.createVehicleId(1)
-          val l1 = Id.createLinkId(1)
           val data = LinkEnterData(0, l1, v1)
-          val updatedNetwork = network.addDriver(l1, v1)
+          val updatedNetwork = NetworkStateCollector().addDriver(l1, v1)
           updatedNetwork.getLink(l1) should equal(NonEmptyLink(Set(v1)))
         }
       }
@@ -24,22 +24,16 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
     "removeDriver" when {
       "called on a valid LinkLeaveEvent" should {
         "no longer contain the driver on that link" in {
-          val network = NetworkStateCollector()
-          val v1 = Id.createVehicleId(1)
-          val l1 = Id.createLinkId(1)
-          val link1ShouldBeEmpty = network.addDriver(l1, v1).removeDriver(l1, v1)
+          val link1ShouldBeEmpty = NetworkStateCollector().addDriver(l1, v1).removeDriver(l1, v1)
           link1ShouldBeEmpty.getLink(l1) should equal(EmptyLink)
         }
       }
     }
     "update called on a valid LinkLeaveEvent" should {
       "no longer contain the driver on that link" in {
-        val network = NetworkStateCollector()
-        val v1 = Id.createVehicleId(1)
-        val l1 = Id.createLinkId(1)
         val data1 = LinkEnterData(0, l1, v1)
         val data2 = LinkLeaveData(0, l1, v1)
-        val link1ShouldBeEmpty = network.update(data1).update(data2)
+        val link1ShouldBeEmpty = NetworkStateCollector().update(data1).update(data2)
         link1ShouldBeEmpty.networkState.getOrElse(l1, false) should equal (EmptyLink)
       }
     }
@@ -47,14 +41,23 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
     "toString" when {
       "called" should {
         "print out all current links flows as tuples on separate lines" in {
-          val network = NetworkStateCollector()
-          val v1 = Id.createVehicleId(1)
-          val v2 = Id.createVehicleId(2)
-          val v3 = Id.createVehicleId(3)
-          val l1 = Id.createLinkId(1)
-          val l2 = Id.createLinkId(20)
-          val smallNetwork = network.addDriver(l1, v1).addDriver(l1, v2).addDriver(l2, v3)
+          val smallNetwork = NetworkStateCollector().addDriver(l1, v1).addDriver(l1, v2).addDriver(l2, v3)
           smallNetwork.toString should equal("1 2\n20 1")
+        }
+      }
+    }
+    "toXML" when {
+      "called" should {
+        "print out all current links as valid XML based on the snapshot_v1.xsd schema" in {
+          val smallNetwork = NetworkStateCollector().addDriver(l1, v1).addDriver(l1, v2).addDriver(l2, v3)
+          val result: Elem = smallNetwork.toXML
+          val dataMap: Map[String,String] = Map.empty[String, String] ++
+            (for (link <- result \ "links" \ "link") yield {
+              val attrs: Map[String,String] = link.attributes.asAttrMap
+              (attrs("id"), attrs("flow"))
+            })
+          dataMap("1") should equal ("2")
+          dataMap("20") should equal ("1")
         }
       }
     }
@@ -64,7 +67,7 @@ class NetworkStateCollectorTests extends SORoutingUnitTests {
       "called with no parameters" should {
         "produce an empty map of the network state" in {
           val network = NetworkStateCollector()
-          network shouldBe a [Map[Id[Link], LinkData[Id[Vehicle]]]]
+          network shouldBe a [NetworkStateCollector]
         }
       }
       "called with a org.matsim.api.core.v01.network.getLinks()" ignore {
