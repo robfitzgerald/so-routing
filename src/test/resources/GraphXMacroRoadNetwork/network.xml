@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <network>
     <links>
-        <link id="1" from="1" to="2"></link>
-        <link id="2" from="2" to="3"></link>
-        <link id="3" from="3" to="1"></link>
+        <link id="1" from="1" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="2" from="2" to="3" freespeed="27.78" capacity="2000.0"/>
+        <link id="3" from="3" to="1" freespeed="27.78" capacity="4000.0"/>
     </links>
     <nodes>
-        <node id="1" x="-10" y="-10"></node>
-        <node id="2" x="-10" y="10"></node>
-        <node id="3" x="10" y="5"></node>
+        <node id="1" x="-10" y="-10"/>
+        <node id="2" x="-10" y="10"/>
+        <node id="3" x="10" y="5"/>
     </nodes>
 </network>
