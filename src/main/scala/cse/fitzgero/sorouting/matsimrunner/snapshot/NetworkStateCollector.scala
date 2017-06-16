@@ -35,6 +35,7 @@ class NetworkStateCollector private ( val networkState: Map[Id[Link], LinkData[I
     case LinkLeaveData(t, link, veh) =>
       val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
       new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
+    case other => throw new IllegalArgumentException(s"passed a ${other.getClass}, but update() only handles LinkEnterData and LinkLeaveData")
   }
 
 

@@ -59,8 +59,8 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
           // confirm that the flow values in our graph are equivalent to those stored in the test object
           result.map(edge => edge.attr.flow == testFlowsMap(edge.attr.id)).reduce(_&&_) should equal (true)
-          // confirm the TestCostFunction, which should be the identity function
-          result.map(edge => edge.attr.cost == edge.attr.flow).reduce(_&&_) should equal (true)
+          // confirm the TestCostFunction, which should be (x) => 1
+          result.map(edge => edge.attr.cost).sum should equal (3)
         }
       }
       "passed an xml.Elem object which has a network with links, but links are malformed (i.e. bad 'id' or 'flow' attributes)" should {
@@ -100,7 +100,10 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           for (linkId <- result.g.edges.map(_.attr.id).toLocalIterator) {
             List("1", "2", "3") should contain (linkId)
           }
-          result.g.edges.map(_.attr.flow).reduce(_+_) should equal (0)
+          // there are no flows assigned
+          result.g.edges.map(_.attr.flow).sum should equal (0)
+          // (the TestCostFunction returns 1, so this should be equal to |E|)
+          result.g.edges.map(_.attr.cost).sum should equal (3)
         }
       }
       "passed an invalid network file link" should {

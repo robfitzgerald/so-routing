@@ -9,14 +9,13 @@ import org.apache.spark.graphx._
 import cse.fitzgero.sorouting.roadnetwork._
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.edge._
-import cse.fitzgero.sorouting.roadnetwork.path.Path
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 import org.apache.spark.rdd.RDD
 
-class GraphXMacroRoadNetwork (val g: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]) extends RoadNetworkWrapper[CoordinateVertexProperty, MacroscopicEdgeProperty, graphx.VertexId] {
+class GraphXMacroRoadNetwork (val g: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]) extends RoadNetworkWrapper[Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]] {
   type IdType = graphx.VertexId
   def getCostFlowValues (linkIds: Seq[IdType]): Seq[Double] = ???
-  def shortestPath (OD: Seq[(CoordinateVertexProperty, CoordinateVertexProperty)]): Seq[Path[IdType]] = ???
+  def shortestPath (OD: Seq[(CoordinateVertexProperty, CoordinateVertexProperty)]): Seq[Path] = ???
 }
 
 case class GraphXMacroFactory (sc: SparkContext, costFunctionFactory: CostFunctionFactory) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
