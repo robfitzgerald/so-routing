@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.roadnetwork.graph
 
 import java.io.IOException
 
-import org.apache.spark.graphx.{Edge, EdgeRDD}
+import org.apache.spark.graphx.{Edge, EdgeRDD, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
@@ -56,7 +56,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
       "passed a valid xml.Elem object" should {
         "produce a correct EdgeRDD" in {
           val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
-          val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
+          val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroRoadNetwork(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
           // confirm that the flow values in our graph are equivalent to those stored in the test object
           result.map(edge => edge.attr.flow == testFlowsMap(edge.attr.id)).reduce(_&&_) should equal (true)
           // confirm the TestCostFunction, which should be (x) => 1
@@ -66,13 +66,13 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
       "passed an xml.Elem object which has a network with links, but links are malformed (i.e. bad 'id' or 'flow' attributes)" should {
         "throw an IOException" in {
           val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
-          val thrown = the [java.io.IOException] thrownBy {GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabEdges(testXML, badFlows)}
+          val thrown = the [java.io.IOException] thrownBy {GraphXMacroRoadNetwork(sc, TestCostFunction) invokePrivate grabEdges(testXML, badFlows)}
           thrown getMessage() should startWith ("snapshot flow data was malformed")
         }
       }
       "passed a real CostFunctionFactory, we can call those from spark" in {
         val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
-        val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroFactory(sc, BPRCostFunction) invokePrivate grabEdges(testXML, testFlows)
+        val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroRoadNetwork(sc, BPRCostFunction) invokePrivate grabEdges(testXML, testFlows)
         // confirm that the costFlow function result is never the same as the flow amount
         // (a simple check that applying the function yielded a different number)
         result.map(edge => edge.attr.cost != edge.attr.flow).reduce(_&&_) should equal (true)
@@ -82,7 +82,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
       "passed a valid xml.Elem object" should {
         "produce a correct VertexRDD" in {
           val grabVertices = PrivateMethod[RDD[(Long, CoordinateVertexProperty)]]('grabVertices)
-          val result: RDD[(Long, CoordinateVertexProperty)] = GraphXMacroFactory(sc, TestCostFunction) invokePrivate grabVertices(testXML)
+          val result: RDD[(Long, CoordinateVertexProperty)] = GraphXMacroRoadNetwork(sc, TestCostFunction) invokePrivate grabVertices(testXML)
           val makeLocal: Map[String, CoordinateVertexProperty] = result.map(vertex => (vertex._1.toString, vertex._2)).toLocalIterator.toMap
           makeLocal("1").position should equal (Euclidian(-10, -10))
           makeLocal("2").position should equal (Euclidian(-10, 10))
@@ -93,22 +93,22 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
     "fromFile" when {
       "passed a file path for a valid MATSim network_v2.xml file" should {
         "produce a correct GraphXMacroRoadNetwork, with all flows equal to 0" in {
-          val result: GraphXMacroRoadNetwork = GraphXMacroFactory(sc, TestCostFunction).fromFile(networkFilePath).get
-          for (vertexId <- result.g.vertices.map(_._1).toLocalIterator) {
+          val result: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(networkFilePath).get
+          for (vertexId <- result.vertices.map(_._1).toLocalIterator) {
             Seq(1, 2, 3) should contain (vertexId)
           }
-          for (linkId <- result.g.edges.map(_.attr.id).toLocalIterator) {
+          for (linkId <- result.edges.map(_.attr.id).toLocalIterator) {
             List("1", "2", "3") should contain (linkId)
           }
           // there are no flows assigned
-          result.g.edges.map(_.attr.flow).sum should equal (0)
+          result.edges.map(_.attr.flow).sum should equal (0)
           // (the TestCostFunction returns 1, so this should be equal to |E|)
-          result.g.edges.map(_.attr.cost).sum should equal (3)
+          result.edges.map(_.attr.cost).sum should equal (3)
         }
       }
       "passed an invalid network file link" should {
         "throw an IOException" in {
-          val thrown = the [java.io.IOException] thrownBy GraphXMacroFactory(sc, TestCostFunction).fromFile(missingFilePath)
+          val thrown = the [java.io.IOException] thrownBy GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(missingFilePath)
           thrown getMessage() should startWith (s"$missingFilePath is not a valid network filename.")
         }
       }
@@ -116,21 +116,21 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
     "fromFileAndSnapshot" when {
       "G[3,3]: passed a file path for a valid MATSim network_v2.xml file and a snapshot_v1.xml file" should {
         "produce a correct GraphXMacroRoadNetwork, with loaded snapshot flows" in {
-          val result: GraphXMacroRoadNetwork = GraphXMacroFactory(sc, TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          for (vertexId <- result.g.vertices.map(_._1).toLocalIterator) {
+          val result: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          for (vertexId <- result.vertices.map(_._1).toLocalIterator) {
             Seq(1, 2, 3) should contain (vertexId)
           }
-          for (linkId <- result.g.edges.map(_.attr.id).toLocalIterator) {
+          for (linkId <- result.edges.map(_.attr.id).toLocalIterator) {
             List("1", "2", "3") should contain (linkId)
           }
-          for (flow <- result.g.edges.map(_.attr.flow).toLocalIterator) {
+          for (flow <- result.edges.map(_.attr.flow).toLocalIterator) {
             List(123, 456, 789) should contain (flow)
           }
         }
       }
       "G[15,23] test with sample network from the MATSim examples directory with a snapshop" should {
         "produce a correct GraphXMacroRoadNetwork, with loaded snapshot flows" in {
-          val result: GraphXMacroRoadNetwork = GraphXMacroFactory(sc, TestCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val result: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
           val networkLinks: Map[String, (String, String)] =
             (XML.loadFile(equilNetworkFilePath) \ "links" \ "link").map(l => {
               ((l \ "@id").toString,
@@ -141,9 +141,9 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
               ((l \ "@id").toString, (l \ "@flow").toString)
             }).toMap
 
-          val edgeSrcMap: Map[String, String] = result.g.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.srcId.toString)))
-          val edgeDstMap: Map[String, String] = result.g.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.dstId.toString)))
-          val edgeFlowMap: Map[String, String] = result.g.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.flow.toInt.toString)))
+          val edgeSrcMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.srcId.toString)))
+          val edgeDstMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.dstId.toString)))
+          val edgeFlowMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.flow.toInt.toString)))
 
           // just testing our mock data here - the cardinality and id-uniqueness of the edge set is confirmed
           networkFlows.keys.foreach(networkLinks.keys.toSeq should contain (_))
@@ -158,13 +158,13 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
       }
       "passed an invalid network file link" should {
         "throw an IOException" in {
-          val thrown = the [java.io.IOException] thrownBy GraphXMacroFactory(sc, TestCostFunction).fromFileAndSnapshot(missingFilePath, snapshotFilePath)
+          val thrown = the [java.io.IOException] thrownBy GraphXMacroRoadNetwork(sc, TestCostFunction).fromFileAndSnapshot(missingFilePath, snapshotFilePath)
           thrown getMessage() should startWith (s"$missingFilePath is not a valid network filename.")
         }
       }
       "passed a valid network file but invalid snapshot file" should {
         "throw an IOException" in {
-          val thrown = the [java.io.IOException] thrownBy GraphXMacroFactory(sc, TestCostFunction).fromFileAndSnapshot(networkFilePath, missingFilePath)
+          val thrown = the [java.io.IOException] thrownBy GraphXMacroRoadNetwork(sc, TestCostFunction).fromFileAndSnapshot(networkFilePath, missingFilePath)
           thrown getMessage() should startWith (s"$missingFilePath is not a valid snapshot filename.")
         }
       }
