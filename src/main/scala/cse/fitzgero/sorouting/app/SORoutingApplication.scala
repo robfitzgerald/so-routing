@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.app
 
 import org.apache.spark.{SparkConf, SparkContext}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.SGDSolver
+import cse.fitzgero.sorouting.algorithm.trafficassignment.TrafficAssignment
 import cse.fitzgero.sorouting.matsimrunner._
 
 /**
@@ -58,7 +58,6 @@ object SORoutingApplication extends App {
   }
 
   println(s"~~~ SO Routing Algorithm ~~~")
-  println(s"~~~~~ ${SGDSolver.foo()} ~~~~~")
 
   sc.stop()
 }
