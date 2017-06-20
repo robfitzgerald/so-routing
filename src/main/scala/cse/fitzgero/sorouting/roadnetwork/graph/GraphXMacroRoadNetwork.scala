@@ -12,7 +12,7 @@ import cse.fitzgero.sorouting.roadnetwork.vertex.{CoordinateVertexProperty, _}
 import org.apache.spark.rdd.RDD
 
 case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
-  type RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]
+
 
   /**
     * loads a road network from an xml file written in MATSim's network format
@@ -111,9 +111,22 @@ case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFu
   }
 }
 
-// failed at defining the generic trait correctly:
-// see graph.HasRoadNetworkOps
+
 object GraphXMacroRoadNetwork {
-  def getCostFlowValues[RoadNetwork](graph: RoadNetwork, samplePercentage: Double): Seq[Double] = ???
-  def shortestPath (graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty], odPairs: Seq[(VertexId, VertexId)]): (Graph[Map[VertexId, Double], MacroscopicEdgeProperty], Seq[(VertexId, VertexId, List[String])]) = ???
+  /**
+    * updates the flow values for edges based on a set of path assignments
+    * @param graph a road network
+    * @param paths tuples where the 3rd element is a list of edge Ids
+    * @return a new road network with those values assigned to the flow attributes of the edges
+    */
+  def updateEdges(graph: RoadNetwork, paths: Seq[(VertexId, VertexId, List[EdgeIdType])]): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+    val updateList: Map[EdgeIdType, Double] = paths.flatMap(_._3).groupBy(identity).map(group => (group._1, group._2.size.toDouble))
+    graph.mapEdges  (edge =>
+      if (updateList.isDefinedAt(edge.attr.id))
+        edge.attr.copy(
+          flow = edge.attr.flow + updateList(edge.attr.id)
+        )
+      else edge.attr
+    )
+  }
 }

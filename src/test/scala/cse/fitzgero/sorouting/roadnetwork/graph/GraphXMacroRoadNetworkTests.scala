@@ -12,7 +12,7 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import scala.xml.XML
 
 class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoadNetworkTests") {
-  "GraphXMacroRoadNetworkTests" when {
+  "GraphXMacroRoadNetwork Class" when {
     val networkFilePath: String =       "src/test/resources/GraphXMacroRoadNetworkTests/network.xml"
     val snapshotFilePath: String =      "src/test/resources/GraphXMacroRoadNetworkTests/snapshot.xml"
     val equilNetworkFilePath: String =  "src/test/resources/GraphXMacroRoadNetworkTests/network-matsim-example-equil.xml"
@@ -166,6 +166,30 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
         "throw an IOException" in {
           val thrown = the [java.io.IOException] thrownBy GraphXMacroRoadNetwork(sc, TestCostFunction).fromFileAndSnapshot(networkFilePath, missingFilePath)
           thrown getMessage() should startWith (s"$missingFilePath is not a valid snapshot filename.")
+        }
+      }
+    }
+  }
+  "GraphXMacroRoadNetwork Object" when {
+    "updateEdges" when {
+      "called with a road network and a collection of paths" should {
+        "increment the flows on the corresponding edges" in {
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+            sc.parallelize(List(
+              (1, CoordinateVertexProperty(Euclidian(0,0))),
+              (2, CoordinateVertexProperty(Euclidian(0,0))),
+              (3, CoordinateVertexProperty(Euclidian(0,0))))),
+            sc.parallelize(List(
+              Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")).generate)),
+              Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")).generate)))))
+          val paths: Seq[(VertexId, VertexId, List[EdgeIdType])] = Seq((1,3,List("1", "2")))
+
+          val result: RoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)
+
+          result.edges.toLocalIterator.foreach(edge => {
+            if (edge.attr.id == "1") edge.attr.flow should equal (6)
+            if (edge.attr.id == "2") edge.attr.flow should equal (11)
+          })
         }
       }
     }

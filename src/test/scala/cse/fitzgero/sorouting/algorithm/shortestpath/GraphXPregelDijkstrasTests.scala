@@ -35,7 +35,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           od4._3 should equal (List("2"))
         }
       }
-      "given a pair of vertex ids and a graph with no congestion and a flow-based cost function" should {
+      "given a pair of vertex ids and a graph with some congestion and a flow-based cost function" should {
         "return the correct shortest path, which should be shortest by number of links" in {
           val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
           val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (12,1), (2, 3))
@@ -48,7 +48,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           val od4 = result.filter(_._1 == 2L).head
 
           od1._2 should equal (12L)
-          od1._3 should equal (List("1", "10", "19"))
+          od1._3 should equal (List("1", "8", "17"))  // because i put 500 people on link 10 ;-)
           od2._2 should equal (15L)
           od2._3 should equal (List("11", "20", "21", "22"))
           od3._2 should equal (1L)
@@ -74,6 +74,28 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           od1._1 should equal (3L)
           od1._2 should equal (1L)
           od1._3 should equal (List.empty[EdgeIdType])
+        }
+      }
+      "given a graph with flow data and all-or-nothing (AON) cost evaluation selected" should {
+        "produce the flow costs as if there were no flow on the network" in {
+          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (12,1), (2, 3))
+
+          val result: Seq[(VertexId, VertexId, List[EdgeIdType])] = GraphXPregelDijkstras.shortestPaths(graph, odPairs, AONFlow())
+
+          val od1 = result.filter(_._1 == 1L).head
+          val od2 = result.filter(_._1 == 3L).head
+          val od3 = result.filter(_._1 == 12L).head
+          val od4 = result.filter(_._1 == 2L).head
+
+          od1._2 should equal (12L)
+          od1._3 should equal (List("1", "10", "19"))  // the 500 people on link 10 are being ignored here because AON
+          od2._2 should equal (15L)
+          od2._3 should equal (List("11", "20", "21", "22"))
+          od3._2 should equal (1L)
+          od3._3 should equal (List("20", "21", "22", "23"))
+          od4._2 should equal (3L)
+          od4._3 should equal (List("2"))
         }
       }
     }
@@ -296,7 +318,8 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
     }
 
     "shortestPathSendMessage" when {
-      val shortestPathSendMessage = PrivateMethod[Iterator[(VertexId, SPGraphData)]]('shortestPathSendMessage)
+      val shortestPathSendMessageWrapper = PrivateMethod[(EdgeTriplet[SPGraphData, MacroscopicEdgeProperty]) => Iterator[(VertexId, SPGraphData)]]('shortestPathSendMessageWrapper)
+//      val shortestPathSendMessage = PrivateMethod[Iterator[(VertexId, SPGraphData)]]('shortestPathSendMessage)
       "triplet where destination values dominate over any source values" should {
         "return an empty iterator" in {
           val srcAttr = Map[VertexId, WeightAndPath](
@@ -324,7 +347,8 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           // triplets foreach used here because of limited API access to triplets
           // there will be exactly one triplet which will contain the exactly one edge in the graph
           graph.triplets.toLocalIterator.foreach(thisEdge => {
-            val result: Iterator[(VertexId, SPGraphData)] = GraphXPregelDijkstras invokePrivate shortestPathSendMessage(thisEdge)
+            val setup = GraphXPregelDijkstras invokePrivate shortestPathSendMessageWrapper(CostFlow())
+            val result: Iterator[(VertexId, SPGraphData)] = setup(thisEdge)
 
             result.isEmpty should be (true)  // because src + edgeweight will always be 1 greater than dest
           })
@@ -357,7 +381,8 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           // triplets foreach used here because of limited API access to triplets
           // there will be exactly one triplet which will contain the exactly one edge in the graph
           graph.triplets.toLocalIterator.foreach(thisEdge => {
-            val result: Iterator[(VertexId, SPGraphData)] = GraphXPregelDijkstras invokePrivate shortestPathSendMessage(thisEdge)
+            val setup = GraphXPregelDijkstras invokePrivate shortestPathSendMessageWrapper(CostFlow())
+            val result: Iterator[(VertexId, SPGraphData)] = setup(thisEdge)
 
             val message = result.next._2
             message.getOrElse(1L, WeightAndPath()).weight should equal (4.0)  // destination attribute

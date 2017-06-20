@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm
 
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
-import org.apache.spark.graphx.VertexId
+import cse.fitzgero.sorouting.roadnetwork.edge.{EdgeIdType, MacroscopicEdgeProperty}
+import org.apache.spark.graphx.{Graph, VertexId}
 
 package object shortestpath {
 
@@ -16,5 +16,12 @@ package object shortestpath {
     * Type of the Vertex Data of the Shortest Paths Graph
     */
   type SPGraphData = Map[VertexId, WeightAndPath]
+  type ShortestPathsGraph = Graph[SPGraphData, MacroscopicEdgeProperty]
 
+  /**
+    * CostMethods are enumeration objects to identify which type of shortest path cost evaluation we are seeking
+    */
+  sealed trait CostMethod
+  case class CostFlow() extends CostMethod
+  case class AONFlow() extends CostMethod
 }
