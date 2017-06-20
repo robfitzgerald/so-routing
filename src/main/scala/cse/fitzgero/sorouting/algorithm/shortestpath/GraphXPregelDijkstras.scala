@@ -2,7 +2,6 @@ package cse.fitzgero.sorouting.algorithm.shortestpath
 
 import org.apache.spark.graphx.{EdgeTriplet, Graph, VertexId}
 import cse.fitzgero.sorouting.roadnetwork.edge._
-import cse.fitzgero.sorouting.roadnetwork.graph._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 /**
@@ -13,16 +12,49 @@ import cse.fitzgero.sorouting.roadnetwork.vertex._
   */
 
 object GraphXPregelDijkstras {
-  val DefaultValue: Double = Double.PositiveInfinity
+  private val Infinity: Double = Double.PositiveInfinity
+  private val Zero: Double = 0.0D
+
+  /**
+    * For each OD pair, finds its shortest path and total path cost within the graph
+    * @param graph a road network
+    * @param odPairs tuples of (Origin Vertex Id, Destination Vertex Id)
+    * @return a collection of tuples (Origin Vertex Id, Destination Vertex Id, Shortest Path as Edge Ids)
+    */
+  def shortestPaths (graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty], odPairs: Seq[(VertexId, VertexId)]): Seq[(VertexId, VertexId, List[EdgeIdType])] = {
+    val destinations: Seq[VertexId] = odPairs.map(_._2)
+    val relevantSubset: Map[VertexId, SPGraphData] = runPregelShortestPaths(graph, odPairs).vertices.filter(destinations contains _._1).collect().toMap
+    odPairs.map(tuple => {
+      (tuple._1, tuple._2, relevantSubset(tuple._2)(tuple._1).path)
+    })
+  }
+
+
+  /**
+    * Runs the Pregel operation for the provided graph and collection of origin/destination pairs
+    * @param graph a road network
+    * @param odPairs tuples of OD pairs
+    * @return A Shortest Paths graph where each vertex contains shortest path information from each listed origin vertex
+    */
+  private def runPregelShortestPaths (graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty], odPairs: Seq[(VertexId, VertexId)]): Graph[SPGraphData, MacroscopicEdgeProperty] =
+    initializeShortestPathsGraph(graph, odPairs)
+      .pregel(initialShorestPathsMessage(odPairs))(
+        shortestPathVertexProgram,
+        shortestPathSendMessage,
+        shortestPathMergeMessage
+      )
+
 
   /**
     * creates the initial vertex data for the shortest path operation: a map of source Ids to distance values
     * @param odPairs origin/destination tuples for this shortest path search
     * @return
     */
-  private def initializeShortestPathMap(odPairs: Seq[(VertexId, VertexId)]): Map[VertexId, Double] = {
-    odPairs.foldLeft(Map.empty[VertexId, Double])((acc, odPair) => acc.updated(odPair._2, DefaultValue))
-  }
+  private def initialShorestPathsMessage(odPairs: Seq[(VertexId, VertexId)]): SPGraphData =
+    odPairs.foldLeft(Map.empty[VertexId, WeightAndPath])((map, tuple) => {
+      map + (tuple._1 -> WeightAndPath())
+    }).withDefaultValue(WeightAndPath())
+
 
   /**
     * updates the graph with initial data, correctly setting distance values of zero for source Ids of our search
@@ -30,77 +62,67 @@ object GraphXPregelDijkstras {
     * @param odPairs origin/destination tuples for this shortest path search
     * @return
     */
-  private def initializeGraphVertexData (graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty], odPairs: Seq[(VertexId, VertexId)]): Graph[Map[VertexId, Double], MacroscopicEdgeProperty] = {
-    val startVals: Map[VertexId, Double] = initializeShortestPathMap(odPairs)
+  private def initializeShortestPathsGraph (graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty], odPairs: Seq[(VertexId, VertexId)]): Graph[SPGraphData, MacroscopicEdgeProperty] = {
+    val startVals: Map[VertexId, WeightAndPath] = initialShorestPathsMessage(odPairs)  // was the shortestPathMap function
     graph.mapVertices((id, _) =>
-      if (startVals isDefinedAt id) startVals.updated(id, 0) else startVals)
+      if (startVals isDefinedAt id) startVals.updated(id, WeightAndPath(Zero)) else startVals)
   }
 
 
-  private def vertexProgram (vertexId: VertexId, localInfo: Map[VertexId, Double], newInfo: Map[VertexId, Double]) = ???
+  /**
+    * Pregel vertex update function
+    * @param vertexId the current vertex
+    * @param localInfo the data at the vertex
+    * @param newInfo the data arriving by the most recent sendMessage step
+    * @return the value used to update this vertex
+    */
+  private def shortestPathVertexProgram (vertexId: VertexId, localInfo: SPGraphData, newInfo: SPGraphData): SPGraphData = {
+    newInfo.foldLeft(localInfo)((pathDistances, tuple) => {
+      if (pathDistances(tuple._1).weight > tuple._2.weight) pathDistances + tuple else pathDistances
+    }).withDefaultValue(WeightAndPath())
+  }
 
-  private def sendMessage (edge: EdgeTriplet[CoordinateVertexProperty, MacroscopicEdgeProperty]): Iterator[(VertexId, Map[VertexId, Double])] = ???
+  /**
+    * Pregel send message function
+    * @param edge the current edge triplet: src-[edge]->dst
+    * @return a message to forward to the destination vertex, or no message at all
+    */
+  private def shortestPathSendMessage (edge: EdgeTriplet[SPGraphData, MacroscopicEdgeProperty]): Iterator[(VertexId, SPGraphData)] = {
+    val edgeWeight: Double = edge.attr.cost
+    if (edge.srcAttr.forall(src => {
+      (src._2.weight + edgeWeight) >= edge.dstAttr.getOrElse(src._1, WeightAndPath()).weight
+    })) Iterator.empty
+    else {
+      // identity called on srcWithEdgeWeight to avoid mapValues returning a non-serializable object
+      // https://stackoverflow.com/questions/17709995/notserializableexception-for-mapstring-string-alias
+      val srcWithEdgeWeight = edge.srcAttr.mapValues(data => {
+        data.copy(
+          weight = data.weight + edgeWeight,
+          path = data.path :+ edge.attr.id
+        )
+      }).map(identity)
 
-  private def mergeMessage (a: Map[VertexId, Double], b: Map[VertexId, Double]): Map[VertexId, Double] = ???
+      val newVals =
+        edge.dstAttr.foldLeft(srcWithEdgeWeight.withDefaultValue(WeightAndPath()))((srcDistancesPlusEdge, destCostTuple) => {
+          val vertex: VertexId = destCostTuple._1
+          val destCost: WeightAndPath = destCostTuple._2
+          if (!srcDistancesPlusEdge.isDefinedAt(vertex) ||
+            srcDistancesPlusEdge(vertex).weight > destCost.weight) srcDistancesPlusEdge + destCostTuple
+          else srcDistancesPlusEdge
+        })
+      Iterator((edge.dstId, newVals))
+    }
+  }
+
+  /**
+    * Pregel merge function
+    * @param a left operand of a merge between two messages
+    * @param b right operand of a merge between two messages
+    * @return a single message to be received by the vertex program
+    */
+  private def shortestPathMergeMessage (a: SPGraphData, b: SPGraphData): SPGraphData = {
+    a.foldLeft(b.withDefaultValue(WeightAndPath()))((pathDistances, tuple) => {
+      if (pathDistances(tuple._1).weight > tuple._2.weight) pathDistances + tuple else pathDistances
+    }).withDefaultValue(WeightAndPath())
+  }
 }
-
-
-
-
-
-
-// older version
-
-
-//object GraphXPregelDijkstras extends HasRoadNetworkOps {
-//
-//
-//  type RoadNetwork = Graph[CoordinateVertexProperty,MacroscopicEdgeProperty]
-//  type Path = List[String]
-//  def Path(): Path = List.empty[String]
-//  type SPMap = Map[VertexId, Path]
-//  case class Message(w: Double, p: Path) extends Serializable
-//
-//  val Infinity: Double = Double.PositiveInfinity
-//  /**
-//    * based on sssp from Spark GraphX Guide: https://spark.apache.org/docs/2.1.0/graphx-programming-guide.html#pregel-api
-//    * @param graph the road network we will traverse
-//    * @param odPairs id of the starting and terminal vertices
-//    * @return
-//    */
-//  def shortestPath
-//  [RoadNetwork, VertexId, Path]
-//  (
-//    graph: Graph[CoordinateVertexProperty,MacroscopicEdgeProperty],
-//    odPairs: Seq[(VertexId, VertexId)]
-//  ):
-//  (Graph[SPMap, Double], Seq[(VertexId, VertexId, Path)]) = {
-//
-//
-//
-//    // Initialize the graph such that all vertices except the root have distance infinity.
-//    val initialGraph = graph.mapVertices((id, _) =>
-//      if (id == sourceId) 0.0 else Message(Infinity, List[String]()))
-//
-//    val sssp = initialGraph.pregel(Message(Infinity., Path()))(
-//
-//      // Vertex Program
-//      (id: VertexId, myMsg: Message, receivedMsg: Message) =>
-//        if (myMsg.w < receivedMsg.w) myMsg else receivedMsg
-//      ,
-//
-//      // Send Message
-//      triplet => {
-//        if (triplet.srcAttr + triplet.attr < triplet.dstAttr) {
-//          Iterator((triplet.dstId, triplet.srcAttr + triplet.attr))
-//        } else {
-//          Iterator.empty
-//        }
-//      },
-//
-//      // Merge Message
-//      (a, b) => math.min(a, b)
-//    )
-//
-//  }
-//}

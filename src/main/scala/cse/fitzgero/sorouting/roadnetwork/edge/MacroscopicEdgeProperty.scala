@@ -8,9 +8,9 @@ package cse.fitzgero.sorouting.roadnetwork.edge
   *                 free flow capacity, free flow speed, and the current flow
   */
 case class MacroscopicEdgeProperty (
-  id: String,
-  flow: Double,
-  costFlow: (Double) => Double)
+  id: EdgeIdType = "",
+  flow: Double = 1.0D,
+  costFlow: (Double) => Double = identity[Double])  // default cost function is identity function of flow variable
   extends EdgeProperty {
   override def cost: Double = costFlow(flow)
 }

@@ -1,5 +1,4 @@
 package cse.fitzgero.sorouting.roadnetwork.vertex
-import cse.fitzgero.sorouting.roadnetwork.graph.Path
 
 case class Euclidian (x: Double, y: Double) extends VertexPosition
 
