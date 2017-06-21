@@ -7,18 +7,18 @@ import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 import cse.fitzgero.sorouting.roadnetwork.graph._
 
-class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijkstrasTests") {
+class GraphXShortestPathsTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") {
   val Infinity: Double = Double.PositiveInfinity
-  val equilNetworkFilePath: String =  "src/test/resources/GraphXPregelDijkstrasTests/network-matsim-example-equil.xml"
-  val equilSnapshotFilePath: String = "src/test/resources/GraphXPregelDijkstrasTests/snapshot-matsim-example-equil.xml"
-  "GraphXPregelDijkstras" when {
+  val equilNetworkFilePath: String =  "src/test/resources/GraphXShortestPathsTests/network-matsim-example-equil.xml"
+  val equilSnapshotFilePath: String = "src/test/resources/GraphXShortestPathsTests/snapshot-matsim-example-equil.xml"
+  "GraphXShortestPathsTests" when {
     "shortestPaths" when {
       "given a pair of vertex ids and a graph with no congestion and a constant-valued cost function" should {
         "return the correct shortest path, which should be shortest by number of links" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(equilNetworkFilePath).get
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (12,1), (2, 3))
+          val graph: RoadNetwork = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(equilNetworkFilePath).get
+          val odPairs: ODPairs = Seq((1,12), (3,15), (12,1), (2, 3))
 
-          val result: Seq[(VertexId, VertexId, List[EdgeIdType])] = GraphXPregelDijkstras.shortestPaths(graph, odPairs)
+          val result: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs)
 
           val od1 = result.filter(_._1 == 1L).head
           val od2 = result.filter(_._1 == 3L).head
@@ -37,10 +37,10 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "given a pair of vertex ids and a graph with some congestion and a flow-based cost function" should {
         "return the correct shortest path, which should be shortest by number of links" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (12,1), (2, 3))
+          val graph: RoadNetwork = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val odPairs: ODPairs = Seq((1,12), (3,15), (12,1), (2, 3))
 
-          val result: Seq[(VertexId, VertexId, List[EdgeIdType])] = GraphXPregelDijkstras.shortestPaths(graph, odPairs)
+          val result: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs)
 
           val od1 = result.filter(_._1 == 1L).head
           val od2 = result.filter(_._1 == 3L).head
@@ -59,7 +59,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "given a graph where the solution is not reachable" should {
         "produce a result for the requested origin/destination pair with the empty list as it's path" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -67,9 +67,9 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             sc.parallelize(List(
               Edge(1,2,MacroscopicEdgeProperty("1")),
               Edge(2,3,MacroscopicEdgeProperty("2")))))
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((3,1))
+          val odPairs: ODPairs = Seq((3,1))
 
-          val paths: Seq[(VertexId, VertexId, List[EdgeIdType])] = GraphXPregelDijkstras.shortestPaths(graph, odPairs)
+          val paths: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs)
           val od1 = paths.head
           od1._1 should equal (3L)
           od1._2 should equal (1L)
@@ -78,10 +78,10 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "given a graph with flow data and all-or-nothing (AON) cost evaluation selected" should {
         "produce the flow costs as if there were no flow on the network" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (12,1), (2, 3))
+          val graph: RoadNetwork = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val odPairs: ODPairs = Seq((1,12), (3,15), (12,1), (2, 3))
 
-          val result: Seq[(VertexId, VertexId, List[EdgeIdType])] = GraphXPregelDijkstras.shortestPaths(graph, odPairs, AONFlow())
+          val result: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs, AONFlow())
 
           val od1 = result.filter(_._1 == 1L).head
           val od2 = result.filter(_._1 == 3L).head
@@ -103,7 +103,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       val runPregelShortestPaths = PrivateMethod[Graph[SPGraphData, MacroscopicEdgeProperty]]('runPregelShortestPaths)
       "run with a 3-intersection (K3) road network and default flow costs of 1" should {
         "return a shortest paths graph" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -114,7 +114,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
               Edge(3,1,MacroscopicEdgeProperty("3")))))
           val odPairs: Seq[(VertexId, VertexId)] = Seq((1,3))
 
-          val result = GraphXPregelDijkstras invokePrivate runPregelShortestPaths(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate runPregelShortestPaths(graph, odPairs)
           val resultLocal: Map[VertexId, SPGraphData] = result.vertices.toLocalIterator.toMap
 
           resultLocal(1)(1).weight should equal(0.0)
@@ -124,10 +124,10 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "run with a 15-intersection road network and default flow costs of 1" should {
         "return a shortest paths graph" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(equilNetworkFilePath).get
+          val graph: RoadNetwork = GraphXMacroRoadNetwork(sc, TestCostFunction).fromFile(equilNetworkFilePath).get
           val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (6,1))
 
-          val result = GraphXPregelDijkstras invokePrivate runPregelShortestPaths(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate runPregelShortestPaths(graph, odPairs)
           val resultLocal: Map[VertexId, SPGraphData] = result.vertices.toLocalIterator.toMap
 
           val correctSolution: Map[VertexId, Map[VertexId, WeightAndPath]] =
@@ -162,10 +162,10 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "run with a 15-intersection road network with real flow values and a real cost function" ignore {
         "return a shortest paths graph" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,12), (3,15), (6,1))
+          val graph: RoadNetwork = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val odPairs: ODPairs = Seq((1,12), (3,15), (6,1))
 
-          val result = GraphXPregelDijkstras invokePrivate runPregelShortestPaths(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate runPregelShortestPaths(graph, odPairs)
           val resultLocal: Map[VertexId, SPGraphData] = result.vertices.toLocalIterator.toMap
 
           // TODO: test something here
@@ -175,7 +175,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "run with a road network where a solution is not reachable for all intersections" should {
         "terminate with infinity values on non-source nodes" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -183,9 +183,9 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             sc.parallelize(List(
               Edge(1,2,MacroscopicEdgeProperty("1")),
               Edge(2,3,MacroscopicEdgeProperty("2")))))
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((3,1))
+          val odPairs: ODPairs = Seq((3,1))
 
-          val result = GraphXPregelDijkstras invokePrivate runPregelShortestPaths(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate runPregelShortestPaths(graph, odPairs)
           val resultLocal: Map[VertexId, SPGraphData] = result.vertices.toLocalIterator.toMap
 
           resultLocal(1)(3).weight should equal(Infinity)
@@ -195,7 +195,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       }
       "run without any origin-destination pairs" should {
         "terminate with default (infinity) values" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -203,9 +203,9 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             sc.parallelize(List(
               Edge(1,2,MacroscopicEdgeProperty("1")),
               Edge(2,3,MacroscopicEdgeProperty("2")))))
-          val odPairs: Seq[(VertexId, VertexId)] = Seq.empty[(VertexId, VertexId)]
+          val odPairs: ODPairs = Seq.empty[(VertexId, VertexId)]
 
-          val result = GraphXPregelDijkstras invokePrivate runPregelShortestPaths(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate runPregelShortestPaths(graph, odPairs)
           val resultLocal: Map[VertexId, SPGraphData] = result.vertices.toLocalIterator.toMap
 
           resultLocal(1)(3).weight should equal(Infinity)
@@ -218,8 +218,8 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       val initialShorestPathsMessage = PrivateMethod[Map[VertexId, WeightAndPath]]('initialShorestPathsMessage)
       "passed a set of origin-destination pairs" should {
         "return a map of those destinations to default weights (infinity)" in {
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,10), (2,20), (3,30))
-          val result: Map[VertexId, WeightAndPath] = GraphXPregelDijkstras invokePrivate initialShorestPathsMessage(odPairs)
+          val odPairs: ODPairs = Seq((1,10), (2,20), (3,30))
+          val result: Map[VertexId, WeightAndPath] = GraphXShortestPaths invokePrivate initialShorestPathsMessage(odPairs)
 
           Seq(1, 2, 3).foreach(v => {
             result(v).weight should equal (Double.PositiveInfinity)
@@ -227,8 +227,8 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           })
         }
         "produces a map with a default value of Infinity" in {
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,10), (2,20), (3,30))
-          val result: Map[VertexId, WeightAndPath] = GraphXPregelDijkstras invokePrivate initialShorestPathsMessage(odPairs)
+          val odPairs: ODPairs = Seq((1,10), (2,20), (3,30))
+          val result: Map[VertexId, WeightAndPath] = GraphXShortestPaths invokePrivate initialShorestPathsMessage(odPairs)
 
           (4 to 10).foreach(v => {
             result.isDefinedAt(v) should equal (false)
@@ -243,7 +243,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
       val initializeShortestPathsGraph = PrivateMethod[Graph[SPGraphData, MacroscopicEdgeProperty]]('initializeShortestPathsGraph)
       "passed a set of od pairs and a graph" should {
         "replace the vertices with the Id->Weight map which should be defined with Infinity values unless the Id corresponds to a source of an od pair" in {
-          val graph: Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -252,9 +252,9 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
               Edge(1,2,MacroscopicEdgeProperty("1",0,(x)=>1)),
               Edge(2,3,MacroscopicEdgeProperty("2",0,(x)=>1)),
               Edge(3,1,MacroscopicEdgeProperty("3",0,(x)=>1)))))
-          val odPairs: Seq[(VertexId, VertexId)] = Seq((1,3), (2,1), (3,2))
+          val odPairs: ODPairs = Seq((1,3), (2,1), (3,2))
 
-          val result = GraphXPregelDijkstras invokePrivate initializeShortestPathsGraph(graph, odPairs)
+          val result = GraphXShortestPaths invokePrivate initializeShortestPathsGraph(graph, odPairs)
 
           //shortest path searches from origins of our odPairs should have initial distance values of zero, otherwise infinity
           result.vertices.toLocalIterator.foreach(v => {
@@ -277,7 +277,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           val thisVertex = Map[VertexId, WeightAndPath]((sourceId, WeightAndPath(3.14159)))
           val incomingMessage: Map[VertexId, WeightAndPath] = Map((sourceId, WeightAndPath(7.5)))
 
-          val result: SPGraphData = GraphXPregelDijkstras invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
+          val result: SPGraphData = GraphXShortestPaths invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
           result.get(sourceId) should equal (thisVertex.get(sourceId))
         }
@@ -289,7 +289,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           val thisVertex = Map[VertexId, WeightAndPath]((sourceId, WeightAndPath(7.5)))
           val incomingMessage: Map[VertexId, WeightAndPath] = Map((sourceId, WeightAndPath(3.14159)))
 
-          val result: SPGraphData = GraphXPregelDijkstras invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
+          val result: SPGraphData = GraphXShortestPaths invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
           result.get(sourceId) should equal (incomingMessage.get(sourceId))
         }
@@ -308,7 +308,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             (3L, WeightAndPath(16.0))
           )
 
-          val result: SPGraphData = GraphXPregelDijkstras invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
+          val result: SPGraphData = GraphXShortestPaths invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
           result.getOrElse(1L, WeightAndPath()).weight should equal (4.0)
           result.getOrElse(2L, WeightAndPath()).weight should equal (8.0)
@@ -347,7 +347,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           // triplets foreach used here because of limited API access to triplets
           // there will be exactly one triplet which will contain the exactly one edge in the graph
           graph.triplets.toLocalIterator.foreach(thisEdge => {
-            val setup = GraphXPregelDijkstras invokePrivate shortestPathSendMessageWrapper(CostFlow())
+            val setup = GraphXShortestPaths invokePrivate shortestPathSendMessageWrapper(CostFlow())
             val result: Iterator[(VertexId, SPGraphData)] = setup(thisEdge)
 
             result.isEmpty should be (true)  // because src + edgeweight will always be 1 greater than dest
@@ -381,7 +381,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
           // triplets foreach used here because of limited API access to triplets
           // there will be exactly one triplet which will contain the exactly one edge in the graph
           graph.triplets.toLocalIterator.foreach(thisEdge => {
-            val setup = GraphXPregelDijkstras invokePrivate shortestPathSendMessageWrapper(CostFlow())
+            val setup = GraphXShortestPaths invokePrivate shortestPathSendMessageWrapper(CostFlow())
             val result: Iterator[(VertexId, SPGraphData)] = setup(thisEdge)
 
             val message = result.next._2
@@ -415,7 +415,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             (5L, WeightAndPath(64.0))
           )
 
-          val result: SPGraphData = GraphXPregelDijkstras invokePrivate shortestPathMergeMessage(msg1, msg2)
+          val result: SPGraphData = GraphXShortestPaths invokePrivate shortestPathMergeMessage(msg1, msg2)
 
           result.getOrElse(1L, WeightAndPath()).weight should equal (4.0)
           result.getOrElse(2L, WeightAndPath()).weight should equal (8.0)
@@ -434,7 +434,7 @@ class GraphXPregelDijkstrasTests extends SparkUnitTestTemplate("GraphXPregelDijk
             (5L, WeightAndPath(25.0))
           )
 
-          val result: SPGraphData = GraphXPregelDijkstras invokePrivate shortestPathMergeMessage(msg1, msg1)
+          val result: SPGraphData = GraphXShortestPaths invokePrivate shortestPathMergeMessage(msg1, msg1)
 
           result.getOrElse(1L, WeightAndPath()).weight should equal (5.0)
           result.getOrElse(2L, WeightAndPath()).weight should equal (10.0)

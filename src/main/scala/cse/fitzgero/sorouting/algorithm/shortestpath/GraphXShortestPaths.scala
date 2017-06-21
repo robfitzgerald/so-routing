@@ -1,8 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.shortestpath
 
-import org.apache.spark.graphx.{EdgeTriplet, Graph, VertexId}
+import org.apache.spark.graphx.{EdgeTriplet, VertexId}
 import cse.fitzgero.sorouting.roadnetwork.edge._
-import cse.fitzgero.sorouting.roadnetwork.vertex._
 import cse.fitzgero.sorouting.roadnetwork.graph._
 
 
@@ -13,7 +12,7 @@ import cse.fitzgero.sorouting.roadnetwork.graph._
   * https://spark.apache.org/docs/2.1.0/graphx-programming-guide.html#pregel-api
   */
 
-object GraphXPregelDijkstras {
+object GraphXShortestPaths {
   private val Infinity: Double = Double.PositiveInfinity
   private val Zero: Double = 0.0D
 

@@ -17,6 +17,8 @@ package object shortestpath {
     */
   type SPGraphData = Map[VertexId, WeightAndPath]
   type ShortestPathsGraph = Graph[SPGraphData, MacroscopicEdgeProperty]
+  type ODPairs = Seq[(VertexId, VertexId)]
+  type ODPaths = Seq[(VertexId, VertexId, List[EdgeIdType])]
 
   /**
     * CostMethods are enumeration objects to identify which type of shortest path cost evaluation we are seeking
