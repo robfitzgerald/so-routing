@@ -22,7 +22,7 @@ object GraphXShortestPaths {
     * @param odPairs tuples of (Origin Vertex Id, Destination Vertex Id)
     * @return a collection of tuples (Origin Vertex Id, Destination Vertex Id, Shortest Path as Edge Ids)
     */
-  def shortestPaths (graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], costMethod: CostMethod = CostFlow()): Seq[(VertexId, VertexId, List[EdgeIdType])] = {
+  def shortestPaths (graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], costMethod: CostMethod = CostFlow()): Seq[(VertexId, VertexId, Path)] = {
     val destinations: Seq[VertexId] = odPairs.map(_._2)
     val shortestPathsGraph: ShortestPathsGraph =
       initializeShortestPathsGraph(graph, odPairs)
@@ -92,7 +92,7 @@ object GraphXShortestPaths {
 
 
   /**
-    * Wrapper to allow passing costMethod into scope of shorestPathSendMessage function
+    * Closure to allow passing costMethod into scope of shorestPathSendMessage function
     * @param costMethod a case class used to determine which method of cost function we want to use
     * @return shortestPathSendMessage() ready for Pregel
     */
@@ -102,7 +102,7 @@ object GraphXShortestPaths {
       * @param edge the current edge triplet: src-[edge]->dst
       * @return a message to forward to the destination vertex, or no message at all
       */
-    def shortestPathSendMessage ()(edge: EdgeTriplet[SPGraphData, MacroscopicEdgeProperty]): Iterator[(VertexId, SPGraphData)] = {
+    def shortestPathSendMessage()(edge: EdgeTriplet[SPGraphData, MacroscopicEdgeProperty]): Iterator[(VertexId, SPGraphData)] = {
       val edgeWeight: Double = costMethod match {
         case CostFlow() => edge.attr.cost
         case AONFlow() => edge.attr.costFlow(Zero)

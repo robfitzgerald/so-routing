@@ -5,12 +5,14 @@ import org.apache.spark.graphx.{Graph, VertexId}
 
 package object shortestpath {
 
+  type Path = List[EdgeIdType]
+
   /**
     * Part of the Pregel message which, for some OD pair, captures the weight and path information for the current Pregel iteration
     * @param weight total path cost for this OD pair, at this iteration (up to whatever intermediary vertex the message has traveled)
     * @param path associated with the (possibly partial) weight, this is the possibly partial path traveled
     */
-  case class WeightAndPath(weight: Double = Double.PositiveInfinity, path: List[EdgeIdType] = List.empty[EdgeIdType])
+  case class WeightAndPath(weight: Double = Double.PositiveInfinity, path: Path = List.empty[EdgeIdType])
 
   /**
     * Type of the Vertex Data of the Shortest Paths Graph
@@ -18,7 +20,7 @@ package object shortestpath {
   type SPGraphData = Map[VertexId, WeightAndPath]
   type ShortestPathsGraph = Graph[SPGraphData, MacroscopicEdgeProperty]
   type ODPairs = Seq[(VertexId, VertexId)]
-  type ODPaths = Seq[(VertexId, VertexId, List[EdgeIdType])]
+  type ODPaths = Seq[(VertexId, VertexId, Path)]
 
   /**
     * CostMethods are enumeration objects to identify which type of shortest path cost evaluation we are seeking

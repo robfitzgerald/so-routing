@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<network>
+    <links>
+        <link id="10" from="1" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="11" from="1" to="3" freespeed="27.78" capacity="1000.0"/>
+        <link id="20" from="4" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="21" from="4" to="3" freespeed="27.78" capacity="1000.0"/>
+        <link id="30" from="5" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="31" from="5" to="3" freespeed="27.78" capacity="1000.0"/>
+        <link id="100" from="2" to="6" freespeed="40.0" capacity="100.0"/>
+        <link id="101" from="3" to="6" freespeed="50.0" capacity="100.0"/>
+    </links>
+    <nodes>
+        <node id="1" x="-10" y="10"/>
+        <node id="2" x="0" y="5"/>
+        <node id="3" x="0" y="-5"/>
+        <node id="4" x="-10" y="0"/>
+        <node id="5" x="-10" y="-10"/>
+        <node id="6" x="10" y="0"/>
+    </nodes>
+</network>
