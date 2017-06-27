@@ -249,9 +249,9 @@ class GraphXShortestPathsTests extends SparkUnitTestTemplate("GraphXShortestPath
               (2, CoordinateVertexProperty(Euclidian(0,0))),
               (3, CoordinateVertexProperty(Euclidian(0,0))))),
             sc.parallelize(List(
-              Edge(1,2,MacroscopicEdgeProperty("1",0,(x)=>1)),
-              Edge(2,3,MacroscopicEdgeProperty("2",0,(x)=>1)),
-              Edge(3,1,MacroscopicEdgeProperty("3",0,(x)=>1)))))
+              Edge(1,2,MacroscopicEdgeProperty("1")),
+              Edge(2,3,MacroscopicEdgeProperty("2")),
+              Edge(3,1,MacroscopicEdgeProperty("3")))))
           val odPairs: ODPairs = Seq((1,3), (2,1), (3,2))
 
           val result = GraphXShortestPaths invokePrivate initializeShortestPathsGraph(graph, odPairs)

@@ -60,7 +60,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           // confirm that the flow values in our graph are equivalent to those stored in the test object
           result.map(edge => edge.attr.flow == testFlowsMap(edge.attr.id)).reduce(_&&_) should equal (true)
           // confirm the TestCostFunction, which should be (x) => 1
-          result.map(edge => edge.attr.cost).sum should equal (3)
+          result.map(edge => edge.attr.linkCostFlow).sum should equal (3)
         }
       }
       "passed an xml.Elem object which has a network with links, but links are malformed (i.e. bad 'id' or 'flow' attributes)" should {
@@ -75,7 +75,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
         val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroRoadNetwork(sc, BPRCostFunction) invokePrivate grabEdges(testXML, testFlows)
         // confirm that the costFlow function result is never the same as the flow amount
         // (a simple check that applying the function yielded a different number)
-        result.map(edge => edge.attr.cost != edge.attr.flow).reduce(_&&_) should equal (true)
+        result.map(edge => edge.attr.linkCostFlow != edge.attr.flow).reduce(_&&_) should equal (true)
       }
     }
     "grabVertices" when {
@@ -103,7 +103,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           // there are no flows assigned
           result.edges.map(_.attr.flow).sum should equal (0)
           // (the TestCostFunction returns 1, so this should be equal to |E|)
-          result.edges.map(_.attr.cost).sum should equal (3)
+          result.edges.map(_.attr.linkCostFlow).sum should equal (3)
         }
       }
       "passed an invalid network file link" should {
@@ -180,8 +180,8 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
               (2, CoordinateVertexProperty(Euclidian(0,0))),
               (3, CoordinateVertexProperty(Euclidian(0,0))))),
             sc.parallelize(List(
-              Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")).generate)),
-              Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")).generate)))))
+              Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")))),
+              Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")))))))
           val paths: Seq[(VertexId, VertexId, List[EdgeIdType])] = Seq((1,3,List("1", "2")))
 
           val result: RoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)

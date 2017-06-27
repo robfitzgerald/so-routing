@@ -86,7 +86,7 @@ case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFu
             attr = MacroscopicEdgeProperty(
               attrs("id"),
               linkFlows.getOrElse(attrs("id"), 0D),
-              costFunctionFactory(attrs).generate
+              costFunctionFactory(attrs)
           ))
         })
     }

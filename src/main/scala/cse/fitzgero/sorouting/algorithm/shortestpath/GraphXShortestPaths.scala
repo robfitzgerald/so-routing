@@ -104,8 +104,8 @@ object GraphXShortestPaths {
       */
     def shortestPathSendMessage()(edge: EdgeTriplet[SPGraphData, MacroscopicEdgeProperty]): Iterator[(VertexId, SPGraphData)] = {
       val edgeWeight: Double = costMethod match {
-        case CostFlow() => edge.attr.cost
-        case AONFlow() => edge.attr.costFlow(Zero)
+        case CostFlow() => edge.attr.linkCostFlow
+        case AONFlow() => edge.attr.cost.freeFlowCost
       }
       if (edge.srcAttr.forall(src => {
         (src._2.weight + edgeWeight) >= edge.dstAttr.getOrElse(src._1, WeightAndPath()).weight
