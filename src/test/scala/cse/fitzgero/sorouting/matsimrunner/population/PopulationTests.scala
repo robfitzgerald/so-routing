@@ -6,29 +6,6 @@ class PopulationTests extends FileWriteSideEffectTestTemplate("PopulationTests")
   val filePath: String = testRootPath
   "Population" when {
     "scaffolding methods" when {
-      ""
-//      "Person" ignore {
-//        ".apply()" should {
-//          "produce a person xml element with all required defaults present" in {
-//            val result: xml.Elem = PersonNode("1").toXml
-//            result.attribute("id") should be (Some("1"))
-//            val plans = result \ "plan"
-//            plans.size should be (1)
-//            val planChildElements = plans.head \ "_"
-//            planChildElements(0).label should equal ("activity")
-//            planChildElements(0).attribute("type") should equal ("home")
-//            planChildElements(1).label should equal ("leg")
-////            planChildElements(1).attribute("type") should equal ("home")
-//            planChildElements(2).label should equal ("activity")
-//            planChildElements(2).attribute("type") should equal ("work")
-//            planChildElements(3).label should equal ("leg")
-////            planChildElements(3).attribute("type") should equal ("home")
-//            planChildElements(4).label should equal ("activity")
-//            planChildElements(4).attribute("type") should equal ("home")
-//
-//          }
-//        }
-//      }
       "population constructor" when {
         "population of 100" should {
           "produce a population scaffolding with 100 people attributes with unique ids" in {
