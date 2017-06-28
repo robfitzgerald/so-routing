@@ -58,7 +58,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
           val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroRoadNetwork(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
           // confirm that the flow values in our graph are equivalent to those stored in the test object
-          result.map(edge => edge.attr.flow == testFlowsMap(edge.attr.id)).reduce(_&&_) should equal (true)
+          result.toLocalIterator.foreach(edge => edge.attr.cost.zeroValue should equal (testFlowsMap(edge.attr.id)))
           // confirm the TestCostFunction, which should be (x) => 1
           result.map(edge => edge.attr.linkCostFlow).sum should equal (3)
         }
@@ -123,8 +123,8 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           for (linkId <- result.edges.map(_.attr.id).toLocalIterator) {
             List("1", "2", "3") should contain (linkId)
           }
-          for (flow <- result.edges.map(_.attr.flow).toLocalIterator) {
-            List(123, 456, 789) should contain (flow)
+          for (flow <- result.edges.map(_.attr.cost.zeroValue).toLocalIterator) {
+            List(123D, 456D, 789D) should contain (flow)
           }
         }
       }
@@ -143,7 +143,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
 
           val edgeSrcMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.srcId.toString)))
           val edgeDstMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.dstId.toString)))
-          val edgeFlowMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.flow.toInt.toString)))
+          val edgeZeroValueMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.cost.zeroValue.toInt.toString)))
 
           // just testing our mock data here - the cardinality and id-uniqueness of the edge set is confirmed
           networkFlows.keys.foreach(networkLinks.keys.toSeq should contain (_))
@@ -151,9 +151,11 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           networkLinks.foreach(l => l._2._1 should equal (edgeSrcMap(l._1)))
           // for each id, the destination id should be consistent (link.value.second)
           networkLinks.foreach(l => l._2._2 should equal (edgeDstMap(l._1)))
-          // for each id, the flow should be consistent
+          // for each id, the zeroValue of the flow should be consistent
           // (casted back to Int from Double above, as the file has it written without trailing decimal)
-          networkFlows.foreach(l => l._2 should equal (edgeFlowMap(l._1)))
+          networkFlows.foreach(l => {
+            l._2 should equal (edgeZeroValueMap(l._1))
+          })
         }
       }
       "passed an invalid network file link" should {
@@ -180,8 +182,8 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
               (2, CoordinateVertexProperty(Euclidian(0,0))),
               (3, CoordinateVertexProperty(Euclidian(0,0))))),
             sc.parallelize(List(
-              Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")))),
-              Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(Map("capacity" -> "10", "freespeed" -> "25")))))))
+              Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(CostFunctionAttributes(10, 25, 10)))),
+              Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(CostFunctionAttributes(10, 25)))))))
           val paths: Seq[(VertexId, VertexId, List[EdgeIdType])] = Seq((1,3,List("1", "2")))
 
           val result: RoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)

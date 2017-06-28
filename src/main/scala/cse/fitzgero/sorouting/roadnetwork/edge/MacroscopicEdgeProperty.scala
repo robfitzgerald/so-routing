@@ -16,5 +16,4 @@ case class MacroscopicEdgeProperty (
   cost: CostFunction = TestCostFunction())  // default cost function is identity function of flow variable
   extends EdgeProperty {
   def linkCostFlow: Double = this.cost.costFlow(flow)
-//  override def cost: Double = costFlow.cost(flow)
 }

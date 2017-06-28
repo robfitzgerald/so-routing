@@ -11,8 +11,8 @@ import cse.fitzgero.sorouting.roadnetwork.edge.{MacroscopicEdgeProperty, _}
 import cse.fitzgero.sorouting.roadnetwork.vertex.{CoordinateVertexProperty, _}
 import org.apache.spark.rdd.RDD
 
-case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
-
+class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
+  val MATSimFlowRate = 3600D // vehicles per hour is used to represent flow data
 
   /**
     * loads a road network from an xml file written in MATSim's network format
@@ -78,19 +78,29 @@ case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFu
       case Failure(err) => throw new IOException(s"snapshot flow data was malformed in ${flowData.toString}\n$err")
       case Success(linkFlows: Map[String, Double]) =>
         sc.parallelize(for (link <- xmlData \ "links" \ "link") yield {
-          val attrs: Map[String,String] = link.attributes.asAttrMap
-
+          val linkData: Map[String,String] = link.attributes.asAttrMap
+          val linkId: String = linkData("id").toString
+          val allAttrs: Map[String,String] = linkData.updated("flow", linkFlows.getOrElse(linkId, 0D).toString)
+          val attrsObject: CostFunctionAttributes = CostFunctionAttributes(
+            allAttrs.getOrElse("capacity", "100").toDouble,
+            allAttrs.getOrElse("freespeed", "50").toDouble,
+            allAttrs("flow").toDouble,
+            MATSimFlowRate,
+            algorithmFlowRate
+          )
           Edge(
-            srcId = attrs("from").toLong,
-            dstId = attrs("to").toLong,
+            srcId = allAttrs("from").toLong,
+            dstId = allAttrs("to").toLong,
             attr = MacroscopicEdgeProperty(
-              attrs("id"),
-              linkFlows.getOrElse(attrs("id"), 0D),
-              costFunctionFactory(attrs)
+              linkId,
+              0D,
+              costFunctionFactory(attrsObject)
           ))
         })
     }
   }
+
+
 
   /**
     * processes xml network to produce the graph's vertex list
@@ -113,6 +123,7 @@ case class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFu
 
 
 object GraphXMacroRoadNetwork {
+  def apply (sc: SparkContext, costFunctionFactory: CostFunctionFactory): GraphXMacroRoadNetwork = new GraphXMacroRoadNetwork(sc, costFunctionFactory)
   /**
     * updates the flow values for edges based on a set of path assignments
     * @param graph a road network

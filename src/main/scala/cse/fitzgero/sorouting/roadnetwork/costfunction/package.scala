@@ -15,4 +15,12 @@ package object costfunction {
       case None => accum :+ attr._2
     })
   }
+
+
+  case class CostFunctionAttributes (
+    capacity: Double = 100D,
+    freespeed: Double = 50D,
+    flow: Double = 0D,
+    flowRate: Double = 3600D,
+    algorithmFlowRate: Double = 3600D) extends Serializable {}
 }

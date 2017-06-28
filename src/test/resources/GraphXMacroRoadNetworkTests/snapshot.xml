@@ -3,8 +3,8 @@
         <!--"/Users/robertfitzgerald/dev/ucd/phd/projects/2017su/SO-Routing/src/test/resources/GraphXMacroRoadNetwork/snapshot_v1.xsd">-->
 <network name="SnapshotIO Test Data">
     <links>
-        <link id="1" flow="123"></link>
-        <link id="2" flow="456"></link>
-        <link id="3" flow="789"></link>
+        <link id="1" flow="123"> </link>
+        <link id="2" flow="456"> </link>
+        <link id="3" flow="789"> </link>
     </links>
 </network>

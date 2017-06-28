@@ -8,6 +8,7 @@ import org.apache.spark.graphx._
 /**
   * Gradient-based traffic assignment solver
   */
+
 abstract class TrafficAssignment {
-  def solve (graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], terminationCriteria: TerminationCriteria): Seq[Path]
+  def solve (graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
 }
