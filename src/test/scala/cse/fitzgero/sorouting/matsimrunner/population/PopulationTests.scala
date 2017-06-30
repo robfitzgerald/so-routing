@@ -1,6 +1,9 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
+import java.time.LocalTime
+
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+
 import scala.xml.XML
 
 class PopulationTests extends SORoutingUnitTestTemplate {
@@ -28,11 +31,27 @@ class PopulationTests extends SORoutingUnitTestTemplate {
           (result \ "person").size should be (100000)
         }
       }
-      "called with a network, asking for 500000 people" should {
-        "generate a set of coordinates and nearest link for each location, as well as time data" in {
+    }
+    "generateRandomPopulation" when {
+      "called with some basic config with one activity" should {
+        "generates a population" in {
           val network = XML.loadFile(equilNetworkFile)
-          val result = PopulationFactory.generateSimpleRandomPopulation(network, 500000)
-          (result \ "person").size should be (500000)
+          val config =
+            RandomPopulationConfig(
+              1000,
+              HomeConfig("home"),
+              Seq(
+                ActivityConfig(
+                  "work",
+                  LocalTime.parse("09:00:00"),
+                  LocalTime.parse("08:00:00"),
+                  30L)
+              ),
+              Seq(ModeConfig("car"))
+            )
+          val result = PopulationFactory.generateRandomPopulation(network, config)
+          (result \ "person").size should be (1000)
+          result.foreach(println)
         }
       }
     }

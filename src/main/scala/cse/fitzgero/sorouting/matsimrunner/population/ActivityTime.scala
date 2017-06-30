@@ -9,6 +9,10 @@ abstract class ActivityTime (time: LocalTime) {
   def nextTime(): LocalTime = time.plusMinutes(nextSample())
 }
 
+final case class NoDeviation(time: LocalTime) extends ActivityTime(time) {
+  override def nextSample(): Long = 0L
+}
+
 /**
   * produces random values in a gaussian distribution within the range [-deviation, deviation]
   * @param deviation standard deviation

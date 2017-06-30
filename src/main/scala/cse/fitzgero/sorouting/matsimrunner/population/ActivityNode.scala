@@ -24,7 +24,7 @@ final case class MorningActivity (
   y: Double,
   link: EdgeIdType,
   opts: EndTime)
-  extends ActivityNode[Double, EdgeIdType, EndTime] with PopulationDataThatConvertsToXml {
+  extends ActivityNode[Double, EdgeIdType, EndTime] with ConvertsToXml {
     override def toXml: xml.Elem =
       <act type={`type`} x={x.toString} y={y.toString} link={link.toString} end_time={opts.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
   }
@@ -35,7 +35,7 @@ final case class MiddayActivity (
   y: Double,
   link: EdgeIdType,
   opts: Dur)
-  extends ActivityNode[Double, EdgeIdType, Dur] with PopulationDataThatConvertsToXml {
+  extends ActivityNode[Double, EdgeIdType, Dur] with ConvertsToXml {
     override def toXml: xml.Elem =
       <act type={`type`} x={x.toString} y={y.toString} link={link.toString} dur={opts.dur.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
   }
@@ -46,7 +46,7 @@ final case class EveningActivity (
   y: Double,
   link: EdgeIdType,
   opts: NoActivity = NoActivity())
-  extends ActivityNode[Double, EdgeIdType, NoActivity] with PopulationDataThatConvertsToXml {
+  extends ActivityNode[Double, EdgeIdType, NoActivity] with ConvertsToXml {
     override def toXml: xml.Elem =
       <act type={`type`} x={x.toString} y={y.toString} link={link.toString}/>
   }
