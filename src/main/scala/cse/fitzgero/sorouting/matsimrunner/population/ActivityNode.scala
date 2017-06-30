@@ -5,12 +5,12 @@ import java.time.format.DateTimeFormatter
 
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
 
-sealed trait ActivityOptions
-final case class EndTime (endTime: LocalTime) extends ActivityOptions
-final case class Dur (dur: LocalTime) extends ActivityOptions
-final case class NoActivity () extends ActivityOptions
+sealed trait ActivityNodeOptions
+final case class EndTime (endTime: LocalTime) extends ActivityNodeOptions
+final case class Dur (dur: LocalTime) extends ActivityNodeOptions
+final case class NoActivity () extends ActivityNodeOptions
 
-sealed trait ActivityNode[Pos, EdgeID, ActOpt <: ActivityOptions] {
+sealed trait ActivityNode[Pos, EdgeID, ActOpt <: ActivityNodeOptions] {
   def `type`: String
   def x: Pos
   def y: Pos

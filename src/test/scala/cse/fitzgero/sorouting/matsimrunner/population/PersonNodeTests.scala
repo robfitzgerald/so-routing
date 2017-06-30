@@ -7,7 +7,7 @@ import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 class PersonNodeTests extends SORoutingUnitTestTemplate {
   "PersonNode" when {
     "toXml called" should {
-      "make a pretty xml object" in {
+      "construct an xml <person/> node" in {
         val a1 = MorningActivity("home", 0D, 1D, "2", EndTime(LocalTime.parse("09:00:00")))
         val a2 = MiddayActivity("work", 123D, 456D, "101", Dur(LocalTime.parse("00:00:10")))
         val a3 = EveningActivity("home", 0D, 1D, "2")

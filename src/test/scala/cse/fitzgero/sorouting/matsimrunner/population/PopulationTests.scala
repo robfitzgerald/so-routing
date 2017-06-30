@@ -1,35 +1,53 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
-import cse.fitzgero.sorouting.FileWriteSideEffectTestTemplate
+import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import scala.xml.XML
 
-class PopulationTests extends FileWriteSideEffectTestTemplate("PopulationTests") {
-  val filePath: String = testRootPath
+class PopulationTests extends SORoutingUnitTestTemplate {
+  val equilNetworkFile: String = "src/test/resources/PopulationTests/network.xml"
   "Population" when {
-    "scaffolding methods" when {
-      "population constructor" when {
-        "population of 100" should {
-          "produce a population scaffolding with 100 people attributes with unique ids" in {
-
-          }
+    "generateSimpleRandomPopulation" when {
+      "called with a network, asking for 100 people" should {
+        "generate a set of coordinates and nearest link for each location, as well as time data" in {
+          val network = XML.loadFile(equilNetworkFile)
+          val result = PopulationFactory.generateSimpleRandomPopulation(network, 100)
+          (result \ "person").size should be (100)
+        }
+      }
+      "called with a network, asking for 10000 people" should {
+        "generate a set of coordinates and nearest link for each location, as well as time data" in {
+          val network = XML.loadFile(equilNetworkFile)
+          val result = PopulationFactory.generateSimpleRandomPopulation(network, 10000)
+          (result \ "person").size should be (10000)
+        }
+      }
+      "called with a network, asking for 100000 people" should {
+        "generate a set of coordinates and nearest link for each location, as well as time data" in {
+          val network = XML.loadFile(equilNetworkFile)
+          val result = PopulationFactory.generateSimpleRandomPopulation(network, 100000)
+          (result \ "person").size should be (100000)
+        }
+      }
+      "called with a network, asking for 500000 people" should {
+        "generate a set of coordinates and nearest link for each location, as well as time data" in {
+          val network = XML.loadFile(equilNetworkFile)
+          val result = PopulationFactory.generateSimpleRandomPopulation(network, 500000)
+          (result \ "person").size should be (500000)
         }
       }
     }
-    "createPlacesList" when {
-      "from a small network" should {
-        "create a list of all edge ids mapped to the coordinates of their origin intersections" in {
+    "simple io utilities" when {
 
-        }
-      }
     }
-    "randomDistribution" when {
-      "from a small network and small population" should {
-        "return a population with home and work activities distributed across the network" in {
+    "generateRandomPopulation" when {
+      "called with a network and parameters for the resulting population" should {
+        "randomly vary the times via a gaussian distribution" in {
 
         }
       }
     }
     "selectSubset" when {
-      "given a subsetPercentage Integer" should {
+      "given a <population/> and a subsetPercentage Integer" should {
         "select a random subset of the population which is of size subsetPercentage * population.size" in {
 
         }
