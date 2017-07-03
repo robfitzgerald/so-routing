@@ -34,7 +34,7 @@ object FrankWolfe extends TrafficAssignment {
     * @param terminationCriteria a rule for algorithm termination
     * @return results of this traffic assignment
     */
-  override def solve(initialGraph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], terminationCriteria: TerminationCriteria): FWSolverResult = {
+  override def solve(initialGraph: RoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): FWSolverResult = {
     val startTime = Instant.now().toEpochMilli
 
     /**
@@ -46,14 +46,14 @@ object FrankWolfe extends TrafficAssignment {
     @tailrec
     def _solve(previousGraph: RoadNetwork, iter: Int = 1): FWSolverResult = {
 
-      println(s"~~ _solve at iteration $iter - previousGraph")
-      previousGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+//      println(s"~~ _solve at iteration $iter - previousGraph")
+//      previousGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
       // all-or-nothing assignment
       val (oracleGraph, paths) = Assignment(previousGraph, odPairs, CostFlow())
 
-      println(s"~~ _solve at iteration $iter - oracleGraph")
-      oracleGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+//      println(s"~~ _solve at iteration $iter - oracleGraph")
+//      oracleGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
       // step size - should be based on our objective function
       val phi = Phi(2.0D/(iter + 2.0D))
@@ -65,8 +65,8 @@ object FrankWolfe extends TrafficAssignment {
       })
       val currentGraph: RoadNetwork = Graph(previousGraph.vertices, updatedEdges)
 
-      println(s"~~ _solve at iteration $iter - currentGraph")
-      currentGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+//      println(s"~~ _solve at iteration $iter - currentGraph")
+//      currentGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
       val stoppingConditionIsMet: Boolean =
         evaluateStoppingCriteria(
@@ -96,9 +96,9 @@ object FrankWolfe extends TrafficAssignment {
       Instant.now().toEpochMilli - startTime > timeThresh
   }
 
-  def Assignment(graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], assignmentType: CostMethod): (RoadNetwork, ODPaths) = {
+  def Assignment(graph: RoadNetwork, odPairs: ODPairs, assignmentType: CostMethod): (RoadNetwork, ODPaths) = {
     val pathsResult: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs, assignmentType)
-    val pathsToFlows: Map[String, Int] = pathsResult.flatMap(_._3).groupBy(identity).mapValues(_.size).map(identity)
+    val pathsToFlows: Map[String, Int] = pathsResult.flatMap(_.path).groupBy(identity).mapValues(_.size).map(identity)
     val newAssignment: RoadNetwork =
       graph
         .mapEdges(edge =>

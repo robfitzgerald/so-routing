@@ -2,8 +2,52 @@ package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
 
-case class Population (persons: Seq[PersonNode]) extends ConvertsToXml {
+import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+
+import scala.xml.{Elem, XML}
+
+sealed trait SamplingMethod {
+  def apply(population: Set[PersonNode]): Stream[PersonNode]
+}
+object RandomSampling extends SamplingMethod {
+  val random = new java.util.Random(System.currentTimeMillis)
+  def setSeed(s: Long): Unit = random.setSeed(s)
+  def apply(population: Set[PersonNode]): Stream[PersonNode] = {
+    if (population.isEmpty) throw new IndexOutOfBoundsException("attempting to sample from empty set")
+    else {
+      val randIndex = random.nextInt(population.size)
+      val nextPerson = population.iterator.drop(randIndex).next
+      nextPerson #:: this(population - nextPerson)
+    }
+  }
+}
+
+case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+  implicit val sampling = RandomSampling
+  sampling.setSeed(seed)
   def toXml: xml.Elem = <population>{persons.map(_.toXml)}</population>
+  def saveFile(fileName: String): Unit = XML.save(fileName, this.toXml)
+  def subsetPartition(percentage: Double): (Population, Population) = {
+    val numSampled = (percentage * persons.size).toInt
+    val thisSampling: Set[PersonNode] = sampling(persons).take(numSampled).toSet
+    (Population(thisSampling), Population(persons -- thisSampling))
+  }
+  def reintegrateSubset(subset: Population): Population = {
+    Population(
+      subset.persons.foldLeft(this.persons)((accum, updatedPerson) => {
+        val toRemove = this.persons.find(_.id == updatedPerson.id)
+        (accum -- toRemove) + updatedPerson
+      })
+    )
+  }
+  def updatePerson(id: PersonIDType, path: List[EdgeIdType]): Population = {
+    persons.find(_.id == id) match {
+      case None => this
+      case Some(person) =>
+        val updatedPerson: PersonNode = person.updatePath(path.head, path.last, path)
+        Population((persons - person) + updatedPerson)
+    }
+  }
 }
 
 case class HomeConfig(name: String)
@@ -15,7 +59,7 @@ object PopulationFactory {
   val Zero: Int = 0
   val random = new java.util.Random(System.currentTimeMillis)
   def setSeed(s: Long): Unit = random.setSeed(s)
-  def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): xml.Elem = {
+  def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): Population = {
     val activityLocations = ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
@@ -34,13 +78,13 @@ object PopulationFactory {
           n.toString,
           "car",
           MorningActivity("home", home._2.x, home._2.y, home._1, EndTime(times("home"))),
-          Seq(MiddayActivity("work", work._2.x, work._2.y, work._1, Dur(times("work")))),
+          List(MiddayActivity("work", work._2.x, work._2.y, work._1, Dur(times("work")))),
           EveningActivity("home", home._2.x, home._2.y, home._1)
         )
-      })
-    ).toXml
+      }).toSet
+    )
   }
-  def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): xml.Elem = {
+  def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): Population = {
     val activityLocations = ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
@@ -61,11 +105,11 @@ object PopulationFactory {
           MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, EndTime(times(conf.home.name))),
           conf.activities.zip(actLocations).map(act => {
             MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, Dur(times(act._1.name)))
-          }),
+          }).toList,
           EveningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1)
         )
-      })
-    ).toXml
+      }).toSet
+    )
   }
   private def evalModeProbability(modeConfig: ModeConfig): Boolean =
     random.nextDouble <= modeConfig.probability

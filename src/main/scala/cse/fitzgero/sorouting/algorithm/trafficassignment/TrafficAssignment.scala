@@ -10,5 +10,5 @@ import org.apache.spark.graphx._
   */
 
 abstract class TrafficAssignment {
-  def solve (graph: RoadNetwork, odPairs: Seq[(VertexId, VertexId)], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
+  def solve (graph: RoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): TrafficAssignmentResult
 }
