@@ -2,9 +2,10 @@ package cse.fitzgero.sorouting.roadnetwork.edge
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFunction}
 
+
 /**
   * basic requirements for a traffic assignment optimization framework
- *
+  *
   * @param id the MATSim edge id, used when converting back to MATSim
   * @param flow current flow on edge (vehicles/time)
   * @param cost a cost/flow function such as BPL, which is a function of

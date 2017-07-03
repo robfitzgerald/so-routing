@@ -1,8 +1,8 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
 import cse.fitzgero.sorouting.roadnetwork.vertex.Euclidian
+import org.apache.spark.graphx.VertexId
 
 class ActivityLocationTests extends SORoutingUnitTestTemplate {
   "ActivityLocation" when {
@@ -27,10 +27,10 @@ class ActivityLocationTests extends SORoutingUnitTestTemplate {
           ActivityLocation.setSeed(1L)
           val result: ActivityLocations = ActivityLocation.takeAllLocations(xmlGraph)
           result.foreach(location => {
-            if (location._1 == "100") location._2 should equal (Euclidian(-5, -5))
-            else if (location._1 == "101") location._2 should equal (Euclidian(5, 5))
-            else if (location._1 == "102") location._2 should equal (Euclidian(0, 10))
-            else fail()  // only those 3 edges should exist
+            if (location._1 == 1) location._2 should equal (Euclidian(-5, -5))
+            else if (location._1 == 2) location._2 should equal (Euclidian(5, 5))
+            else if (location._1 == 3) location._2 should equal (Euclidian(0, 10))
+            else fail()  // only those 3 nodes should exist
           })
         }
       }
@@ -40,12 +40,12 @@ class ActivityLocationTests extends SORoutingUnitTestTemplate {
         "return one of them, randomly" in {
           ActivityLocation.setSeed(1L)
           val activityLocations: ActivityLocations = ActivityLocation.takeAllLocations(xmlGraph)
-          val r1: (EdgeIdType, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
-          val r2: (EdgeIdType, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
-          val r3: (EdgeIdType, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
-          r1._1 should equal ("100")
-          r2._1 should equal ("101")
-          r3._1 should equal ("101")
+          val r1: (VertexId, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
+          val r2: (VertexId, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
+          val r3: (VertexId, Euclidian) = ActivityLocation.pickRandomLocation(activityLocations)
+          r1._1 should equal (1L)
+          r2._1 should equal (2L)
+          r3._1 should equal (2L)
         }
       }
     }

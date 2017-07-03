@@ -3,7 +3,9 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import cse.fitzgero.sorouting.algorithm.shortestpath.ODPath
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import org.apache.spark.graphx.VertexId
 
 import scala.xml.XML
 
@@ -101,13 +103,14 @@ class PopulationTests extends SORoutingUnitTestTemplate {
           val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
 
           val personToUpdate = pop.persons.find(_.id == updatedPersonId).get
-          val (src, dst) = (personToUpdate.legList.head.source, personToUpdate.legList.head.destination)
-          val newPath: List[EdgeIdType] = List(src, "3", "4", "1234567890" , "5", dst)
+          val (src, dst) = (personToUpdate.legs.head.source, personToUpdate.legs.head.destination)
+          val newPath: List[EdgeIdType] = List("3", "4", "1234567890" , "5")
+          val newODPath: ODPath = ODPath(updatedPersonId, src, dst, newPath)
 
-          val newPop = pop.updatePerson(updatedPersonId, newPath)
+          val newPop = pop.updatePerson(newODPath)
           val result = newPop.persons.find(_.id == updatedPersonId).get
 
-          result.legList.head.path.mkString(" ") should equal (s"$src 3 4 1234567890 5 $dst")
+          result.legs.head.path.mkString(" ") should equal ("3 4 1234567890 5")
         }
       }
     }
@@ -118,10 +121,22 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         }
       }
     }
-    "groupByTimeGroup" when {
+    "castAsODPairs" when {
       "given a population (subset)" should {
-        "group the population by activity(home, work) and then by the injected starttime value (w/ duplicates)" in {
+        "group the population by the starttime value (w/ duplicates)" in {
+          val popSize = 100
+          val network = XML.loadFile(equilNetworkFile)
+          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          Population(pop.persons.map(p => p.copy(legsParam = p.legsParam.map(_.copy(path = List("1", "2", "3"))))))
+          pop.persons.size should be (popSize)
 
+          val result = pop.toODPairs
+
+          // two legs, before and after activity, for each person
+          result.size should be (popSize * 2)
+          // should be exactly two of each id
+          result.map(_.personId.toInt).sum should equal ((0 until 100 map(_ * 2) ).sum)
+          // @todo find more tests of this result
         }
       }
     }

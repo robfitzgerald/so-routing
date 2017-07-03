@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm
 
 import cse.fitzgero.sorouting.matsimrunner.population.PersonIDType
-import cse.fitzgero.sorouting.roadnetwork.edge.{EdgeIdType, MacroscopicEdgeProperty}
+import cse.fitzgero.sorouting.roadnetwork.edge._
 import org.apache.spark.graphx.{Graph, VertexId}
 
 package object shortestpath {

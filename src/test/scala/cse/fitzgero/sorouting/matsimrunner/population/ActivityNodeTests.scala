@@ -8,7 +8,7 @@ class ActivityNodeTests extends SORoutingUnitTestTemplate {
   "ActivityNode" when {
     "activity with end_time converted to xml" should {
       "produce a correctly formed xml node" in {
-        val firstNode = MorningActivity("home", 0D, 1D, "2", EndTime(LocalTime.parse("09:00:00"))).toXml.attributes.asAttrMap
+        val firstNode = MorningActivity("home", 0D, 1D, 2, EndTime(LocalTime.parse("09:00:00"))).toXml.attributes.asAttrMap
         firstNode("type") should equal ("home")
         firstNode("x") should equal ("0.0")
         firstNode("y") should equal ("1.0")
@@ -19,7 +19,7 @@ class ActivityNodeTests extends SORoutingUnitTestTemplate {
     }
     "activity with dur converted to xml" should {
       "produce a correctly formed xml node" in {
-        val secondNode = MiddayActivity("work", 123D, 456D, "101", Dur(LocalTime.parse("00:00:10"))).toXml.attributes.asAttrMap
+        val secondNode = MiddayActivity("work", 123D, 456D, 101, Dur(LocalTime.parse("00:00:10"))).toXml.attributes.asAttrMap
         secondNode("type") should equal ("work")
         secondNode("x") should equal ("123.0")
         secondNode("y") should equal ("456.0")
@@ -30,7 +30,7 @@ class ActivityNodeTests extends SORoutingUnitTestTemplate {
     }
     "activity with no options converted to xml" should {
       "produce a correctly formed xml node" in {
-        val thirdNode = EveningActivity("home", 0D, 1D, "2").toXml.attributes.asAttrMap
+        val thirdNode = EveningActivity("home", 0D, 1D, 2).toXml.attributes.asAttrMap
         thirdNode("type") should equal ("home")
         thirdNode("x") should equal ("0.0")
         thirdNode("y") should equal ("1.0")

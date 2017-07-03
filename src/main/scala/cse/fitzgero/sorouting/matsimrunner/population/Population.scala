@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import cse.fitzgero.sorouting.algorithm.shortestpath.{ODPair, ODPath, ODPairs, ODPaths}
 
 import scala.xml.{Elem, XML}
 
@@ -40,14 +40,15 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
       })
     )
   }
-  def updatePerson(id: PersonIDType, path: List[EdgeIdType]): Population = {
-    persons.find(_.id == id) match {
+  def updatePerson(data: ODPath): Population = {
+    persons.find(_.id == data.personId) match {
       case None => this
       case Some(person) =>
-        val updatedPerson: PersonNode = person.updatePath(path.head, path.last, path)
+        val updatedPerson: PersonNode = person.updatePath(data.srcVertex, data.dstVertex, data.path)
         Population((persons - person) + updatedPerson)
     }
   }
+  def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => ODPair(p.id, leg.source, leg.destination)))
 }
 
 case class HomeConfig(name: String)

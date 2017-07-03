@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.roadnetwork.graph
 
 import java.io.IOException
 
+import cse.fitzgero.sorouting.algorithm.shortestpath.ODPaths
+
 import scala.xml.{Elem, XML}
 import scala.util.{Failure, Success, Try}
 import org.apache.spark.SparkContext
@@ -130,8 +132,8 @@ object GraphXMacroRoadNetwork {
     * @param paths tuples where the 3rd element is a list of edge Ids
     * @return a new road network with those values assigned to the flow attributes of the edges
     */
-  def updateEdges(graph: RoadNetwork, paths: Seq[(VertexId, VertexId, List[EdgeIdType])]): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
-    val updateList: Map[EdgeIdType, Double] = paths.flatMap(_._3).groupBy(identity).map(group => (group._1, group._2.size.toDouble))
+  def updateEdges(graph: RoadNetwork, paths: ODPaths): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+    val updateList: Map[EdgeIdType, Double] = paths.flatMap(_.path).groupBy(identity).map(group => (group._1, group._2.size.toDouble))
     graph.mapEdges  (edge =>
       if (updateList.isDefinedAt(edge.attr.id))
         edge.attr.copy(

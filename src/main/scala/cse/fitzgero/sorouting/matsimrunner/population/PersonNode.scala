@@ -1,22 +1,23 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import org.apache.spark.graphx.VertexId
 
 import scala.xml.Elem
 
-case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legs: List[LegNode] = List.empty[LegNode]) extends ConvertsToXml {
-  val legList: List[LegNode] =
-    if (legs.nonEmpty) legs
+case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legsParam: List[LegNode] = List.empty[LegNode]) extends ConvertsToXml {
+  private val legList: List[LegNode] =
+    if (legsParam.nonEmpty) legsParam
     else
-      (homeAM.link +: work.map(_.link) :+ homePM.link)
+      (homeAM.vertex +: work.map(_.vertex) :+ homePM.vertex)
         .sliding(2).toList
         .map((odPair) => LegNode(mode, odPair(0), odPair(1)))
-
-  def updatePath(src: EdgeIdType, dst: EdgeIdType, path: List[EdgeIdType]): PersonNode = {
+  def legs: List[LegNode] = legList
+  def updatePath(src: VertexId, dst: VertexId, path: List[EdgeIdType]): PersonNode = {
     val legIdx: Int = legList.indexWhere(leg => leg.source == src && leg.destination == dst)
     if (legIdx == -1) this
     else {
       val newLegVal: LegNode = legList(legIdx).copy(path = path)
-      this.copy(legs = legList.updated(legIdx, newLegVal))
+      this.copy(legsParam = legList.updated(legIdx, newLegVal))
     }
   }
   def stripedLegsAndActivities: Seq[ConvertsToXml] = {
@@ -26,7 +27,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
         if (legList.nonEmpty) legList
         else
         // constructs a default set of LegNode objects based on the links where each activity occurs
-          (homeAM.link +: work.map(_.link) :+ homePM.link)
+          (homeAM.vertex +: work.map(_.vertex) :+ homePM.vertex)
             .sliding(2).toList
             .map((odPair) => LegNode(mode, odPair(0), odPair(1)))
       def stripe(remLegs: List[ConvertsToXml], remWork: List[ConvertsToXml]): List[ConvertsToXml] = {
