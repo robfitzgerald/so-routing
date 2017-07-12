@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.{ODPair, ODPath, ODPairs, ODPaths}
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
 
 import scala.xml.{Elem, XML}
 
@@ -25,7 +25,7 @@ object RandomSampling extends SamplingMethod {
 case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
   implicit val sampling = RandomSampling
   sampling.setSeed(seed)
-  def toXml: xml.Elem = <population>{persons.map(_.toXml)}</population>
+  def toXml: xml.Elem = <plans>{persons.map(_.toXml)}</plans>
   def saveFile(fileName: String): Unit = XML.save(fileName, this.toXml)
   def subsetPartition(percentage: Double): (Population, Population) = {
     val numSampled = (percentage * persons.size).toInt
@@ -40,7 +40,7 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
       })
     )
   }
-  def updatePerson(data: ODPath): Population = {
+  def updatePerson(data: SimpleMSSP_ODPath): Population = {
     persons.find(_.id == data.personId) match {
       case None => this
       case Some(person) =>
@@ -48,13 +48,17 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
         Population((persons - person) + updatedPerson)
     }
   }
-  def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => ODPair(p.id, leg.source, leg.destination)))
+
+  def fromTimeGroup(lowerBound: LocalTime, upperBound: LocalTime): ODPairs =
+    persons.flatMap(_.unpackTrips(lowerBound, upperBound)).toSeq
+
+  def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => SimpleMSSP_ODPair(p.id, leg.source, leg.destination)))
 }
 
 case class HomeConfig(name: String)
 case class ActivityConfig(name: String, start: LocalTime, dur: LocalTime, dev: Long = 0L)
 case class ModeConfig(name: String, probability: Double = 1.0D)
-case class RandomPopulationConfig(pSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
+case class RandomPopulationConfig(populationSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
 
 object PopulationFactory {
   val Zero: Int = 0
@@ -79,7 +83,7 @@ object PopulationFactory {
           n.toString,
           "car",
           MorningActivity("home", home._2.x, home._2.y, home._1, EndTime(times("home"))),
-          List(MiddayActivity("work", work._2.x, work._2.y, work._1, Dur(times("work")))),
+          List(MiddayActivity("work", work._2.x, work._2.y, work._1, EndTime(times("work")))),
           EveningActivity("home", home._2.x, home._2.y, home._1)
         )
       }).toSet
@@ -96,7 +100,7 @@ object PopulationFactory {
       )
 
     Population(
-      (Zero until conf.pSize).map(n => {
+      (Zero until conf.populationSize).map(n => {
         val times = activityTimeGenerator.next()
         val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
         val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
@@ -105,7 +109,7 @@ object PopulationFactory {
           conf.modes.filter(evalModeProbability).map(_.name).mkString(","),
           MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, EndTime(times(conf.home.name))),
           conf.activities.zip(actLocations).map(act => {
-            MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, Dur(times(act._1.name)))
+            MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, EndTime(times(act._1.name)))
           }).toList,
           EveningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1)
         )

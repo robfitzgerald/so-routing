@@ -19,12 +19,12 @@ class ActivityNodeTests extends SORoutingUnitTestTemplate {
     }
     "activity with dur converted to xml" should {
       "produce a correctly formed xml node" in {
-        val secondNode = MiddayActivity("work", 123D, 456D, 101, Dur(LocalTime.parse("00:00:10"))).toXml.attributes.asAttrMap
+        val secondNode = MiddayActivity("work", 123D, 456D, 101, EndTime(LocalTime.parse("00:00:10"))).toXml.attributes.asAttrMap
         secondNode("type") should equal ("work")
         secondNode("x") should equal ("123.0")
         secondNode("y") should equal ("456.0")
         secondNode("link") should equal ("101")
-        secondNode("dur") should equal ("00:00:10")
+        secondNode("end_time") should equal ("00:00:10")
         secondNode.size should be (5)
       }
     }

@@ -4,7 +4,8 @@ import java.time._
 
 import scala.math.abs
 import cse.fitzgero.sorouting.roadnetwork.graph.RoadNetwork
-import cse.fitzgero.sorouting.algorithm.shortestpath._
+import cse.fitzgero.sorouting.algorithm.mssp.graphx._
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
 import org.apache.spark.graphx.{EdgeRDD, Graph, VertexId}
 import cse.fitzgero.sorouting.roadnetwork.edge._
 
@@ -97,7 +98,8 @@ object FrankWolfe extends TrafficAssignment {
   }
 
   def Assignment(graph: RoadNetwork, odPairs: ODPairs, assignmentType: CostMethod): (RoadNetwork, ODPaths) = {
-    val pathsResult: ODPaths = GraphXShortestPaths.shortestPaths(graph, odPairs, assignmentType)
+    SimpleMSSP.setCostMethod(assignmentType)
+    val pathsResult: ODPaths = SimpleMSSP.shortestPaths(graph, odPairs)
     val pathsToFlows: Map[EdgeIdType, Int] = pathsResult.flatMap(_.path).groupBy(identity).mapValues(_.size).map(identity)
     val newAssignment: RoadNetwork =
       graph

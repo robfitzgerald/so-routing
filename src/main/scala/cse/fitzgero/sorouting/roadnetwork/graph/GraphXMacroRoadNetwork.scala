@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.roadnetwork.graph
 
 import java.io.IOException
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.ODPaths
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
 
 import scala.xml.{Elem, XML}
 import scala.util.{Failure, Success, Try}
