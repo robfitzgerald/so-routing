@@ -18,13 +18,15 @@ sealed trait ActivityNode[Pos, VertexId, ActOpt <: ActivityNodeOptions] {
   def opts: ActOpt
 }
 
+abstract class MatsimActivity extends ActivityNode[Double, VertexId, EndTime]
+
 final case class MorningActivity (
   `type`: String,
   x: Double,
   y: Double,
   vertex: VertexId,
   opts: EndTime)
-  extends ActivityNode[Double, VertexId, EndTime] with ConvertsToXml {
+  extends MatsimActivity with ConvertsToXml {
     override def toXml: xml.Elem =
       <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} end_time={opts.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
   }
@@ -34,13 +36,14 @@ final case class MiddayActivity (
   x: Double,
   y: Double,
   vertex: VertexId,
-  opts: ActivityNodeOptions)
-  extends ActivityNode[Double, VertexId, ActivityNodeOptions] with ConvertsToXml {
-    override def toXml: xml.Elem = opts match {
-      case EndTime(endTime) => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} end_time={endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
-      case Dur(dur) => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} dur={dur.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
-      case _ => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString}/>
-    }
+  opts: EndTime)
+  extends MatsimActivity with ConvertsToXml {
+    override def toXml: xml.Elem = <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} end_time={opts.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
+//    override def toXml: xml.Elem = opts match {
+//      case EndTime(endTime) => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} end_time={endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
+//      case Dur(dur) => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString} dur={dur.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
+//      case _ => <act type={`type`} x={x.toString} y={y.toString} link={vertex.toString}/>
+//    }
   }
 
 final case class EveningActivity (

@@ -9,7 +9,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
     "toXml called" should {
       "construct an xml <person/> node" in {
         val a1 = MorningActivity("home", 0D, 1D, 2, EndTime(LocalTime.parse("09:00:00")))
-        val a2 = List(MiddayActivity("work", 123D, 456D, 101, Dur(LocalTime.parse("00:00:10"))))
+        val a2 = List(MiddayActivity("work", 123D, 456D, 101, EndTime(LocalTime.parse("00:00:10"))))
         val a3 = EveningActivity("home", 0D, 1D, 2)
         val result = PersonNode("1", "car", a1, a2, a3).toXml
         result.attribute("id").get.text should equal ("1")
@@ -32,8 +32,8 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
       "construct a valid xml <person/> node" in {
         val a1 = MorningActivity("home", 0D, 1D, 2, EndTime(LocalTime.parse("09:00:00")))
         val a2 = List(
-          MiddayActivity("work", 123D, 456D, 101, Dur(LocalTime.parse("06:30:00"))),
-          MiddayActivity("soccer-practice", 789D, 1011D, 123, Dur(LocalTime.parse("01:00:00")))
+          MiddayActivity("work", 123D, 456D, 101, EndTime(LocalTime.parse("06:30:00"))),
+          MiddayActivity("soccer-practice", 789D, 1011D, 123, EndTime(LocalTime.parse("01:00:00")))
         )
         val a3 = EveningActivity("home", 0D, 1D, 2)
         val result = PersonNode("1", "car", a1, a2, a3).toXml
@@ -62,8 +62,8 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
       "construct a valid xml <person/> node" in {
         val a1 = MorningActivity("home", 0D, 1D, 2, EndTime(LocalTime.parse("09:00:00")))
         val a2 = List(
-          MiddayActivity("work", 123D, 456D, 101, Dur(LocalTime.parse("06:30:00"))),
-          MiddayActivity("soccer-practice", 789D, 1011D, 123, Dur(LocalTime.parse("01:00:00")))
+          MiddayActivity("work", 123D, 456D, 101, EndTime(LocalTime.parse("06:30:00"))),
+          MiddayActivity("soccer-practice", 789D, 1011D, 123, EndTime(LocalTime.parse("01:00:00")))
         )
         val a3 = EveningActivity("home", 0D, 1D, 2)
         val legs = List(LegNode("car", 1, 3, List("1", "2", "3")), LegNode("car", 3, 5, List("3", "4", "5")), LegNode("car", 5, 1, List("5", "1")))

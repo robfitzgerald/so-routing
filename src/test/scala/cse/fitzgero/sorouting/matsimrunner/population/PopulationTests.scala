@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.shortestpath.ODPath
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 
@@ -58,9 +58,6 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         }
       }
     }
-    "simple io utilities" when {
-
-    }
     "RandomSampling" when {
       "passed a population" should {
         "randomly sample from that population when streamed" in {
@@ -105,7 +102,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
           val personToUpdate = pop.persons.find(_.id == updatedPersonId).get
           val (src, dst) = (personToUpdate.legs.head.source, personToUpdate.legs.head.destination)
           val newPath: List[EdgeIdType] = List("3", "4", "1234567890" , "5")
-          val newODPath: ODPath = ODPath(updatedPersonId, src, dst, newPath)
+          val newODPath: SimpleMSSP_ODPath = SimpleMSSP_ODPath(updatedPersonId, src, dst, newPath)
 
           val newPop = pop.updatePerson(newODPath)
           val result = newPop.persons.find(_.id == updatedPersonId).get
@@ -126,7 +123,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "group the population by the starttime value (w/ duplicates)" in {
           val popSize = 100
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          val pop: Population = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
           Population(pop.persons.map(p => p.copy(legsParam = p.legsParam.map(_.copy(path = List("1", "2", "3"))))))
           pop.persons.size should be (popSize)
 
@@ -137,6 +134,17 @@ class PopulationTests extends SORoutingUnitTestTemplate {
           // should be exactly two of each id
           result.map(_.personId.toInt).sum should equal ((0 until 100 map(_ * 2) ).sum)
           // @todo find more tests of this result
+        }
+      }
+    }
+    "fromTimeGroup" when {
+      "given a population and a filename which contains a snapshot range" should {
+        "return a collection of origin-destination pairs" in {
+          val popSize = 100
+          val network = XML.loadFile(equilNetworkFile)
+          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          val result: ODPairs = pop.fromTimeGroup(LocalTime.parse("06:00:00"), LocalTime.parse("10:00:00"))
+          result.foreach(println)
         }
       }
     }

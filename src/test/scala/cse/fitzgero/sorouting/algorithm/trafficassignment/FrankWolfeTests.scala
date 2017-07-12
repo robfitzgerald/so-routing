@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment
 
 import cse.fitzgero.sorouting.SparkUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.shortestpath._
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graph._
 import org.apache.spark.graphx.VertexId
@@ -23,15 +23,15 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
     val snapshotFilePathSuite02: String = "src/test/resources/GraphXMacroRoadNetworkTests/snapshot-matsim-example-equil.xml"
 
     val testODPairsSuite01: ODPairs = List(
-      ODPair("1", 1L, 6L),
-      ODPair("2", 1L, 6L),
-      ODPair("3", 4L, 6L),
-      ODPair("4", 4L, 6L),
-      ODPair("5", 5L, 6L),
-      ODPair("6", 5L, 6L)
+      SimpleMSSP_ODPair("1", 1L, 6L),
+      SimpleMSSP_ODPair("2", 1L, 6L),
+      SimpleMSSP_ODPair("3", 4L, 6L),
+      SimpleMSSP_ODPair("4", 4L, 6L),
+      SimpleMSSP_ODPair("5", 5L, 6L),
+      SimpleMSSP_ODPair("6", 5L, 6L)
     )
-    val thousandODPairsSuite01: ODPairs = (1 to 1000).map(n => ODPair(n.toString, Seq(1L, 4L, 5L)(n % 3), 6L))
-    val twoHundredODPairsSuite02: ODPairs = (1 to 200).map(n => ODPair(n.toString, 1L, 15L))
+    val thousandODPairsSuite01: ODPairs = (1 to 1000).map(n => SimpleMSSP_ODPair(n.toString, Seq(1L, 4L, 5L)(n % 3), 6L))
+    val twoHundredODPairsSuite02: ODPairs = (1 to 200).map(n => SimpleMSSP_ODPair(n.toString, 1L, 15L))
     "AONAssignment" ignore { // incorrect interpretation of all-or-nothing - deprecated
       "called with a graph with an shortest but obviously congested path" should {
         "route everything through that link anyway" in {

@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 import cse.fitzgero.sorouting.SparkUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.shortestpath.{ODPath, ODPaths}
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{SimpleMSSP_ODPath, ODPaths}
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 
 import scala.xml.XML
@@ -185,7 +185,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
             sc.parallelize(List(
               Edge(1,2,MacroscopicEdgeProperty("1", 5, BPRCostFunction(CostFunctionAttributes(10, 25, 10)))),
               Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(CostFunctionAttributes(10, 25)))))))
-          val paths: ODPaths = Seq(ODPath("1",1,3,List("1", "2")))
+          val paths: ODPaths = Seq(SimpleMSSP_ODPath("1",1,3,List("1", "2")))
 
           val result: RoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)
 

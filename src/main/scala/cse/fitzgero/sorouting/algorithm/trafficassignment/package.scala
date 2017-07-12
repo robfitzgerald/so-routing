@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.{ODPaths, Path}
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
 import cse.fitzgero.sorouting.roadnetwork.graph.RoadNetwork
 
 package object trafficassignment {
