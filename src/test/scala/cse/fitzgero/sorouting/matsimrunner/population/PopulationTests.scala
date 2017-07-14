@@ -100,7 +100,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
           val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
 
           val personToUpdate = pop.persons.find(_.id == updatedPersonId).get
-          val (src, dst) = (personToUpdate.legs.head.source, personToUpdate.legs.head.destination)
+          val (src, dst) = (personToUpdate.legs.head.srcVertex, personToUpdate.legs.head.dstVertex)
           val newPath: List[EdgeIdType] = List("3", "4", "1234567890" , "5")
           val newODPath: SimpleMSSP_ODPath = SimpleMSSP_ODPath(updatedPersonId, src, dst, newPath)
 

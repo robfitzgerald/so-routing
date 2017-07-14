@@ -73,7 +73,7 @@ class SORoutingFilesHelper(private val configFileName: String, private val netwo
   val WriteXmlDeclaration = true
   val configDocType = DocType("config", SystemID("http://www.matsim.org/files/dtd/config_v1.dtd"), Nil)
   val networkDocType = DocType("network", SystemID("http://www.matsim.org/files/dtd/network_v1.dtd"), Nil)
-  val populationDocType = DocType("plans", SystemID("http://www.matsim.org/files/dtd/plans_v4.dtd"), Nil)
+  val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
 
   lazy val configDirectoryExists: Boolean =
     Files.isDirectory(Paths.get(thisConfigDirectory))
@@ -117,7 +117,7 @@ class SORoutingFilesHelper(private val configFileName: String, private val netwo
     */
   def writePopulationFile(elem: xml.Elem, expType: SORoutingExperimentType): String = {
     val filePath = populationFilePath(expType)
-    XML.save(populationFilePath(expType), elem)
+    XML.save(filePath, elem)
     filePath
   }
 

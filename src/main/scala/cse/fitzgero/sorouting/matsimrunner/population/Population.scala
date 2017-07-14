@@ -4,6 +4,7 @@ import java.time.LocalTime
 
 import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
 
+import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
 
 sealed trait SamplingMethod {
@@ -23,10 +24,17 @@ object RandomSampling extends SamplingMethod {
 }
 
 case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+  // random values
   implicit val sampling = RandomSampling
   sampling.setSeed(seed)
-  def toXml: xml.Elem = <plans>{persons.map(_.toXml)}</plans>
-  def saveFile(fileName: String): Unit = XML.save(fileName, this.toXml)
+
+  // xml save operation
+  val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
+  val WriteXmlDeclaration = true
+  def toXml: xml.Elem = <population>{persons.map(_.toXml)}</population>
+  def saveFile(fileName: String): Unit = XML.save(fileName, this.toXml, "UTF-8", WriteXmlDeclaration, populationDocType)
+
+  // population operations
   def subsetPartition(percentage: Double): (Population, Population) = {
     val numSampled = (percentage * persons.size).toInt
     val thisSampling: Set[PersonNode] = sampling(persons).take(numSampled).toSet
@@ -49,10 +57,10 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
     }
   }
 
+  // export ops
   def fromTimeGroup(lowerBound: LocalTime, upperBound: LocalTime): ODPairs =
     persons.flatMap(_.unpackTrips(lowerBound, upperBound)).toSeq
-
-  def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => SimpleMSSP_ODPair(p.id, leg.source, leg.destination)))
+  def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => SimpleMSSP_ODPair(p.id, leg.srcVertex, leg.dstVertex)))
 }
 
 case class HomeConfig(name: String)
@@ -65,7 +73,7 @@ object PopulationFactory {
   val random = new java.util.Random(System.currentTimeMillis)
   def setSeed(s: Long): Unit = random.setSeed(s)
   def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): Population = {
-    val activityLocations = ActivityLocation.takeAllLocations(network)
+//    val activityLocations = ??? // ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
         Seq(
@@ -77,20 +85,22 @@ object PopulationFactory {
     Population(
       (Zero until pSize).map(n => {
         val times = activityTimeGenerator.next()
-        val home = ActivityLocation.pickRandomLocation(activityLocations)
-        val work = ActivityLocation.pickRandomLocation(activityLocations)
+//        val home = ActivityLocation.pickRandomLocation(activityLocations)
+//        val work = ActivityLocation.pickRandomLocation(activityLocations)
+        val home = ActivityLocation.takeRandomLocation(network)
+        val work = ActivityLocation.takeRandomLocation(network)
         PersonNode(
           n.toString,
           "car",
-          MorningActivity("home", home._2.x, home._2.y, home._1, EndTime(times("home"))),
-          List(MiddayActivity("work", work._2.x, work._2.y, work._1, EndTime(times("work")))),
-          EveningActivity("home", home._2.x, home._2.y, home._1)
+          MorningActivity("home", home._2.x, home._2.y, home._1, home._3, EndTime(times("home"))),
+          List(MiddayActivity("work", work._2.x, work._2.y, work._1, work._3, EndTime(times("work")))),
+          EveningActivity("home", home._2.x, home._2.y, home._1, home._3)
         )
       }).toSet
     )
   }
   def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): Population = {
-    val activityLocations = ActivityLocation.takeAllLocations(network)
+//    val activityLocations = ??? // ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
         (conf.home.name, NoDeviation(conf.activities.head.start)) +:
@@ -102,16 +112,18 @@ object PopulationFactory {
     Population(
       (Zero until conf.populationSize).map(n => {
         val times = activityTimeGenerator.next()
-        val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
-        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
+//        val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
+//        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
+        val homeLocation = ActivityLocation.takeRandomLocation(network)
+        val actLocations = conf.activities.map(_ => ActivityLocation.takeRandomLocation(network))
         PersonNode(
           n.toString,
           conf.modes.filter(evalModeProbability).map(_.name).mkString(","),
-          MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, EndTime(times(conf.home.name))),
+          MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, homeLocation._3, EndTime(times(conf.home.name))),
           conf.activities.zip(actLocations).map(act => {
-            MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, EndTime(times(act._1.name)))
+            MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, act._2._3, EndTime(times(act._1.name)))
           }).toList,
-          EveningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1)
+          EveningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, homeLocation._3)
         )
       }).toSet
     )
