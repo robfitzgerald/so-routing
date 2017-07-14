@@ -12,6 +12,8 @@ import scala.collection.JavaConverters._
 class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
+  println(matsimConfig.toString)
+
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
 
@@ -37,8 +39,8 @@ class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
               if (timeTracker.belongsToThisTimeGroup(e))
                 currentNetworkState = currentNetworkState.update(e)
               else {
-                val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeString)
-                NetworkStateCollector.toRawFile(writerData, currentNetworkState)
+                val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
+                NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
 
                 while(!timeTracker.belongsToThisTimeGroup(e))
                   timeTracker = timeTracker.advance
@@ -49,8 +51,8 @@ class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
 
           case NewIteration(i) =>
             // make sure everything's written from the last
-            val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeString}-final")
-            NetworkStateCollector.toRawFile(writerData, currentNetworkState)
+            val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeStringFS}-final")
+            NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
 
             // start next iteration
             timeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
@@ -60,16 +62,20 @@ class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
       }
     })
 
+
+
     //start the simulation
     controler.run()
 
     // handle writing final snapshot
-    val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeString}-final")
-    NetworkStateCollector.toRawFile(writerData, currentNetworkState)
+    val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeStringFS}-final")
+    NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
 
     // return directory location of output (matsim output and snapshot output)
     matsimConfig.outputDirectory
   }
+
+  run()
 }
 
 object MATSimSnapshotRunnerModule {

@@ -22,7 +22,7 @@ case class SORoutingApplicationConfig (
 object SORoutingApplicationConfigParseArgs {
   def filePathArgsRegex(flag: String): Regex = s"-$flag ([\\w .\\/-]+)".r
   def makeNumberArgsRegex(flag: String): Regex = s"-$flag (\\d+(?:\\.\\d*)?)".r
-  def makeTimeArgsRegex(flag: String): Regex = s"-$flag ([0-9]{2}:[0-9]{2})".r
+  def makeTimeArgsRegex(flag: String): Regex = s"-$flag ([0-9]{2}:[0-9]{2}:[0-9]{2})".r
   def makeSparkProcsRegex(flag: String): Regex = s"-$flag (\\*|(?:\\d+(?:\\.\\d*)?)){1}".r
 
   val confFile: Regex = filePathArgsRegex("conf")

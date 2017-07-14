@@ -19,7 +19,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
 
   def updatePath(src: VertexId, dst: VertexId, path: List[EdgeIdType]): PersonNode = {
     val legIdx: Int = legList.indexWhere(leg => leg.source == src && leg.destination == dst)
-    if (legIdx == -1) this
+    if (legIdx == -1) {println(s"PersonNode.updatePath failed to find leg with src $src and dst $dst with path values ${path.mkString(" ")}"); this }
     else {
       val newLegVal: LegNode = legList(legIdx).copy(path = path)
       this.copy(legsParam = legList.updated(legIdx, newLegVal))
@@ -44,6 +44,12 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     }
   }
 
+  /**
+    * construct OD Pair objects from any trips in the range [low, high)
+    * @param low lower bound, inclusive
+    * @param high upper bound, exclusive
+    * @return
+    */
   def unpackTrips(low: LocalTime, high: LocalTime): ODPairs = {
     val srcVerticesInTimeRange: Seq[VertexId] = ((homeAM.vertex, homeAM.opts) +: (work.map(a => (a.vertex, a.opts))))
       .map({
@@ -53,7 +59,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
       .filter(_.isDefined)
       .filter(tuple => {
         val thisTime = tuple.get._2
-        thisTime.isAfter(low) && thisTime.isBefore(high)
+        (thisTime == low || thisTime.isAfter(low)) && thisTime.isBefore(high)
       })
       .map(_.get._1)
     legs.filter(srcVerticesInTimeRange contains _.source).map(asODPair)

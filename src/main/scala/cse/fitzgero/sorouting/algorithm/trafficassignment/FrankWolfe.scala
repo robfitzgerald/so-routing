@@ -36,55 +36,59 @@ object FrankWolfe extends TrafficAssignment {
     * @return results of this traffic assignment
     */
   override def solve(initialGraph: RoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): FWSolverResult = {
-    val startTime = Instant.now().toEpochMilli
+    if (odPairs.isEmpty)
+      FWSolverResult(Nil, initialGraph, 0, 0)
+    else {
+      val startTime = Instant.now().toEpochMilli
 
-    /**
-      * recursive inner function describing the Frank-Wolfe algorithm
-      * @param previousGraph result of previous iteration
-      * @param iter current iteration
-      * @return results of this traffic assignment
-      */
-    @tailrec
-    def _solve(previousGraph: RoadNetwork, iter: Int = 1): FWSolverResult = {
+      /**
+        * recursive inner function describing the Frank-Wolfe algorithm
+        * @param previousGraph result of previous iteration
+        * @param iter current iteration
+        * @return results of this traffic assignment
+        */
+      @tailrec
+      def _solve(previousGraph: RoadNetwork, iter: Int = 1): FWSolverResult = {
 
-//      println(s"~~ _solve at iteration $iter - previousGraph")
-//      previousGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+        //      println(s"~~ _solve at iteration $iter - previousGraph")
+        //      previousGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
-      // all-or-nothing assignment
-      val (oracleGraph, paths) = Assignment(previousGraph, odPairs, CostFlow())
+        // all-or-nothing assignment
+        val (oracleGraph, paths) = Assignment(previousGraph, odPairs, CostFlow())
 
-//      println(s"~~ _solve at iteration $iter - oracleGraph")
-//      oracleGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+        //      println(s"~~ _solve at iteration $iter - oracleGraph")
+        //      oracleGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
-      // step size - should be based on our objective function
-      val phi = Phi(2.0D/(iter + 2.0D))
+        // step size - should be based on our objective function
+        val phi = Phi(2.0D/(iter + 2.0D))
 
-      val updatedEdges: EdgeRDD[MacroscopicEdgeProperty] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
-        currentEdge.copy(
-          flow = frankWolfeFlowCalculation(phi, currentEdge.flow, oracleEdge.flow)
-        )
-      })
-      val currentGraph: RoadNetwork = Graph(previousGraph.vertices, updatedEdges)
+        val updatedEdges: EdgeRDD[MacroscopicEdgeProperty] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
+          currentEdge.copy(
+            flow = frankWolfeFlowCalculation(phi, currentEdge.flow, oracleEdge.flow)
+          )
+        })
+        val currentGraph: RoadNetwork = Graph(previousGraph.vertices, updatedEdges)
 
-//      println(s"~~ _solve at iteration $iter - currentGraph")
-//      currentGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+        //      println(s"~~ _solve at iteration $iter - currentGraph")
+        //      currentGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
 
-      val stoppingConditionIsMet: Boolean =
-        evaluateStoppingCriteria(
-          terminationCriteria,
-          relativeGap(currentGraph, oracleGraph),  // call-by-name argument
-          startTime,
-          iter)
+        val stoppingConditionIsMet: Boolean =
+          evaluateStoppingCriteria(
+            terminationCriteria,
+            relativeGap(currentGraph, oracleGraph),  // call-by-name argument
+            startTime,
+            iter)
 
-      if (stoppingConditionIsMet) {
-        val totalTime = startTime - Instant.now().toEpochMilli
-        FWSolverResult(paths, currentGraph, iter, totalTime)
+        if (stoppingConditionIsMet) {
+          val totalTime = startTime - Instant.now().toEpochMilli
+          FWSolverResult(paths, currentGraph, iter, totalTime)
+        }
+        else {
+          _solve(currentGraph, iter + 1)
+        }
       }
-      else {
-        _solve(currentGraph, iter + 1)
-      }
+      _solve(initialGraph)
     }
-    _solve(initialGraph)
   }
 
   def evaluateStoppingCriteria(terminationCriteria: TerminationCriteria, relGap: => Double, startTime: Long, iter: Int): Boolean = terminationCriteria match {

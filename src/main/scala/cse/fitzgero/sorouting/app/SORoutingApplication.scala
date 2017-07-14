@@ -2,6 +2,7 @@ package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
 
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPairs
 import org.apache.spark.{SparkConf, SparkContext}
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.matsimrunner._
@@ -17,7 +18,7 @@ object SORoutingApplication extends App {
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
 
   val sparkConf = new SparkConf()
-    .setAppName("cse.fitzgero.app.SORoutingApplication")
+    .setAppName("cse.fitzgero.sorouting.app.SORoutingApplication")
     .setMaster(s"local[${conf.sparkProcesses}]")
     .set("spark.executor.memory","1g")
   val sc = new SparkContext(sparkConf)
@@ -33,8 +34,8 @@ object SORoutingApplication extends App {
         fileHelper.network,
         RandomPopulationConfig(
           conf.populationSize,
-          HomeConfig("home"),
-          Seq(ActivityConfig("work", LocalTime.parse("09:00"), LocalTime.parse("08:00"), 30L)),
+          HomeConfig("h"),
+          Seq(ActivityConfig("w", LocalTime.parse("09:00"), LocalTime.parse("08:00"), 30L)),
           Seq(ModeConfig("car"))
         )
       )
@@ -86,7 +87,10 @@ object SORoutingApplication extends App {
         }
     val startOfTimeRange: LocalTime = fileHelper.parseSnapshotForTime(snapshotFile)
     val endOfTimeRange: LocalTime = startOfTimeRange.plusMinutes(conf.algorithmTimeWindow.toLong)
-    val result: FWSolverResult = FrankWolfe.solve(graph, populationSubset.fromTimeGroup(startOfTimeRange, endOfTimeRange), RelativeGapTerminationCriteria(0.0001))
+    val groupToRoute: ODPairs = populationSubset.fromTimeGroup(startOfTimeRange, endOfTimeRange)
+    println(s"routing group $startOfTimeRange of size ${groupToRoute.size}")
+    val result: FWSolverResult = FrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
+    //
     result.paths.foldLeft(populationAccumulator)((pop, path) => {
       pop.updatePerson(path)
     })

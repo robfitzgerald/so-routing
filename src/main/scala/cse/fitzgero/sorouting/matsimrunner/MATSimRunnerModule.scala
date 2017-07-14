@@ -8,6 +8,8 @@ import org.matsim.core.scenario.ScenarioUtils
 class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
+  println(matsimConfig)
+
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}"
 
   val config: Config = ConfigUtils.loadConfig(matsimConfig.matsimConfigFile)
@@ -23,6 +25,8 @@ class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) {
     // return directory location of output (matsim output and snapshot output)
     matsimConfig.outputDirectory
   }
+
+  run()
 }
 
 object MATSimRunnerModule {

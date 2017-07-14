@@ -18,8 +18,8 @@ class SORoutingApplicationConfigTests extends SORoutingUnitTestTemplate {
               "-win", "10",
               "-pop", "5000",
               "-route", "100",
-              "-start", "00:00",
-              "-end", "23:59"
+              "-start", "00:00:00",
+              "-end", "23:59:00"
             )
           val result: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
           result should equal (
@@ -32,8 +32,8 @@ class SORoutingApplicationConfigTests extends SORoutingUnitTestTemplate {
               "10",
               5000,
               1.0,
-              "00:00",
-              "23:59"
+              "00:00:00",
+              "23:59:00"
             )
           )
 
@@ -73,14 +73,14 @@ class SORoutingApplicationConfigTests extends SORoutingUnitTestTemplate {
           result should equal ("100000")
         }
         "find a start time" in {
-          val args = Array("-start","06:00","other","flags")
+          val args = Array("-start","06:00:00","other","flags")
           val result = SORoutingApplicationConfigParseArgs.test(args)(SORoutingApplicationConfigParseArgs.startTime)
-          result should equal ("06:00")
+          result should equal ("06:00:00")
         }
         "find a end time" in {
-          val args = Array("-end","17:00","other","flags")
+          val args = Array("-end","17:00:00","other","flags")
           val result = SORoutingApplicationConfigParseArgs.test(args)(SORoutingApplicationConfigParseArgs.endTime)
-          result should equal ("17:00")
+          result should equal ("17:00:00")
         }
       }
     }

@@ -132,21 +132,21 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
           val resultLocal: Map[VertexId, SimpleMSSG_PregelVertex] = result.vertices.toLocalIterator.toMap
 
           val correctSolution: Map[VertexId, Map[VertexId, SimpleMSSP_PregelMsg]] =
-            Map((5,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (10,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (14,Map(1L -> SimpleMSSP_PregelMsg("1",5.0), 3L -> SimpleMSSP_PregelMsg("2",3.0), 6L -> SimpleMSSP_PregelMsg("3",3.0))),
-            (1,Map(1L -> SimpleMSSP_PregelMsg("1",0.0), 3L -> SimpleMSSP_PregelMsg("2",5.0), 6L -> SimpleMSSP_PregelMsg("3",5.0))),
-            (6,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",0.0))),
-            (9,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (13,Map(1L -> SimpleMSSP_PregelMsg("1",4.0), 3L -> SimpleMSSP_PregelMsg("2",2.0), 6L -> SimpleMSSP_PregelMsg("3",2.0))),
-            (2,Map(1L -> SimpleMSSP_PregelMsg("1",1.0), 3L -> SimpleMSSP_PregelMsg("2",6.0), 6L -> SimpleMSSP_PregelMsg("3",6.0))),
-            (12,Map(1L -> SimpleMSSP_PregelMsg("1",3.0), 3L -> SimpleMSSP_PregelMsg("2",1.0), 6L -> SimpleMSSP_PregelMsg("3",1.0))),
-            (7,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (3,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",0.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (11,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (8,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (4,Map(1L -> SimpleMSSP_PregelMsg("1",2.0), 3L -> SimpleMSSP_PregelMsg("2",7.0), 6L -> SimpleMSSP_PregelMsg("3",7.0))),
-            (15,Map(1L -> SimpleMSSP_PregelMsg("1",6.0), 3L -> SimpleMSSP_PregelMsg("2",4.0), 6L -> SimpleMSSP_PregelMsg("3",4.0)))
+            Map((5,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (10,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (14,Map(1L -> SimpleMSSP_PregelMsg(5.0), 3L -> SimpleMSSP_PregelMsg(3.0), 6L -> SimpleMSSP_PregelMsg(3.0))),
+            (1,Map(1L -> SimpleMSSP_PregelMsg(0.0), 3L -> SimpleMSSP_PregelMsg(5.0), 6L -> SimpleMSSP_PregelMsg(5.0))),
+            (6,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(0.0))),
+            (9,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (13,Map(1L -> SimpleMSSP_PregelMsg(4.0), 3L -> SimpleMSSP_PregelMsg(2.0), 6L -> SimpleMSSP_PregelMsg(2.0))),
+            (2,Map(1L -> SimpleMSSP_PregelMsg(1.0), 3L -> SimpleMSSP_PregelMsg(6.0), 6L -> SimpleMSSP_PregelMsg(6.0))),
+            (12,Map(1L -> SimpleMSSP_PregelMsg(3.0), 3L -> SimpleMSSP_PregelMsg(1.0), 6L -> SimpleMSSP_PregelMsg(1.0))),
+            (7,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (3,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(0.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (11,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (8,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (4,Map(1L -> SimpleMSSP_PregelMsg(2.0), 3L -> SimpleMSSP_PregelMsg(7.0), 6L -> SimpleMSSP_PregelMsg(7.0))),
+            (15,Map(1L -> SimpleMSSP_PregelMsg(6.0), 3L -> SimpleMSSP_PregelMsg(4.0), 6L -> SimpleMSSP_PregelMsg(4.0)))
           )
 
           resultLocal.foreach(intersection => {
@@ -275,8 +275,8 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
         "return the original vertex data with an unmodified set of pathDistances" in {
           val sourceId: VertexId = 1L
           val thisId: VertexId = 42L // an arbitrary vertexId in the graph
-          val thisVertex = Map[VertexId, SimpleMSSP_PregelMsg]((sourceId, SimpleMSSP_PregelMsg("a",3.14159)))
-          val incomingMessage: Map[VertexId, SimpleMSSP_PregelMsg] = Map((sourceId, SimpleMSSP_PregelMsg("b",7.5)))
+          val thisVertex = Map[VertexId, SimpleMSSP_PregelMsg]((sourceId, SimpleMSSP_PregelMsg(3.14159)))
+          val incomingMessage: Map[VertexId, SimpleMSSP_PregelMsg] = Map((sourceId, SimpleMSSP_PregelMsg(7.5)))
 
           val result: SimpleMSSG_PregelVertex = SimpleMSSP invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
@@ -287,8 +287,8 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
         "update the vertex pathDistances with the new shortest path data" in {
           val sourceId: VertexId = 1L
           val thisId: VertexId = 42L // an arbitrary vertexId in the graph
-          val thisVertex = Map[VertexId, SimpleMSSP_PregelMsg]((sourceId, SimpleMSSP_PregelMsg("a",7.5)))
-          val incomingMessage: Map[VertexId, SimpleMSSP_PregelMsg] = Map((sourceId, SimpleMSSP_PregelMsg("b",3.14159)))
+          val thisVertex = Map[VertexId, SimpleMSSP_PregelMsg]((sourceId, SimpleMSSP_PregelMsg(7.5)))
+          val incomingMessage: Map[VertexId, SimpleMSSP_PregelMsg] = Map((sourceId, SimpleMSSP_PregelMsg(3.14159)))
 
           val result: SimpleMSSG_PregelVertex = SimpleMSSP invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
@@ -299,21 +299,21 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
         "only update the shorter values" in {
           val thisId: VertexId = 42L // an arbitrary vertexId in the graph
           val thisVertex = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("b",5.0)),
-            (2L, SimpleMSSP_PregelMsg("b",10.0)),
-            (3L, SimpleMSSP_PregelMsg("b",15.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0))
           )
           val incomingMessage: Map[VertexId, SimpleMSSP_PregelMsg] = Map(
-            (1L, SimpleMSSP_PregelMsg("b",4.0)),
-            (2L, SimpleMSSP_PregelMsg("b",8.0)),
-            (3L, SimpleMSSP_PregelMsg("b",16.0))
+            (1L, SimpleMSSP_PregelMsg(4.0)),
+            (2L, SimpleMSSP_PregelMsg(8.0)),
+            (3L, SimpleMSSP_PregelMsg(16.0))
           )
 
           val result: SimpleMSSG_PregelVertex = SimpleMSSP invokePrivate shortestPathVertexProgram(thisId, thisVertex, incomingMessage)
 
-          result.getOrElse(1L, SimpleMSSP_PregelMsg("B")).weight should equal (4.0)
-          result.getOrElse(2L, SimpleMSSP_PregelMsg("B")).weight should equal (8.0)
-          result.getOrElse(3L, SimpleMSSP_PregelMsg("B")).weight should equal (15.0)
+          result.getOrElse(1L, SimpleMSSP_PregelMsg()).weight should equal (4.0)
+          result.getOrElse(2L, SimpleMSSP_PregelMsg()).weight should equal (8.0)
+          result.getOrElse(3L, SimpleMSSP_PregelMsg()).weight should equal (15.0)
         }
       }
     }
@@ -324,18 +324,18 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
       "triplet where destination values dominate over any source values" should {
         "return an empty iterator" in {
           val srcAttr = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("a",5.0)),
-            (2L, SimpleMSSP_PregelMsg("a",10.0)),
-            (3L, SimpleMSSP_PregelMsg("a",15.0)),
-            (4L, SimpleMSSP_PregelMsg("a",20.0)),
-            (6L, SimpleMSSP_PregelMsg("a",30.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0)),
+            (4L, SimpleMSSP_PregelMsg(20.0)),
+            (6L, SimpleMSSP_PregelMsg(30.0))
           )
           val dstAttr = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("a",5.0)),
-            (2L, SimpleMSSP_PregelMsg("a",10.0)),
-            (3L, SimpleMSSP_PregelMsg("a",15.0)),
-            (4L, SimpleMSSP_PregelMsg("a",20.0)),
-            (6L, SimpleMSSP_PregelMsg("a",30.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0)),
+            (4L, SimpleMSSP_PregelMsg(20.0)),
+            (6L, SimpleMSSP_PregelMsg(30.0))
           )
           val graph = Graph[SimpleMSSG_PregelVertex, MacroscopicEdgeProperty](
             sc.parallelize(List(
@@ -357,18 +357,18 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
       "triplet with some differences between source and destination values" should {
         "combine best of src + edge weight and destination values" in {
           val srcAttr = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("b",5.0)),
-            (2L, SimpleMSSP_PregelMsg("b",10.0)),
-            (3L, SimpleMSSP_PregelMsg("b",15.0)),
-            (4L, SimpleMSSP_PregelMsg("b",20.0)),
-            (6L, SimpleMSSP_PregelMsg("b",30.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0)),
+            (4L, SimpleMSSP_PregelMsg(20.0)),
+            (6L, SimpleMSSP_PregelMsg(30.0))
           )
           val dstAttr = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("b",4.0)),
-            (2L, SimpleMSSP_PregelMsg("b",8.0)),
-            (3L, SimpleMSSP_PregelMsg("b",16.0)),
-            (4L, SimpleMSSP_PregelMsg("b",32.0)),
-            (5L, SimpleMSSP_PregelMsg("b",64.0))
+            (1L, SimpleMSSP_PregelMsg(4.0)),
+            (2L, SimpleMSSP_PregelMsg(8.0)),
+            (3L, SimpleMSSP_PregelMsg(16.0)),
+            (4L, SimpleMSSP_PregelMsg(32.0)),
+            (5L, SimpleMSSP_PregelMsg(64.0))
           )
           val graph = Graph[SimpleMSSG_PregelVertex, MacroscopicEdgeProperty](
             sc.parallelize(List(
@@ -384,12 +384,12 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
             val result: Iterator[(VertexId, SimpleMSSG_PregelVertex)] = SimpleMSSP invokePrivate shortestPathSendMessage(thisEdge)
 
             val message = result.next._2
-            message.getOrElse(1L, SimpleMSSP_PregelMsg("a")).weight should equal (4.0)  // destination attribute
-            message.getOrElse(2L, SimpleMSSP_PregelMsg("a")).weight should equal (8.0)  // destination attribute
-            message.getOrElse(3L, SimpleMSSP_PregelMsg("a")).weight should equal (16.0) // source attribute + edge weight
-            message.getOrElse(4L, SimpleMSSP_PregelMsg("a")).weight should equal (21.0) // source attribute + edge weight
-            message.getOrElse(5L, SimpleMSSP_PregelMsg("a")).weight should equal (64.0) // destination attribute
-            message.getOrElse(6L, SimpleMSSP_PregelMsg("a")).weight should equal (31.0) // source attribute + edge weight
+            message.getOrElse(1L, SimpleMSSP_PregelMsg()).weight should equal (4.0)  // destination attribute
+            message.getOrElse(2L, SimpleMSSP_PregelMsg()).weight should equal (8.0)  // destination attribute
+            message.getOrElse(3L, SimpleMSSP_PregelMsg()).weight should equal (16.0) // source attribute + edge weight
+            message.getOrElse(4L, SimpleMSSP_PregelMsg()).weight should equal (21.0) // source attribute + edge weight
+            message.getOrElse(5L, SimpleMSSP_PregelMsg()).weight should equal (64.0) // destination attribute
+            message.getOrElse(6L, SimpleMSSP_PregelMsg()).weight should equal (31.0) // source attribute + edge weight
           })
         }
       }
@@ -400,46 +400,46 @@ class SimpleMSSPTests extends SparkUnitTestTemplate("GraphXShortestPathsTests") 
       "called with two messages with the same keys but some different values" should {
         "take the smaller values from either message" in {
           val msg1 = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("a",5.0)),
-            (2L, SimpleMSSP_PregelMsg("a",10.0)),
-            (3L, SimpleMSSP_PregelMsg("a",15.0)),
-            (4L, SimpleMSSP_PregelMsg("a",20.0)),
-            (5L, SimpleMSSP_PregelMsg("a",25.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0)),
+            (4L, SimpleMSSP_PregelMsg(20.0)),
+            (5L, SimpleMSSP_PregelMsg(25.0))
           )
           val msg2 = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("a",4.0)),
-            (2L, SimpleMSSP_PregelMsg("a",8.0)),
-            (3L, SimpleMSSP_PregelMsg("a",16.0)),
-            (4L, SimpleMSSP_PregelMsg("a",32.0)),
-            (5L, SimpleMSSP_PregelMsg("a",64.0))
+            (1L, SimpleMSSP_PregelMsg(4.0)),
+            (2L, SimpleMSSP_PregelMsg(8.0)),
+            (3L, SimpleMSSP_PregelMsg(16.0)),
+            (4L, SimpleMSSP_PregelMsg(32.0)),
+            (5L, SimpleMSSP_PregelMsg(64.0))
           )
 
           val result: SimpleMSSG_PregelVertex = SimpleMSSP invokePrivate shortestPathMergeMessage(msg1, msg2)
 
-          result.getOrElse(1L, SimpleMSSP_PregelMsg("a")).weight should equal (4.0)
-          result.getOrElse(2L, SimpleMSSP_PregelMsg("a")).weight should equal (8.0)
-          result.getOrElse(3L, SimpleMSSP_PregelMsg("a")).weight should equal (15.0)
-          result.getOrElse(4L, SimpleMSSP_PregelMsg("a")).weight should equal (20.0)
-          result.getOrElse(5L, SimpleMSSP_PregelMsg("a")).weight should equal (25.0)
+          result.getOrElse(1L, SimpleMSSP_PregelMsg()).weight should equal (4.0)
+          result.getOrElse(2L, SimpleMSSP_PregelMsg()).weight should equal (8.0)
+          result.getOrElse(3L, SimpleMSSP_PregelMsg()).weight should equal (15.0)
+          result.getOrElse(4L, SimpleMSSP_PregelMsg()).weight should equal (20.0)
+          result.getOrElse(5L, SimpleMSSP_PregelMsg()).weight should equal (25.0)
         }
       }
       "called with two messages that have the same values" should {
         "return an equivalent message" in {
           val msg1 = Map[VertexId, SimpleMSSP_PregelMsg](
-            (1L, SimpleMSSP_PregelMsg("b",5.0)),
-            (2L, SimpleMSSP_PregelMsg("b",10.0)),
-            (3L, SimpleMSSP_PregelMsg("b",15.0)),
-            (4L, SimpleMSSP_PregelMsg("b",20.0)),
-            (5L, SimpleMSSP_PregelMsg("b",25.0))
+            (1L, SimpleMSSP_PregelMsg(5.0)),
+            (2L, SimpleMSSP_PregelMsg(10.0)),
+            (3L, SimpleMSSP_PregelMsg(15.0)),
+            (4L, SimpleMSSP_PregelMsg(20.0)),
+            (5L, SimpleMSSP_PregelMsg(25.0))
           )
 
           val result: SimpleMSSG_PregelVertex = SimpleMSSP invokePrivate shortestPathMergeMessage(msg1, msg1)
 
-          result.getOrElse(1L, SimpleMSSP_PregelMsg("B")).weight should equal (5.0)
-          result.getOrElse(2L, SimpleMSSP_PregelMsg("B")).weight should equal (10.0)
-          result.getOrElse(3L, SimpleMSSP_PregelMsg("B")).weight should equal (15.0)
-          result.getOrElse(4L, SimpleMSSP_PregelMsg("B")).weight should equal (20.0)
-          result.getOrElse(5L, SimpleMSSP_PregelMsg("B")).weight should equal (25.0)
+          result.getOrElse(1L, SimpleMSSP_PregelMsg()).weight should equal (5.0)
+          result.getOrElse(2L, SimpleMSSP_PregelMsg()).weight should equal (10.0)
+          result.getOrElse(3L, SimpleMSSP_PregelMsg()).weight should equal (15.0)
+          result.getOrElse(4L, SimpleMSSP_PregelMsg()).weight should equal (20.0)
+          result.getOrElse(5L, SimpleMSSP_PregelMsg()).weight should equal (25.0)
         }
       }
     }

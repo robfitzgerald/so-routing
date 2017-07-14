@@ -60,8 +60,8 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     */
   private def initialShorestPathsMessage(odPairs: ODPairs): SimpleMSSG_PregelVertex =
     odPairs.foldLeft(Map.empty[VertexId, SimpleMSSP_PregelMsg])((map, tuple) => {
-      map + (tuple.srcVertex -> SimpleMSSP_PregelMsg(tuple.personId))
-    }).withDefaultValue(SimpleMSSP_PregelMsg("initialShorestPathsMessage default (error)"))
+      map + (tuple.srcVertex -> SimpleMSSP_PregelMsg())
+    }).withDefaultValue(SimpleMSSP_PregelMsg())
 
 
   /**
@@ -87,7 +87,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
   private def shortestPathVertexProgram (vertexId: VertexId, localInfo: SimpleMSSG_PregelVertex, newInfo: SimpleMSSG_PregelVertex): SimpleMSSG_PregelVertex = {
     newInfo.foldLeft(localInfo)((pathDistances, tuple) => {
       if (pathDistances(tuple._1).weight > tuple._2.weight) pathDistances + tuple else pathDistances
-    }).withDefaultValue(SimpleMSSP_PregelMsg("shortestPathVertexProgram default (error)"))
+    }).withDefaultValue(SimpleMSSP_PregelMsg())
   }
 
   /**
@@ -101,7 +101,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
       case AONFlow() => edge.attr.cost.freeFlowCost
     }
     if (edge.srcAttr.forall(src => {
-      (src._2.weight + edgeWeight) >= edge.dstAttr.getOrElse(src._1, SimpleMSSP_PregelMsg("shortestPathSendMessage default")).weight
+      (src._2.weight + edgeWeight) >= edge.dstAttr.getOrElse(src._1, SimpleMSSP_PregelMsg()).weight
     })) Iterator.empty
     else {
       // identity called on srcWithEdgeWeight to avoid mapValues returning a non-serializable object
@@ -114,7 +114,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
       }).map(identity)
 
       val newVals =
-        edge.dstAttr.foldLeft(srcWithEdgeWeight.withDefaultValue(SimpleMSSP_PregelMsg("shortestPathSendMessage default")))((srcDistancesPlusEdge, destCostTuple) => {
+        edge.dstAttr.foldLeft(srcWithEdgeWeight.withDefaultValue(SimpleMSSP_PregelMsg()))((srcDistancesPlusEdge, destCostTuple) => {
           val vertex: VertexId = destCostTuple._1
           val destCost: SimpleMSSP_PregelMsg = destCostTuple._2
           if (!srcDistancesPlusEdge.isDefinedAt(vertex) ||
@@ -134,8 +134,8 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @return a single message to be received by the vertex program
     */
   private def shortestPathMergeMessage (a: SimpleMSSG_PregelVertex, b: SimpleMSSG_PregelVertex): SimpleMSSG_PregelVertex = {
-    a.foldLeft(b.withDefaultValue(SimpleMSSP_PregelMsg("shortestPathMergeMessage default (error)")))((pathDistances, tuple) => {
+    a.foldLeft(b.withDefaultValue(SimpleMSSP_PregelMsg()))((pathDistances, tuple) => {
       if (pathDistances(tuple._1).weight > tuple._2.weight) pathDistances + tuple else pathDistances
-    }).withDefaultValue(SimpleMSSP_PregelMsg("shortestPathMergeMessage default 2 (error)"))
+    }).withDefaultValue(SimpleMSSP_PregelMsg())
   }
 }

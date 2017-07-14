@@ -2,12 +2,13 @@ package cse.fitzgero.sorouting.util
 
 import java.nio.file.{Files, _}
 import java.time.{LocalDateTime, LocalTime}
-
-import cse.fitzgero.sorouting.matsimrunner.population.Population
-
+import scala.collection.JavaConverters._
 import scala.xml.{Elem, XML}
 import scala.util.matching.Regex
 import scala.xml.dtd.{DocType, SystemID}
+
+import cse.fitzgero.sorouting.matsimrunner.population.Population
+
 
 //
 // $WORKING_DIR - basic scaffolding
@@ -134,12 +135,28 @@ class SORoutingFilesHelper(private val configFileName: String, private val netwo
   def populationFilePath(expType: SORoutingExperimentType): String =
     s"$experimentDirectory/population-$expType.xml"
 
-  def snapshotFileList: Seq[String] =
-    Files.list(Paths.get(snapshotDirectory)).toArray.map(_.toString)
+  def snapshotFileList: Seq[String] = {
+    // @TODO: move these snapshots down two directories so they can be shared and not repeated
+    val snapshotDirectory = s"${experimentPath(PartialUEExp)}/snapshot"
+    println(s"getting snapshotDirectory file list via this path:")
+    println(s"$snapshotDirectory")
+    val lastIteration = getLastIterationDirectory(snapshotDirectory)
+    val snapshotLastIterationDirectory = s"$snapshotDirectory/$lastIteration"
+    println(snapshotLastIterationDirectory)
+    Files.list(Paths.get(snapshotLastIterationDirectory)).toArray.map(_.toString)
+    //    Files.list(Paths.get(snapshotDirectory)).toArray.map(_.toString) - original
+  }
 
-  private val snapshotTimeParse: Regex = ".*([0-9]{2}:[0-9]{2}:[0-9]{2}).*".r
+  //
+  def getLastIterationDirectory(dir: String): String = {
+    val paths: Iterator[Path] = Files.list(Paths.get(dir)).iterator.asScala
+    paths.map(_.getFileName).toArray.map(_.toString.toInt).max.toString
+  }
+
+
+  private val snapshotTimeParse: Regex = ".*snapshot-([0-9]{2}.[0-9]{2}.[0-9]{2}).*".r
   def parseSnapshotForTime(s: String): LocalTime = s match {
-    case snapshotTimeParse(time) => LocalTime.parse(time)
+    case snapshotTimeParse(time) => LocalTime.parse(time.map(ch=>if (ch == '.') ':' else ch))
   }
 
 

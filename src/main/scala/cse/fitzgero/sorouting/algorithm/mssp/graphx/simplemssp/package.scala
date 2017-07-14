@@ -12,7 +12,7 @@ package object simplemssp {
     * @param weight total path cost for this OD pair, at this iteration (up to whatever intermediary vertex the message has traveled)
     * @param path associated with the (possibly partial) weight, this is the possibly partial path traveled
     */
-  case class SimpleMSSP_PregelMsg(personId: PersonIDType, weight: Double = Double.PositiveInfinity, path: Path = List.empty[EdgeIdType])
+  case class SimpleMSSP_PregelMsg(weight: Double = Double.PositiveInfinity, path: Path = List.empty[EdgeIdType])
 
   /**
     * Type of the Vertex Data of the Shortest Paths Graph

@@ -138,13 +138,35 @@ class PopulationTests extends SORoutingUnitTestTemplate {
       }
     }
     "fromTimeGroup" when {
-      "given a population and a filename which contains a snapshot range" should {
-        "return a collection of origin-destination pairs" in {
+      "given a population and all possible time ranges" should {
+        "return all 200 trips for this population" in {
           val popSize = 100
           val network = XML.loadFile(equilNetworkFile)
           val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
-          val result: ODPairs = pop.fromTimeGroup(LocalTime.parse("06:00:00"), LocalTime.parse("10:00:00"))
-          result.foreach(println)
+          val allTimesInRange = (
+            LocalTime.parse("00:00:00").toSecondOfDay to
+            LocalTime.parse("23:59:59").toSecondOfDay by 30
+            ).map(timeNumber => LocalTime.ofSecondOfDay(timeNumber))
+          val result = allTimesInRange.sliding(2).map(bounds => {
+            pop.fromTimeGroup(bounds(0), bounds(1))
+          })
+          result.flatten.size should be (popSize * 2)
+        }
+      }
+    }
+    "updatePerson" when {
+      "given data associated with a person" should {
+        "add the path information to the relevant person's relevant path leg" in {
+          val popSize = 1
+          val network = XML.loadFile(equilNetworkFile)
+          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          val personId = pop.persons.head.id
+          val personSrc = pop.persons.head.homeAM.vertex
+          val personDst = pop.persons.head.work.head.vertex
+          val path = List("1","4","9")
+          val data = SimpleMSSP_ODPath(personId, personSrc, personDst, path)
+          val result = pop.updatePerson(data)
+          result.persons.head.legs.head.path.mkString(" ") should equal ("1 4 9")
         }
       }
     }

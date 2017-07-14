@@ -46,11 +46,18 @@ class TimeTracker (
     */
   def currentTimeGroup: Int = currentTimeWindowLowerBound
 
+
   /**
     * get the label of the current time group
     * @return
     */
   def currentTimeString: String = TimeStringConvert.fromInt(currentTimeWindowLowerBound)
+
+  /**
+    * file system friendly version of currentTimeString, from HH:mm:ss to HH.mm.ss
+    * @return
+    */
+  def currentTimeStringFS: String = currentTimeString.map(ch => if (ch == ':') '.' else ch)
 
   /**
     * advance the time group by a time step the magnitude of the time delta value, windowDuration
