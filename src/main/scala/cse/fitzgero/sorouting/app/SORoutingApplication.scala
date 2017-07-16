@@ -39,7 +39,7 @@ object SORoutingApplication extends App {
           Seq(ModeConfig("car"))
         )
       )
-  val (populationSubset, populationRemainder) = populationFull.subsetPartition(conf.routePercentage)
+  val (populationSubsetToRoute, populationRemainder) = populationFull.subsetPartition(conf.routePercentage)
 
 
   fileHelper.savePopulation(populationFull, FullUEExp)
@@ -76,9 +76,7 @@ object SORoutingApplication extends App {
   //----------------------------------------------------------------------------------------------
   //  3. For each snapshot, load as graphx and run our algorithm
   //----------------------------------------------------------------------------------------------
-  // TODO: get list of snapshot files in snapshot directory (file helper)
-  // TODO: update the entry of a person in the population file to have new path from path search
-  val routedPopulation: Population = fileHelper.snapshotFileList.foldLeft(populationSubset)((populationAccumulator, snapshotFile) => {
+  val populationSubsetRouted: Population = fileHelper.snapshotFileList.foldLeft(populationSubsetToRoute)((populationAccumulator, snapshotFile) => {
     val graph =
       GraphXMacroRoadNetwork(sc, BPRCostFunction)
         .fromFileAndSnapshot(fileHelper.thisNetworkFilePath, snapshotFile) match {
@@ -86,17 +84,21 @@ object SORoutingApplication extends App {
           case Failure(e) => throw new Error(s"failed to load network file ${fileHelper.thisNetworkFilePath} and snapshot $snapshotFile")
         }
     val startOfTimeRange: LocalTime = fileHelper.parseSnapshotForTime(snapshotFile)
-    val endOfTimeRange: LocalTime = startOfTimeRange.plusMinutes(conf.algorithmTimeWindow.toLong)
-    val groupToRoute: ODPairs = populationSubset.fromTimeGroup(startOfTimeRange, endOfTimeRange)
-    println(s"routing group $startOfTimeRange of size ${groupToRoute.size}")
+    val endOfTimeRange: LocalTime = startOfTimeRange.plusSeconds(conf.algorithmTimeWindow.toLong)
+    val groupToRoute: ODPairs = populationSubsetToRoute.fromTimeGroup(startOfTimeRange, endOfTimeRange)
+
+    if (groupToRoute.nonEmpty) println(s"${LocalTime.now} - routing group in range [$startOfTimeRange,$endOfTimeRange) of size ${groupToRoute.size}")
+
     val result: FWSolverResult = FrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
-    //
+
+    if (result.iterations != 0) println(s"${LocalTime.now} - completed in ${result.time} ms")
+
     result.paths.foldLeft(populationAccumulator)((pop, path) => {
       pop.updatePerson(path)
     })
   })
 
-  fileHelper.savePopulation(populationFull.reintegrateSubset(routedPopulation), CombinedUESOExp)
+  fileHelper.savePopulation(populationFull.reintegrateSubset(populationSubsetRouted), CombinedUESOExp)
 
   //----------------------------------------------------------------------------------------------
   //  4. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)

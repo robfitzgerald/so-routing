@@ -78,7 +78,7 @@ object PopulationFactory {
       PopulationRandomTimeGenerator(
         Seq(
           ("home", NoDeviation(LocalTime.parse("09:00:00"))),
-          ("work", NoDeviation(LocalTime.parse("08:00:00")))
+          ("work", NoDeviation(LocalTime.parse("15:00:00")))
         )
       )
 
@@ -100,25 +100,28 @@ object PopulationFactory {
     )
   }
   def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): Population = {
-//    val activityLocations = ??? // ActivityLocation.takeAllLocations(network)
+    // @TODO: revise time generation. is currently passing start time and duration; we just use end time.
+    // might be worth smarting up with case classes for types of time and different results from the time generator
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
         (conf.home.name, NoDeviation(conf.activities.head.start)) +:
         conf.activities.map(act => {
-          (act.name, BidirectionalBoundedDeviation(act.dur, act.dev))
+          (act.name, BidirectionalBoundedDeviation(act.start.plusSeconds(act.dur.toSecondOfDay), act.dev))
         })
       )
 
     Population(
       (Zero until conf.populationSize).map(n => {
         val times = activityTimeGenerator.next()
+//        println("generated times")
+//        println(times.mkString(" "))
 //        val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
 //        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
         val homeLocation = ActivityLocation.takeRandomLocation(network)
         val actLocations = conf.activities.map(_ => ActivityLocation.takeRandomLocation(network))
         PersonNode(
           n.toString,
-          conf.modes.filter(evalModeProbability).map(_.name).mkString(","),
+          conf.modes.filter(evaluateModeProbability).map(_.name).mkString(","),
           MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, homeLocation._3, EndTime(times(conf.home.name))),
           conf.activities.zip(actLocations).map(act => {
             MiddayActivity(act._1.name, act._2._2.x, act._2._2.y, act._2._1, act._2._3, EndTime(times(act._1.name)))
@@ -128,6 +131,6 @@ object PopulationFactory {
       }).toSet
     )
   }
-  private def evalModeProbability(modeConfig: ModeConfig): Boolean =
+  private def evaluateModeProbability(modeConfig: ModeConfig): Boolean =
     random.nextDouble <= modeConfig.probability
 }

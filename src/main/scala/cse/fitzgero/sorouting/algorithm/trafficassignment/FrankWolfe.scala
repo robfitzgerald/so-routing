@@ -80,7 +80,7 @@ object FrankWolfe extends TrafficAssignment {
             iter)
 
         if (stoppingConditionIsMet) {
-          val totalTime = startTime - Instant.now().toEpochMilli
+          val totalTime = Instant.now().toEpochMilli - startTime
           FWSolverResult(paths, currentGraph, iter, totalTime)
         }
         else {

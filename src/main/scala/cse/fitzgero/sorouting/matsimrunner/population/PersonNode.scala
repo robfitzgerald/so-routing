@@ -64,10 +64,11 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
         case (vertex, EndTime(time)) => Some((vertex, time))
         case _ => None
       })
-      .filter(_.isDefined)
       .filter(tuple => {
-        val thisTime = tuple.get._2
-        (thisTime == low || thisTime.isAfter(low)) && thisTime.isBefore(high)
+        if (tuple.isDefined) {
+          val thisTime = tuple.get._2
+          (thisTime == low || thisTime.isAfter(low)) && thisTime.isBefore(high)
+        } else false
       })
       .map(_.get._1)
     legs.filter(srcVerticesInTimeRange contains _.srcVertex).map(asODPair)

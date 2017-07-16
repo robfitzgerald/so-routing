@@ -56,8 +56,10 @@ class ActivityLocationTests extends SORoutingUnitTestTemplate {
           ActivityLocation.setSeed(1L)
           val a1: (VertexId, Euclidian, EdgeIdType) = ActivityLocation.takeRandomLocation(xmlGraph)
           val a2: (VertexId, Euclidian, EdgeIdType) = ActivityLocation.takeRandomLocation(xmlGraph)
-          a1 should equal ((1,Euclidian(-5.0,-5.0),"100"))
-          a2 should equal ((2,Euclidian(5.0,5.0),"101"))
+
+          // for each tuple, it should pair the edge with it's source vertex data in 1-[100]->2, 2-[101]->3, 3-[102]->1
+          a1 should equal ((1,Euclidian(-5.0,-5.0),"100")) // 1-[100]
+          a2 should equal ((2,Euclidian(5.0,5.0),"101")) // 2-[101]
         }
       }
     }

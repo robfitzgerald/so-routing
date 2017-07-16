@@ -1,5 +1,7 @@
 package cse.fitzgero.sorouting.matsimrunner
 
+import java.time.LocalTime
+
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
@@ -42,9 +44,14 @@ class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
                 val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
                 NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
 
-                while(!timeTracker.belongsToThisTimeGroup(e))
+                while(!timeTracker.belongsToThisTimeGroup(e)) {
+                  val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
+                  NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
                   timeTracker = timeTracker.advance
+                  println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker advanced due to event inaction. group is now ${timeTracker.currentTimeString}")
+                }
 
+                println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker group is now ${timeTracker.currentTimeString}")
                 currentNetworkState = currentNetworkState.update(e)
               }
             }

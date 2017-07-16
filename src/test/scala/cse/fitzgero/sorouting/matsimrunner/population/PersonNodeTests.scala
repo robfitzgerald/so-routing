@@ -62,7 +62,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
           val a2 = List(MiddayActivity("work", 123D, 456D, 2L, "20", EndTime(LocalTime.parse("00:00:10"))))
           val a3 = EveningActivity("home", 0D, 1D, 1L, "10")
           val result = PersonNode("1", "car", a1, a2, a3).updatePath(1L, 2L, List("1","4","9"))
-          (result.toXml \ "plan" \ "leg").toList.head.text should equal ("1 4 9")
+          (result.toXml \ "plan" \ "leg").toList.head.text should equal ("10 1 4 9 20")
         }
       }
     }
