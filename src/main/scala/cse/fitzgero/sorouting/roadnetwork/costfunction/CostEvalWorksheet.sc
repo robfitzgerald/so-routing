@@ -1,4 +1,4 @@
-import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.costfunction._
 
 val f1: BPRCostFunction = BPRCostFunction(Map("freespeed" -> "50", "capacity" -> "100"))
 val f2: BPRCostFunction = BPRCostFunction(Map("freespeed" -> "40", "capacity" -> "100"))

@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.graphx.costfunction
+package cse.fitzgero.sorouting.roadnetwork.costfunction
 
 
 abstract class CostFunction extends Serializable {

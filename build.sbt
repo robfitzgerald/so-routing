@@ -15,6 +15,10 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "2.1.1"
 libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.1.1"
 
 
+// ~~~ Graph For Scala (scala-graph)
+libraryDependencies += "org.scala-graph" %% "graph-core" % "1.11.5"
+
+
 // ~~~ MATSim
 //unmanagedBase := baseDirectory.value / "lib"
 // was unable to add via sbt as following:

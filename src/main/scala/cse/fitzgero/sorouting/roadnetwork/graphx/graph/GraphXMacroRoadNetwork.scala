@@ -2,17 +2,19 @@ package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
 import java.io.IOException
 
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
-import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
+import scala.util.{Failure, Success, Try}
+import scala.xml.{Elem, XML}
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx.{Graph, _}
 import org.apache.spark.rdd.RDD
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
+import cse.fitzgero.sorouting.roadnetwork.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.graphx.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
+import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge
 
-import scala.util.{Failure, Success, Try}
-import scala.xml.{Elem, XML}
 
 class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
   val MATSimFlowRate = 3600D // vehicles per hour is used to represent flow data
@@ -31,7 +33,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
       case Success(file: Elem) =>
         Try({
           val noSnapshotData: Elem = <network><links></links></network>
-          val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, noSnapshotData)
+          val edgeSet: RDD[edge.Edge[MacroscopicEdgeProperty]] = grabEdges(file, noSnapshotData)
           val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
           Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
         })
@@ -56,7 +58,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
           case Failure(err) => throw new IOException(s"$snapshotFileName is not a valid snapshot filename. \n ${err.getStackTrace}")
           case Success(flows: Elem) =>
             Try({
-              val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, flows)
+              val edgeSet: RDD[edge.Edge[MacroscopicEdgeProperty]] = grabEdges(file, flows)
               val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
               Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
             })
@@ -70,7 +72,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
     * @param flowData snapshot xml element
     * @return
     */
-  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[Edge[MacroscopicEdgeProperty]] = {
+  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[edge.Edge[MacroscopicEdgeProperty]] = {
     require((xmlData \ "links").nonEmpty)
     require((xmlData \ "links" \ "link").nonEmpty)
     Try({

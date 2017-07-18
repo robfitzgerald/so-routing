@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
 import cse.fitzgero.sorouting.SparkUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{ODPaths, SimpleMSSP_ODPath}
-import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork

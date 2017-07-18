@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.graphx.costfunction
+package cse.fitzgero.sorouting.roadnetwork.costfunction
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 

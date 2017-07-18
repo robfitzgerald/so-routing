@@ -8,7 +8,7 @@ import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph.GraphXMacroRoadNetwork
-import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction.BPRCostFunction
+import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
 
 import scala.util.{Failure, Success}
