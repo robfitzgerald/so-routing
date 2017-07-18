@@ -1,9 +1,8 @@
-package cse.fitzgero.sorouting.roadnetwork
+package cse.fitzgero.sorouting.roadnetwork.graphx
 
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeProperty
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{VertexPosition, VertexProperty}
 import org.apache.spark.graphx.Graph
-
-import cse.fitzgero.sorouting.roadnetwork.edge._
-import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 /**
   * has a shortest path method which takes (x,y) coordinate tuples for

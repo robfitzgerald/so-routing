@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.graph
+package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
 import org.apache.spark.graphx.Graph
 

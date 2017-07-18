@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 
 sealed trait ActivityNodeOptions

@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
-import cse.fitzgero.sorouting.roadnetwork.vertex.Euclidian
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.Euclidian
 import org.apache.spark.graphx.VertexId
 
 import scala.xml.NodeSeq

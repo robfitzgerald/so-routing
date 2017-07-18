@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork
+package cse.fitzgero.sorouting.roadnetwork.graphx
 
 package object costfunction {
   type AttributesAndDefaults = Map[String, Double]

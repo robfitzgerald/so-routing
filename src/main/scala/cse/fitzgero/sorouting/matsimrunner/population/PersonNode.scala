@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 
 import scala.xml.Elem

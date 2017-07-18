@@ -1,8 +1,8 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
-import cse.fitzgero.sorouting.roadnetwork.vertex.Euclidian
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.Euclidian
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 
 class ActivityLocationTests extends SORoutingUnitTestTemplate {

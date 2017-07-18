@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.costfunction
+package cse.fitzgero.sorouting.roadnetwork.graphx.costfunction
 
 /**
   * a cost function that evaluates any link as having a cost of "1"

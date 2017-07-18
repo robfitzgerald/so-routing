@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.roadnetwork.edge
+package cse.fitzgero.sorouting.roadnetwork.graphx.edge
 
-import cse.fitzgero.sorouting.roadnetwork.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
 
 /**
   * Base class for Edge property classes

@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.graph
+package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
 /**
   * a singleton extends this trait if it can compute road network operations on a Graph G

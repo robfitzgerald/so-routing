@@ -1,14 +1,14 @@
-package cse.fitzgero.sorouting.roadnetwork.graph
+package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
-import java.io.IOException
-
-import org.apache.spark.graphx.{Edge, EdgeRDD, Graph, VertexId}
-import org.apache.spark.rdd.RDD
-import cse.fitzgero.sorouting.roadnetwork.edge._
-import cse.fitzgero.sorouting.roadnetwork.vertex._
 import cse.fitzgero.sorouting.SparkUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{SimpleMSSP_ODPath, ODPaths}
-import cse.fitzgero.sorouting.roadnetwork.costfunction._
+import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{ODPaths, SimpleMSSP_ODPath}
+import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
+import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
+import org.apache.spark.graphx.{Edge, EdgeRDD, Graph}
+import org.apache.spark.rdd.RDD
 
 import scala.xml.XML
 

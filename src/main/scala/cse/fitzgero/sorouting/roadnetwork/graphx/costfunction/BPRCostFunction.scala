@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.costfunction
+package cse.fitzgero.sorouting.roadnetwork.graphx.costfunction
 
 import scala.math.pow
 
@@ -26,9 +26,9 @@ object BPRCostFunction extends CostFunctionFactory {
         if (cap == 0D)
           new BPRCostFunction(1D, freeFlowSpeed, steadyStateNetworkFlow)
         else {
-            val capacity = cap * (flowRate / algorithmFlowRate)
-            new BPRCostFunction(capacity, freeFlowSpeed, steadyStateNetworkFlow)
-          }
+          val capacity = cap * (flowRate / algorithmFlowRate)
+          new BPRCostFunction(capacity, freeFlowSpeed, steadyStateNetworkFlow)
+        }
       case _ => throw new IllegalArgumentException(s"Unable to parse expected arguments ${expectedAttributes.keys.mkString("")} from ${attributes.keys.mkString("")}")
     }
   }

@@ -1,17 +1,18 @@
-package cse.fitzgero.sorouting.roadnetwork.graph
+package cse.fitzgero.sorouting.roadnetwork.graphx.graph
 
 import java.io.IOException
 
 import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
-
-import scala.xml.{Elem, XML}
-import scala.util.{Failure, Success, Try}
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
+import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction._
+import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx.{Graph, _}
-import cse.fitzgero.sorouting.roadnetwork.costfunction._
-import cse.fitzgero.sorouting.roadnetwork.edge.{MacroscopicEdgeProperty, _}
-import cse.fitzgero.sorouting.roadnetwork.vertex.{CoordinateVertexProperty, _}
 import org.apache.spark.rdd.RDD
+
+import scala.util.{Failure, Success, Try}
+import scala.xml.{Elem, XML}
 
 class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
   val MATSimFlowRate = 3600D // vehicles per hour is used to represent flow data

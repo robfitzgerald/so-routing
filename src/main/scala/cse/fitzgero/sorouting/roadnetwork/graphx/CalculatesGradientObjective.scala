@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork
+package cse.fitzgero.sorouting.roadnetwork.graphx
 
 /**
   * has a method to calculate the value used for calculating the objective

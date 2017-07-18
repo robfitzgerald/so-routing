@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.mssp.graphx
 
-import cse.fitzgero.sorouting.roadnetwork.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 
 import scala.annotation.tailrec
 

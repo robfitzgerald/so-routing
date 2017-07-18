@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.roadnetwork.edge
+package cse.fitzgero.sorouting.roadnetwork.graphx.edge
 
-import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFunction}
+import cse.fitzgero.sorouting.roadnetwork.graphx.costfunction.{CostFunction, TestCostFunction}
 
 
 /**
