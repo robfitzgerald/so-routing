@@ -10,15 +10,16 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.edge.WDiEdge
 import scalax.collection.edge.Implicits._
-import cse.fitzgero.sorouting.roadnetwork.graph.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge.{Edge, EdgeProperty, MacroscopicEdgeProperty}
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.vertex.{CoordinateVertexProperty, Euclidian, VertexPosition, VertexProperty}
+import cse.fitzgero.sorouting.roadnetwork.graph._
+import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge._
+import cse.fitzgero.sorouting.roadnetwork.scalagraph.vertex._
 
 /**
   * Builds Road Networks from file sources
   */
-class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles[Graph[Long, Edge]] with CanReadFlowSnapshotFiles[Graph[Long, Edge]] {
+class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles[Graph[VertexId, Edge]] with CanReadFlowSnapshotFiles[Graph[VertexId, Edge]] {
   val MATSimFlowRate = 3600D // vehicles per hour is used to represent flow data
+  val NoFlowData: xml.Elem = <network><links></links></network>
 
   override def fromFile(fileName: String): Try[Graph[Long, Edge]] =
     Try ({
@@ -26,8 +27,8 @@ class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithm
     }) match {
       case Failure(e) => throw new IOException(s"$fileName is not a valid network filename. \n ${e.getStackTrace}")
       case Success(file: Elem) =>
-        val nodes = getNodes(file)
-        val edges = getEdges(file, <a></a>)
+        val nodes = grabVertices(file)
+        val edges = grabEdges(file, NoFlowData)
         Try(Graph.from(nodes.map(_._1), edges))
     }
 
@@ -39,7 +40,7 @@ class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithm
     * @param file xml data containing the list of node data
     * @return
     */
-  def getNodes(file: Elem): Seq[(Long, CoordinateVertexProperty)] =
+  def grabVertices(file: Elem): Seq[(VertexId, CoordinateVertexProperty)] =
     for (node <- file \ "nodes" \ "node") yield {
       val attrs = node.attributes.asAttrMap
       val x = attrs.getOrElse("x", "0").toDouble
@@ -48,7 +49,7 @@ class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithm
       (id, CoordinateVertexProperty(Euclidian(x, y)))
     }
 
-  def getEdges(file: Elem, flowData: Elem): Seq[Edge[Long]] =
+  def grabEdges(file: Elem, flowData: Elem): Seq[Edge[VertexId]] =
     Try({
       val links: xml.NodeSeq = flowData \ "links" \ "link"
       if (links.isEmpty) Map.empty[String, Double]
@@ -72,4 +73,9 @@ class ScalaGraphRoadNetwork (costFunctionFactory: CostFunctionFactory, algorithm
           val weight = MacroscopicEdgeProperty(linkId, 0D, costFunctionFactory(attrsObject))
         Edge(from, to, weight) }
     }
+}
+
+object ScalaGraphRoadNetwork {
+  def apply (costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) =
+    new ScalaGraphRoadNetwork(costFunctionFactory, algorithmFlowRate)
 }

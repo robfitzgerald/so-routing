@@ -13,7 +13,6 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graphx.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}
 import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge
 
 
 class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
@@ -33,7 +32,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
       case Success(file: Elem) =>
         Try({
           val noSnapshotData: Elem = <network><links></links></network>
-          val edgeSet: RDD[edge.Edge[MacroscopicEdgeProperty]] = grabEdges(file, noSnapshotData)
+          val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, noSnapshotData)
           val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
           Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
         })
@@ -58,7 +57,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
           case Failure(err) => throw new IOException(s"$snapshotFileName is not a valid snapshot filename. \n ${err.getStackTrace}")
           case Success(flows: Elem) =>
             Try({
-              val edgeSet: RDD[edge.Edge[MacroscopicEdgeProperty]] = grabEdges(file, flows)
+              val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, flows)
               val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
               Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
             })
@@ -72,7 +71,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
     * @param flowData snapshot xml element
     * @return
     */
-  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[edge.Edge[MacroscopicEdgeProperty]] = {
+  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[Edge[MacroscopicEdgeProperty]] = {
     require((xmlData \ "links").nonEmpty)
     require((xmlData \ "links" \ "link").nonEmpty)
     Try({

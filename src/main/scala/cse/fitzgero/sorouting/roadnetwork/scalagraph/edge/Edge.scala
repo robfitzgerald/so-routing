@@ -11,9 +11,9 @@ case class Edge[+N](srcIntersection: N, dstIntersection: N, attr: MacroscopicEdg
     with    EdgeCopy[Edge]
     with    OuterEdge[N,Edge]
 {
-  private def this(nodes: Product, flightNo: String) {
+  private def this(nodes: Product, attr: MacroscopicEdgeProperty) {
     this(nodes.productElement(0).asInstanceOf[N],
-      nodes.productElement(1).asInstanceOf[N], flightNo)
+      nodes.productElement(1).asInstanceOf[N], attr)
   }
   def keyAttributes = Seq(attr)
   override def copy[NN](newNodes: Product) = new Edge[NN](newNodes, attr)
