@@ -4,8 +4,8 @@ import java.io.IOException
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graph._
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge._
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.vertex._
+import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._
+import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, NodeSeq}
