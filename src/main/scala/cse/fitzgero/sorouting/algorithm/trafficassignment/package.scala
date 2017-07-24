@@ -1,17 +1,12 @@
 package cse.fitzgero.sorouting.algorithm
 
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
-import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork
+import cse.fitzgero.sorouting.algorithm.shortestpath._
 
 package object trafficassignment {
-  sealed trait TerminationCriteria
-  final case class RelativeGapTerminationCriteria (value: Double) extends TerminationCriteria
-  final case class IterationTerminationCriteria (value: Int) extends TerminationCriteria
-  final case class RunningTimeTerminationCriteria (value: Long) extends TerminationCriteria
-  final case class AllTerminationCriteria(relGap: Double, iteration: Int, runTime: Long) extends TerminationCriteria
-
-  sealed abstract class TrafficAssignmentResult
-  case class FWSolverResult(paths: ODPaths, finalNetwork: RoadNetwork, iterations: Int, time: Long, relGap: Double = 0D) extends TrafficAssignmentResult {
-    require(relGap >= 0D && relGap <= 1D)
+  abstract class TrafficAssignmentResult [G]{
+    def paths: Seq[ODPath[_,_]]
+    def finalNetwork: G
+    def iterations: Int
+    def time: Long
   }
 }

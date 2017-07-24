@@ -2,9 +2,9 @@ package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPairs
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp.ODPairs
 import org.apache.spark.{SparkConf, SparkContext}
-import cse.fitzgero.sorouting.algorithm.trafficassignment._
+import cse.fitzgero.sorouting.algorithm.trafficassignment.graphx._
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph.GraphXMacroRoadNetwork
@@ -89,7 +89,7 @@ object SORoutingApplication extends App {
 
     if (groupToRoute.nonEmpty) println(s"${LocalTime.now} - routing group in range [$startOfTimeRange,$endOfTimeRange) of size ${groupToRoute.size}")
 
-    val result: FWSolverResult = FrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
+    val result: FWSolverResult = GraphXFrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
 
     if (result.iterations != 0) println(s"${LocalTime.now} - completed in ${result.time} ms")
 

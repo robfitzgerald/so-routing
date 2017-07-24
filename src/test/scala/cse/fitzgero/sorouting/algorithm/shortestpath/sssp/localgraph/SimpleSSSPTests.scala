@@ -1,7 +1,7 @@
-package cse.fitzgero.sorouting.algorithm.sssp.localgraph
+package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.sssp.SSSP
+import cse.fitzgero.sorouting.algorithm.shortestpath.SSSP
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, TestCostFunction}
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._

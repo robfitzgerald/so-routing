@@ -1,12 +1,13 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment
 
 import cse.fitzgero.sorouting.SparkUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.trafficassignment.graphx._
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph._
 import org.apache.spark.graphx.VertexId
 
-class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
+class GraphXFrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
   "FrankWolfe object" when {
     val networkFilePathSuite01: String =       "src/test/resources/FrankWolfeTests/network.xml"
     val snapshotFilePathSuite01: String =      "src/test/resources/FrankWolfeTests/snapshot.xml"
@@ -38,7 +39,7 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFile(networkFilePathSuite01).get
           val makeLinkBusy: RoadNetwork = graph.mapEdges(edge => if (edge.attr.id == "100") edge.attr.copy(flow = 200D) else edge.attr)
 
-          val (result, _) = FrankWolfe.Assignment(makeLinkBusy, testODPairsSuite01, AONFlow())
+          val (result, _) = GraphXFrankWolfe.Assignment(makeLinkBusy, testODPairsSuite01, AONFlow())
           // all vehicles should have been routed on link "100", even though it was gnarly congested
           result.edges.toLocalIterator.filter(_.attr.id == "100").next.attr.flow should equal (206.0D)
         }
@@ -47,20 +48,20 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
     "frankWolfeFlowCalculation" when {
       "called with equal flow values and mean (50%) phi value" should {
         "return the same flow number" in {
-          FrankWolfe.frankWolfeFlowCalculation(FrankWolfe.Phi(0.5), 100D, 100D) should equal (100D)
+          GraphXFrankWolfe.frankWolfeFlowCalculation(GraphXFrankWolfe.Phi(0.5), 100D, 100D) should equal (100D)
         }
       }
       "called with Phi Values at the extremum" should {
         "return 100% of the corresponding flow value" in {
-          FrankWolfe.frankWolfeFlowCalculation(FrankWolfe.Phi(1.0D), 67, 100D) should equal (100D)
-          FrankWolfe.frankWolfeFlowCalculation(FrankWolfe.Phi(0.0D), 67, 100D) should equal (67D)
+          GraphXFrankWolfe.frankWolfeFlowCalculation(GraphXFrankWolfe.Phi(1.0D), 67, 100D) should equal (100D)
+          GraphXFrankWolfe.frankWolfeFlowCalculation(GraphXFrankWolfe.Phi(0.0D), 67, 100D) should equal (67D)
         }
       }
     }
     "Phi" when {
       "called with a valid Phi value" should {
         "produce a valid Phi object" in {
-          val phi = FrankWolfe.Phi(0.8D)
+          val phi = GraphXFrankWolfe.Phi(0.8D)
           phi.value should equal (0.8D)
           phi.inverse should be >= 0.19D
           phi.inverse should be <= 0.2D
@@ -69,7 +70,7 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
       "called with an invalid Phi value" should {
         "throw an exception" in {
           val testValue: Double = 1.2D
-          val thrown = the [IllegalArgumentException] thrownBy FrankWolfe.Phi(testValue)
+          val thrown = the [IllegalArgumentException] thrownBy GraphXFrankWolfe.Phi(testValue)
           thrown.getMessage should equal (s"requirement failed: Phi is only defined for values in the range [0,1], but found ${testValue.toString}")
         }
       }
@@ -78,9 +79,9 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
       "called with two road networks" should {
         "calculate the relative gap of those two networks" in {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(networkFilePathSuite01, snapshotFilePathSuite01).get
-          val (currentIteration, _) = FrankWolfe.Assignment(graph, testODPairsSuite01, CostFlow())
-          val (aonAssignment, _) = FrankWolfe.Assignment(graph, testODPairsSuite01, AONFlow())
-          FrankWolfe.relativeGap(currentIteration, aonAssignment) should be < 1.0D
+          val (currentIteration, _) = GraphXFrankWolfe.Assignment(graph, testODPairsSuite01, CostFlow())
+          val (aonAssignment, _) = GraphXFrankWolfe.Assignment(graph, testODPairsSuite01, AONFlow())
+          GraphXFrankWolfe.relativeGap(currentIteration, aonAssignment) should be < 1.0D
         }
       }
     }
@@ -89,8 +90,8 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
         "compute sum (linkFlow * currentLinkCost)" in {
           val graphWithoutFlows = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFile(networkFilePathSuite01).get
           val graphWithFlows = graphWithoutFlows.mapEdges(edge => edge.attr.copy(flow = 100D))
-          val objWithoutFlows = FrankWolfe.SystemOptimalObjective(graphWithoutFlows)
-          val objWithFlows = FrankWolfe.SystemOptimalObjective(graphWithFlows)
+          val objWithoutFlows = GraphXFrankWolfe.SystemOptimalObjective(graphWithoutFlows)
+          val objWithFlows = GraphXFrankWolfe.SystemOptimalObjective(graphWithFlows)
           println(s"$objWithoutFlows $objWithFlows")
           objWithoutFlows should be < objWithFlows
         }
@@ -106,8 +107,8 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
       "called" should {
         "prove to be interesting" in {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(networkFilePathSuite01, snapshotFilePathSuite01).get
-          val (comparisonGraph, comparisonPaths) = FrankWolfe.Assignment(graph, thousandODPairsSuite01, CostFlow())
-          val result: FWSolverResult = FrankWolfe.solve(graph, thousandODPairsSuite01, RelativeGapTerminationCriteria(0.0001))
+          val (comparisonGraph, comparisonPaths) = GraphXFrankWolfe.Assignment(graph, thousandODPairsSuite01, CostFlow())
+          val result: FWSolverResult = GraphXFrankWolfe.solve(graph, thousandODPairsSuite01, RelativeGapTerminationCriteria(0.0001))
           println(s"~~with fw~~")
           result.paths.distinct.foreach(println(_))
           result.finalNetwork.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.linkCostFlow}"))
@@ -119,8 +120,8 @@ class FrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
       "called with the MATSim equil example network" should {
         "also do something interesting" in {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(networkFilePathSuite02, snapshotFilePathSuite02).get
-          val (comparisonGraph, comparisonPaths) = FrankWolfe.Assignment(graph, twoHundredODPairsSuite02, CostFlow())
-          val result: FWSolverResult = FrankWolfe.solve(graph, twoHundredODPairsSuite02, IterationTerminationCriteria(10))
+          val (comparisonGraph, comparisonPaths) = GraphXFrankWolfe.Assignment(graph, twoHundredODPairsSuite02, CostFlow())
+          val result: FWSolverResult = GraphXFrankWolfe.solve(graph, twoHundredODPairsSuite02, IterationTerminationCriteria(10))
           println(s"~~with fw~~")
           result.paths.distinct.foreach(println(_))
           result.finalNetwork.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.linkCostFlow}"))

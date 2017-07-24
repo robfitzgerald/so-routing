@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.SimpleMSSP_ODPair
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp.SimpleMSSP_ODPair
 
 class PersonNodeTests extends SORoutingUnitTestTemplate {
   "PersonNode" when {

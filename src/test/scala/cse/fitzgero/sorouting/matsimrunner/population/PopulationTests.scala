@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 

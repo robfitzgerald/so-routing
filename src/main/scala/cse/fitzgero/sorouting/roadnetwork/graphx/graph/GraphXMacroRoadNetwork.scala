@@ -7,7 +7,7 @@ import scala.xml.{Elem, XML}
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx.{Graph, _}
 import org.apache.spark.rdd.RDD
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp.ODPaths
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp.ODPaths
 import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graphx.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}

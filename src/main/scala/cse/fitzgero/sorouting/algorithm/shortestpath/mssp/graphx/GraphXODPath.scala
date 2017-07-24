@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.algorithm.mssp.graphx
+package cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx
 
-import cse.fitzgero.sorouting.algorithm.mssp.ODPath
+import cse.fitzgero.sorouting.algorithm.shortestpath._
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 import org.apache.spark.graphx.VertexId
 

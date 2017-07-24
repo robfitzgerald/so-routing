@@ -1,17 +1,17 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment
+package cse.fitzgero.sorouting.algorithm.trafficassignment.graphx
 
 import java.time._
 
-import scala.math.abs
-import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork
-import cse.fitzgero.sorouting.algorithm.mssp.graphx._
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
-import org.apache.spark.graphx.{EdgeRDD, Graph, VertexId}
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
+import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork
+import org.apache.spark.graphx.{EdgeRDD, Graph}
 
 import scala.annotation.tailrec
+import scala.math.abs
 
-object FrankWolfe extends TrafficAssignment {
+object GraphXFrankWolfe extends GraphXTrafficAssignment {
 
   case class RelativeGapSummation(currentFlowTimesCost: Double, aonFlowTimesCost: Double)
 

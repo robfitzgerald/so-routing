@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.mssp.graphx
+package cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx
 
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 

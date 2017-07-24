@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.algorithm.sssp.localgraph
+package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph
 
-import cse.fitzgero.sorouting.algorithm.sssp._
+import cse.fitzgero.sorouting.algorithm.shortestpath._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._

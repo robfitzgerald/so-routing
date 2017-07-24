@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.algorithm.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
 
 import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
