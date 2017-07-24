@@ -1,17 +1,19 @@
 package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
+import scala.util.{Failure, Success}
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp.ODPairs
 import org.apache.spark.{SparkConf, SparkContext}
+
+import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.graphx._
+import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph.GraphXMacroRoadNetwork
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
 
-import scala.util.{Failure, Success}
 
 object SORoutingApplication extends App {
 
