@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.roadnetwork.localgraph
 
 class LocalGraph [V, E] private[localgraph]
-  (adj: Map[VertexId, Map[EdgeId, VertexId]], _v: Map[VertexId, V], _e: Map[EdgeId, E]) {
+(adj: Map[VertexId, Map[EdgeId, VertexId]], _v: Map[VertexId, V], _e: Map[EdgeId, E]) {
 
   case class Triplet(o: VertexId, e: EdgeId, d: VertexId)
   case class TripletAttrs(o: V, e: E, d: V)
@@ -62,7 +62,7 @@ class LocalGraph [V, E] private[localgraph]
   }
 
   override def toString: String =
-    adjacencyList.map(kv => s"${kv._1.toString} | ${kv._2.mkString("->")}").mkString(" ")
+    adjacencyList.map(kv => s"${kv._1.toString} | ${kv._2.mkString("->")}").mkString("\n")
 }
 
 object LocalGraph {

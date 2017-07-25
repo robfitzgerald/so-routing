@@ -15,11 +15,6 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
 
   case class RelativeGapSummation(currentFlowTimesCost: Double, aonFlowTimesCost: Double)
 
-  case class Phi (value: Double) {
-    require(value <= 1 && value >= 0, s"Phi is only defined for values in the range [0,1], but found $value")
-    val inverse: Double = 1 - value
-  }
-
   abstract class FrankWolfeObjective extends Serializable {
     case class MapReduceAccumulator(value: Double)
   }
@@ -35,9 +30,9 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
     * @param terminationCriteria a rule for algorithm termination
     * @return results of this traffic assignment
     */
-  override def solve(initialGraph: RoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): FWSolverResult = {
+  override def solve(initialGraph: RoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): GraphXFWSolverResult = {
     if (odPairs.isEmpty)
-      FWSolverResult(Nil, initialGraph, 0, 0)
+      GraphXFWSolverResult(Nil, initialGraph, 0, 0)
     else {
       val startTime = Instant.now().toEpochMilli
 
@@ -48,18 +43,12 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
         * @return results of this traffic assignment
         */
       @tailrec
-      def _solve(previousGraph: RoadNetwork, iter: Int = 1): FWSolverResult = {
-
-        //      println(s"~~ _solve at iteration $iter - previousGraph")
-        //      previousGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
+      def _solve(previousGraph: RoadNetwork, iter: Int = 1): GraphXFWSolverResult = {
 
         // all-or-nothing assignment
         val (oracleGraph, paths) = Assignment(previousGraph, odPairs, CostFlow())
 
-        //      println(s"~~ _solve at iteration $iter - oracleGraph")
-        //      oracleGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
-
-        // step size - should be based on our objective function
+        // TODO: step size - should be based on our objective function
         val phi = Phi(2.0D/(iter + 2.0D))
 
         val updatedEdges: EdgeRDD[MacroscopicEdgeProperty] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
@@ -69,19 +58,17 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
         })
         val currentGraph: RoadNetwork = Graph(previousGraph.vertices, updatedEdges)
 
-        //      println(s"~~ _solve at iteration $iter - currentGraph")
-        //      currentGraph.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.cost.zeroValue} ${edge.attr.linkCostFlow}"))
-
         val stoppingConditionIsMet: Boolean =
-          evaluateStoppingCriteria(
-            terminationCriteria,
-            relativeGap(currentGraph, oracleGraph),  // call-by-name argument
-            startTime,
-            iter)
+          terminationCriteria
+            .eval(TerminationData(
+              startTime,
+              iter,
+              relativeGap(currentGraph, oracleGraph)
+            ))
 
         if (stoppingConditionIsMet) {
           val totalTime = Instant.now().toEpochMilli - startTime
-          FWSolverResult(paths, currentGraph, iter, totalTime)
+          GraphXFWSolverResult(paths, currentGraph, iter, totalTime)
         }
         else {
           _solve(currentGraph, iter + 1)
@@ -89,16 +76,6 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
       }
       _solve(initialGraph)
     }
-  }
-
-  def evaluateStoppingCriteria(terminationCriteria: TerminationCriteria, relGap: => Double, startTime: Long, iter: Int): Boolean = terminationCriteria match {
-    case RelativeGapTerminationCriteria(relGapThresh) => relGap > relGapThresh
-    case IterationTerminationCriteria(iterThresh) => iter >= iterThresh
-    case RunningTimeTerminationCriteria(timeThresh) => Instant.now().toEpochMilli - startTime > timeThresh
-    case AllTerminationCriteria(relGapThresh, iterThresh, timeThresh) =>
-      relGap > relGapThresh &&
-      iter >= iterThresh &&
-      Instant.now().toEpochMilli - startTime > timeThresh
   }
 
   def Assignment(graph: RoadNetwork, odPairs: ODPairs, assignmentType: CostMethod): (RoadNetwork, ODPaths) = {
@@ -115,16 +92,6 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
   }
 
   /**
-    * used to find the flow values for the current phase of Frank-Wolfe
-    *
-    * @param phi      a phi value with it's inverse (1 - phi) pre-calculated, for performance
-    * @param linkFlow this link's flow of the previous FW iteration
-    * @param aonFlow  this link's flow in the All-Or-Nothing assignment
-    * @return the flow value for the next step
-    */
-  def frankWolfeFlowCalculation(phi: Phi, linkFlow: Double, aonFlow: Double): Double = (phi.inverse * linkFlow) + (phi.value * aonFlow)
-
-  /**
     * calculates the relative gap value based on the two available graphs
     * @param currentGraph expected to be the graph constructed from the current Frank-Wolfe iteration
     * @param aonGraph expected to be the same graph as "currentGraph' but with all-or-nothing flow assignments
@@ -133,10 +100,11 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
   def relativeGap(currentGraph: RoadNetwork, aonGraph: RoadNetwork): Double = {
     val sum: RelativeGapSummation = currentGraph.edges.innerJoin(aonGraph.edges)((_, _, currentEdge, aonEdge) => {
       RelativeGapSummation(
-        currentEdge.flow * currentEdge.linkCostFlow,
-        aonEdge.flow * aonEdge.linkCostFlow
+        currentEdge.allFlow * currentEdge.linkCostFlow,
+        aonEdge.allFlow * aonEdge.linkCostFlow
       )
     }).reduce((e1, e2) => e1.copy(attr = RelativeGapSummation(e1.attr.currentFlowTimesCost + e2.attr.currentFlowTimesCost, e1.attr.aonFlowTimesCost + e2.attr.aonFlowTimesCost))).attr
-    abs((sum.currentFlowTimesCost - sum.aonFlowTimesCost) / sum.currentFlowTimesCost)
+    val result = abs((sum.currentFlowTimesCost - sum.aonFlowTimesCost) / sum.currentFlowTimesCost)
+    math.max(math.min(result, 1.0D), 0.0D) // result has domain [0.0, 1.0]
   }
 }

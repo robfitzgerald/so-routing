@@ -108,7 +108,7 @@ class GraphXFrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
         "prove to be interesting" in {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(networkFilePathSuite01, snapshotFilePathSuite01).get
           val (comparisonGraph, comparisonPaths) = GraphXFrankWolfe.Assignment(graph, thousandODPairsSuite01, CostFlow())
-          val result: FWSolverResult = GraphXFrankWolfe.solve(graph, thousandODPairsSuite01, RelativeGapTerminationCriteria(0.0001))
+          val result: GraphXFWSolverResult = GraphXFrankWolfe.solve(graph, thousandODPairsSuite01, RelativeGapTerminationCriteria(0.0001))
           println(s"~~with fw~~")
           result.paths.distinct.foreach(println(_))
           result.finalNetwork.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.linkCostFlow}"))
@@ -121,7 +121,7 @@ class GraphXFrankWolfeTests extends SparkUnitTestTemplate("FrankWolfeTests") {
         "also do something interesting" in {
           val graph = GraphXMacroRoadNetwork(sc, BPRCostFunction).fromFileAndSnapshot(networkFilePathSuite02, snapshotFilePathSuite02).get
           val (comparisonGraph, comparisonPaths) = GraphXFrankWolfe.Assignment(graph, twoHundredODPairsSuite02, CostFlow())
-          val result: FWSolverResult = GraphXFrankWolfe.solve(graph, twoHundredODPairsSuite02, IterationTerminationCriteria(10))
+          val result: GraphXFWSolverResult = GraphXFrankWolfe.solve(graph, twoHundredODPairsSuite02, IterationTerminationCriteria(10))
           println(s"~~with fw~~")
           result.paths.distinct.foreach(println(_))
           result.finalNetwork.edges.toLocalIterator.foreach(edge => println(s"${edge.attr.id} ${edge.attr.flow} ${edge.attr.linkCostFlow}"))

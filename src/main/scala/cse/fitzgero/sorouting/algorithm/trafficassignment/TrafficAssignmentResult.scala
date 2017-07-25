@@ -1,10 +1,14 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment
 
-import cse.fitzgero.sorouting.algorithm.shortestpath._
+sealed trait TrafficAssignmentResult
 
-abstract class TrafficAssignmentResult [G]{
-  def paths: Seq[ODPath[_,_]]
+abstract class TrafficAssignmentSolution [G] extends TrafficAssignmentResult {
   def finalNetwork: G
   def iterations: Int
   def time: Long
 }
+
+case class NoTrafficAssignmentSolution(
+  iterations: Int = 0,
+  time: Long = 0L
+) extends TrafficAssignmentResult

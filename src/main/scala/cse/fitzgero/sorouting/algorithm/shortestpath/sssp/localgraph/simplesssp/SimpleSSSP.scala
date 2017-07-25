@@ -1,19 +1,11 @@
-package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph
+package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp
 
 import cse.fitzgero.sorouting.algorithm.shortestpath._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
-import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._
+import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 
 import scala.annotation.tailrec
-
-
-case class SimpleSSSP_ODPair(srcVertex: VertexId, dstVertex: VertexId) extends ODPair[VertexId]
-case class SimpleSSSP_ODPath(srcVertex: VertexId, dstVertex: VertexId, path: List[EdgeId], cost: List[Double]) extends ODPath[VertexId, EdgeId]
-sealed trait BackPropagationData
-case class π(edge: EdgeId, srcVertex: VertexId) extends BackPropagationData
-case object Origin extends BackPropagationData
-case class SimpleSSSP_SearchNode(π: BackPropagationData, d: Double)
 
 class SimpleSSSP [V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[LocalGraph[V, E], SimpleSSSP_ODPair, SimpleSSSP_ODPath] {
   override def shortestPath (graph: LocalGraph[V, E], od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =

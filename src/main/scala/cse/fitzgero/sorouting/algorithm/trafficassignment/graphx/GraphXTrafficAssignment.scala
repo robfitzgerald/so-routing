@@ -4,10 +4,7 @@ import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph._
 
-/**
-  * Gradient-based traffic assignment solver
-  */
-
-abstract class GraphXTrafficAssignment extends TrafficAssignment[RoadNetwork, SimpleMSSP_ODPair]{
-  def solve (graph: RoadNetwork, odPairs: Seq[SimpleMSSP_ODPair], terminationCriteria: TerminationCriteria): TrafficAssignmentResult[RoadNetwork]
+abstract class GraphXTrafficAssignment extends TrafficAssignment[RoadNetwork, SimpleMSSP_ODPair] with Serializable {
+  // TODO: solve now returns base sealed trait which includes a NoSolution type. change the graphx implementation to support the broader set of categories
+  def solve (graph: RoadNetwork, odPairs: Seq[SimpleMSSP_ODPair], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
 }

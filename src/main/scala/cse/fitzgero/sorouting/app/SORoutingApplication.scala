@@ -91,7 +91,7 @@ object SORoutingApplication extends App {
 
     if (groupToRoute.nonEmpty) println(s"${LocalTime.now} - routing group in range [$startOfTimeRange,$endOfTimeRange) of size ${groupToRoute.size}")
 
-    val result: FWSolverResult = GraphXFrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
+    val result: GraphXFWSolverResult = GraphXFrankWolfe.solve(graph, groupToRoute, IterationTerminationCriteria(10))
 
     if (result.iterations != 0) println(s"${LocalTime.now} - completed in ${result.time} ms")
 
