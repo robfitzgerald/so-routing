@@ -11,6 +11,33 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
     val networkFilePath: String =   "src/test/resources/LocalGraphFrankWolfeTests/network.xml"
     val snapshotFilePath: String =   "src/test/resources/LocalGraphFrankWolfeTests/snapshot.xml"
     val networkNoSolutionFilePath: String = "src/test/resources/LocalGraphFrankWolfeTests/networkNoSolution.xml"
+    val equilNetwork: String =  "src/test/resources/GraphXMacroRoadNetworkTests/network-matsim-example-equil.xml"
+    val equilSnapshot: String = "src/test/resources/GraphXMacroRoadNetworkTests/snapshot-matsim-example-equil.xml"
+    "solve" when {
+      "called with the MATSim equil example network" should {
+        "also do something interesting" in {
+          val rand = new scala.util.Random
+          def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
+          val twoHundredODPairs: Seq[SimpleSSSP_ODPair] = (1 to 200).map(n => SimpleSSSP_ODPair(randomNodeId(n), randomNodeId(n)))
+          twoHundredODPairs.foreach(println)
+          val graph = LocalGraphMATSimFactory.fromFileAndSnapshot(equilNetwork, equilSnapshot).get
+
+          LocalGraphFrankWolfe.solve(graph, twoHundredODPairs, IterationTerminationCriteria(10)) match {
+            case NoTrafficAssignmentSolution(iter, time) => fail()
+            case LocalGraphFWSolverResult(result, iter, time, relGap) =>
+              println(s"~~with fw~~")
+              println(s"${result.toString}")
+              println(s"${result.edgeAttrs.map(_.allFlow).mkString(" ")}")
+              println(s"${result.edgeAttrs.map(_.linkCostFlow).mkString(" ")}")
+              println(s"~~without fw~~")
+              println(s"${graph.toString}")
+              println(s"${graph.edgeAttrs.map(_.allFlow).mkString(" ")}")
+              println(s"${graph.edgeAttrs.map(_.linkCostFlow).mkString(" ")}")
+              println(s"iterations $iter time $time relGap $relGap")
+          }
+        }
+      }
+    }
     "assignment" when {
       "called with a small valid graph with no flows and valid set of od pairs" should {
         "assign flows to the obvious edges along the most direct paths" in {
