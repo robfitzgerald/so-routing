@@ -18,7 +18,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
     "shortestPath" when {
       "run on two vertices in a 3 vertex network with one solution" should {
         "find that solution" in {
-          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = LocalGraphMATSimFactory.fromFile(networkFilePath).get
+          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           val sssp: SSSP[LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty], SimpleSSSP_ODPair, SimpleSSSP_ODPath] =
             SimpleSSSP[CoordinateVertexProperty, MacroscopicEdgeProperty]()
           val result: SimpleSSSP_ODPath = sssp.shortestPath(graph, SimpleSSSP_ODPair(1L, 3L))
@@ -48,9 +48,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
     "djikstrasAlgorithm" when {
       "called with an itty bitty triangle graph and valid od pair" should {
         "produce the shortest path" in {
-          val factory = LocalGraphMATSimFactory
-          factory.setCostFunctionFactory(TestCostFunction)
-          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = factory.fromFile(networkFilePath).get
+          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           val odPair = SimpleSSSP_ODPair(1L, 3L)
           val sssp = new SimpleSSSP[CoordinateVertexProperty, MacroscopicEdgeProperty]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
@@ -60,9 +58,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
       }
       "called with an itty bitty triangle graph, snapshot, and valid od pair" should {
         "produce the shortest path" in {
-          val factory = LocalGraphMATSimFactory
-          factory.setCostFunctionFactory(BPRCostFunction)
-          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = factory.fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val odPair = SimpleSSSP_ODPair(1L, 3L)
           val sssp = new SimpleSSSP[CoordinateVertexProperty, MacroscopicEdgeProperty]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
@@ -72,9 +68,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
       }
       "called with the MATSim Equil network and valid od pair" should {
         "produce the shortest path" in {
-          val factory = LocalGraphMATSimFactory
-          factory.setCostFunctionFactory(BPRCostFunction)
-          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = factory.fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
+          val graph: LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
           val odPair = SimpleSSSP_ODPair(1L, 15L)
           val sssp = new SimpleSSSP[CoordinateVertexProperty, MacroscopicEdgeProperty]
           val result = sssp.djikstrasAlgorithm(graph, odPair)

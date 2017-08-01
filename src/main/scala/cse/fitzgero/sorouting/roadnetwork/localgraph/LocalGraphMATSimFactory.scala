@@ -10,15 +10,13 @@ import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, NodeSeq}
 
-object LocalGraphMATSimFactory extends
+class LocalGraphMATSimFactory (
+  var costFunctionFactory: CostFunctionFactory,
+  var MATSimFlowRate: Double,
+  var AlgorithmFlowRate: Double
+) extends
   CanReadNetworkFiles[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] with
   CanReadFlowSnapshotFiles[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] {
-
-  var MATSimFlowRate = 3600D
-  var AlgorithmFlowRate = 3600D
-  var costFunctionFactory: CostFunctionFactory = TestCostFunction
-
-  def setCostFunctionFactory(c: CostFunctionFactory): Unit = costFunctionFactory = c
 
   override def fromFile(fileName: String): Try[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] =
     fromFileAndSnapshot(fileName)
@@ -87,4 +85,12 @@ object LocalGraphMATSimFactory extends
         })
     }
   }
+}
+
+object LocalGraphMATSimFactory{
+  def apply(
+    costFunctionFactory: CostFunctionFactory,
+    MATSimFlowRate: Double = 3600D,
+    AlgorithmFlowRate: Double = 3600D): LocalGraphMATSimFactory =
+    new LocalGraphMATSimFactory(costFunctionFactory, MATSimFlowRate, AlgorithmFlowRate)
 }

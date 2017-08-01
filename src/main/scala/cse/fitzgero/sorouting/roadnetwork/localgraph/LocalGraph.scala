@@ -10,6 +10,7 @@ class LocalGraph [V, E] private[localgraph]
   def vertices: Iterable[VertexId] = _v.keys
   def edges: Iterable[EdgeId] = _e.keys
   def edgeAttrs: Iterable[E] = _e.values
+  def edgeKVPairs: Iterator[(EdgeId, E)] = _e.iterator
   def vertexAttrs: Iterable[V] = _v.values
   def edgeAttrOf(e: EdgeId): Option[E] =
     if (_e.isDefinedAt(e)) Some(_e(e))

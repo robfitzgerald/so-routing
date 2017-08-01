@@ -9,6 +9,7 @@ import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
 
 import scala.annotation.tailrec
+import scala.collection.parallel.ParSeq
 import scala.math.abs
 
 object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraph[CoordinateVertexProperty,MacroscopicEdgeProperty], SimpleSSSP_ODPair] {
@@ -34,22 +35,40 @@ object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraph[CoordinateVerte
         previousGraph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty],
         iter: Int = 1): LocalGraphFWSolverResult = {
 
+//        println(s"_solve iteration $iter (total: ${previousGraph.edgeAttrs.map(_.allFlow).sum})")
+//        println(s"${previousGraph.edgeAttrs.map(_.allFlow).mkString(" ")}")
+
         // all-or-nothing assignment
+        // TODO: this should output a new set of flows, not add to the flows of previousGraph
         val oracleGraph = assignment(previousGraph, odPairs)
 
-        // TODO: step size - should be based on our objective function
-        val phi = Phi(2.0D / (iter + 2.0D))
+        val phi = Phi.linearFromIteration(iter)
+
 
         val currentGraph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] =
-        previousGraph
+          previousGraph
           .edges
-          .map((id: EdgeId) => (id, previousGraph.edgeAttrOf(id).get))
-          .zip(oracleGraph.edgeAttrs)
-          .foldLeft(previousGraph)(
+            // TODO: better UNION here please. don't like the assumption that id/edge ordering is consistent
+          .map((id: EdgeId) => (id, previousGraph.edgeAttrOf(id).get)).zip(oracleGraph.edgeAttrs)
+          .foldLeft(initialGraph)(
             (newGraph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty],
-              tuple: ((EdgeId, MacroscopicEdgeProperty), MacroscopicEdgeProperty)) => {
-              newGraph.updateEdge(tuple._1._1, tuple._1._2.copy(flow = tuple._1._2.flow + tuple._2.flow))
+                tuple: ((EdgeId, MacroscopicEdgeProperty), MacroscopicEdgeProperty)) => {
+              val edgeIdToModify = tuple._1._1
+              val edgePreviousAttr = tuple._1._2
+              val edgePreviousFlow = edgePreviousAttr.flow
+              val edgeCurrentFlow = tuple._2.flow
+              newGraph
+                .updateEdge(
+                    edgeIdToModify,
+                    edgePreviousAttr
+                      .copy(flow = frankWolfeFlowCalculation(phi, edgePreviousFlow, edgeCurrentFlow)))
             })
+
+        println(s"current graph at iteration $iter ")
+        println(s"phi: ${phi.value} phiInverse: ${phi.inverse}")
+        println(s"links used: ${currentGraph.edgeAttrs.map(_.allFlow).sum}")
+        println(s"network cost: ${currentGraph.edgeAttrs.map(_.linkCostFlow).sum}")
+        println(s"${currentGraph.edgeAttrs.map(_.allFlow).mkString(" ")}")
 
         val stoppingConditionIsMet: Boolean =
           terminationCriteria
@@ -72,13 +91,21 @@ object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraph[CoordinateVerte
     }
   }
 
+  /**
+    * given a graph and a set of od pairs, we perform an "all-or-nothing" assignment based on the link costs of srcGraph
+    * @param srcGraph graph to grab flow costs from, to copy, reset flow values, and add the path flows to
+    * @param odPairs set of origin destination pairs
+    * @return
+    */
   def assignment(
-    graph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty],
+    srcGraph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty],
     odPairs: Seq[SimpleSSSP_ODPair]
   ): LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
     val SSSP = SimpleSSSP[CoordinateVertexProperty, MacroscopicEdgeProperty]()
-    val flowsToAdd: Map[EdgeId, Double] = odPairs
-      .map(od => SSSP.shortestPath(graph, od))
+
+    val flowsToAdd: Map[EdgeId, Double] =
+      odPairs
+      .map(od => SSSP.shortestPath(srcGraph, od))
       .foldLeft(Map.empty[EdgeId, Double])((flows: Map[EdgeId, Double], odPath) => {
         odPath.path.zip(odPath.cost).foldLeft(flows)((updatedFlows, pathCostTuple) => {
           val eId = pathCostTuple._1
@@ -87,8 +114,16 @@ object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraph[CoordinateVerte
           else updatedFlows.updated(eId, 1D)
         })
       })
-    flowsToAdd.foldLeft(graph)((updatedGraph, flowDelta) => {
-      graph.edgeAttrOf(flowDelta._1) match {
+
+    val dstGraph =
+      srcGraph
+        .edgeKVPairs
+        .foldLeft(srcGraph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty])((g, eTup) => {
+          g.updateEdge(eTup._1, eTup._2.copy(flow = 0D))
+        })
+
+    flowsToAdd.foldLeft(dstGraph)((updatedGraph, flowDelta) => {
+      srcGraph.edgeAttrOf(flowDelta._1) match {
         case Some(edgeAttr: MacroscopicEdgeProperty) =>
           updatedGraph.updateEdge(flowDelta._1, edgeAttr.copy(flow = edgeAttr.flow + flowDelta._2))
         case None => updatedGraph

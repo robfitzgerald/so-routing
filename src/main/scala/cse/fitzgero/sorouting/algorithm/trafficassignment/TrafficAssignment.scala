@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment
 
 import java.time.Instant
 
-abstract class TrafficAssignment [G, O]{
+abstract class TrafficAssignment [G, O] {
   /**
     * solves the traffic assignment problem for the given graph and set of origin/destination pairs. od pairs are assumed to be individual agents, not flows of agents.
     * @param graph the network to solve on
@@ -18,7 +18,19 @@ abstract class TrafficAssignment [G, O]{
     */
   case class Phi (value: Double) {
     require(value <= 1 && value >= 0, s"Phi is only defined for values in the range [0,1], but found $value")
-    val inverse: Double = 1 - value
+    val inverse: Double = 1.0D - value
+  }
+
+  /**
+    * convenience methods for types of Phi values
+    */
+  case object Phi {
+    /**
+      * calculates a linear phi value that starts from 1 and takes simple fraction steps (at first) toward 0
+      * @param i current assignment algorithm iteration (assumed to begin at 1)
+      * @return Phi
+      */
+    def linearFromIteration(i: Int): Phi = Phi(2.0D / (i + 1.0D))
   }
 
   /**

@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.roadnetwork.localgraph
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import cse.fitzgero.sorouting.roadnetwork.costfunction.TestCostFunction
 import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge.MacroscopicEdgeProperty
 import cse.fitzgero.sorouting.roadnetwork.scalagraph.vertex.CoordinateVertexProperty
 
@@ -27,7 +28,7 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
     "fromFile" when {
       "called with a valid network file url" should {
         "build a graph from that file" in {
-          val result = LocalGraphMATSimFactory.fromFile(networkFilePath).get
+          val result = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           result.vertices.toList.sorted should equal (List(1L, 2L, 3L))
           result.edges.toList.sorted should equal (List(1L, 2L, 3L))
           result.adjacencyList(1L) should equal (Map[EdgeId, VertexId](1L -> 2L))
@@ -39,7 +40,7 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
     "fromFileAndSnapshot" when {
       "called with valid network file and snapshot file urls" should {
         "build a graph with edge flows" in {
-          val result = LocalGraphMATSimFactory.fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          val result = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           result.edgeAttrOf(1L).get.cost.zeroValue should equal (123.0D)
           result.edgeAttrOf(2L).get.cost.zeroValue should equal (456.0D)
           result.edgeAttrOf(3L).get.cost.zeroValue should equal (789.0D)
@@ -51,7 +52,7 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
         "create a LocalGraph instance which has all vertices described in the network file" in {
           val grabVertices = PrivateMethod[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]]('grabVertices)
           val emptyGraph = LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]()
-          val result: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = LocalGraphMATSimFactory invokePrivate grabVertices(emptyGraph, testXML)
+          val result: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction) invokePrivate grabVertices(emptyGraph, testXML)
           result.vertices.toList should equal (List(1L, 2L, 3L))
         }
       }
