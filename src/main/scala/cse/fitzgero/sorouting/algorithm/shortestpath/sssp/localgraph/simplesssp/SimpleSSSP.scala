@@ -1,11 +1,13 @@
 package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp
 
+import scala.annotation.tailrec
+import scala.collection.mutable.PriorityQueue
+
 import cse.fitzgero.sorouting.algorithm.shortestpath._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 
-import scala.annotation.tailrec
 
 class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, SimpleSSSP_ODPair, SimpleSSSP_ODPath] {
   override def shortestPath (graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =
@@ -17,20 +19,26 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
     val DistanceLowerBound = 0D
     val NoPathFound = SimpleSSSP_ODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
-    implicit val tripletOrdering: Ordering[graph.Triplet] =
+    implicit val tripletOrdering: Ordering[graph.Triplet] = Ordering.by {
       (t: graph.Triplet) => {
         val edge: E =  graph.edgeAttrOf(t.e).get
         val flow: Double = edge.flow
         edge.cost.costFlow(flow)
       }
+    }
+    val startFrontier: collection.mutable.PriorityQueue[graph.Triplet] = collection.mutable.PriorityQueue()(tripletOrdering)
+    graph
+      .neighborTriplets(od.srcVertex)
+      .foreach(t => startFrontier.enqueue(t))
 
     @tailrec
-    def _djikstrasAlgorithm(solution: Map[VertexId, SimpleSSSP_SearchNode], frontier: Iterator[graph.Triplet]): SimpleSSSP_ODPath = {
+    def _djikstrasAlgorithm(solution: Map[VertexId, SimpleSSSP_SearchNode], frontier: collection.mutable.PriorityQueue[graph.Triplet]): SimpleSSSP_ODPath = {
       if (frontier.isEmpty) NoPathFound
       else {
-        val currentTriplet = frontier.next
+        val currentTriplet = frontier.dequeue
         val edgeCostAttr = graph.edgeAttrOf(currentTriplet.e).get
-        val edgeCost: Double = edgeCostAttr.cost.costFlow(edgeCostAttr.flow)  // @TODO: decide on cost function needs!  revise class heirarchy?
+        // evaluate the cost function with the flow + snapshotFlow (implicitly) as input
+        val edgeCost: Double = edgeCostAttr.cost.costFlow(edgeCostAttr.flow)
         // check if our current working solution has a path already that terminates at the current triplet's destination
         val nextSolution =
           if (!solution.isDefinedAt(currentTriplet.d)) {
@@ -50,7 +58,7 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
     }
     _djikstrasAlgorithm(
       Map[VertexId, SimpleSSSP_SearchNode](origin -> OriginSearchData),
-      graph.neighborTriplets(od.srcVertex)
+      startFrontier
     )
   }
 

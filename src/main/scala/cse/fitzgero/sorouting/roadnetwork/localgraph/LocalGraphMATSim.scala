@@ -6,8 +6,6 @@ class LocalGraphMATSim
 (adj: GenMap[VertexId, Map[EdgeId, VertexId]], _v: GenMap[VertexId, VertexMATSim], _e: GenMap[EdgeId, EdgeMATSim])
   extends LocalGraph[VertexMATSim, EdgeMATSim](adj, _v, _e) {
 
-  val self = this
-
   def replaceEdgeList(es: GenSeq[EdgeMATSim]): LocalGraphMATSim = {
     val newEdges: GenMap[EdgeId, EdgeMATSim] =
       es.map(e => e.id -> e).toMap
