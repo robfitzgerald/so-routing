@@ -1,17 +1,22 @@
 package cse.fitzgero.sorouting.roadnetwork.localgraph
 
+import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
+
+import scala.collection.{GenIterable, GenMap}
+
 class LocalGraph [V, E] private[localgraph]
-(adj: Map[VertexId, Map[EdgeId, VertexId]], _v: Map[VertexId, V], _e: Map[EdgeId, E]) {
+(adj: GenMap[VertexId, Map[EdgeId, VertexId]], _v: GenMap[VertexId, V], _e: GenMap[EdgeId, E])
+extends RoadNetwork {
 
   case class Triplet(o: VertexId, e: EdgeId, d: VertexId)
   case class TripletAttrs(o: V, e: E, d: V)
 
-  def adjacencyList: Map[VertexId, Map[EdgeId, VertexId]] = adj
-  def vertices: Iterable[VertexId] = _v.keys
-  def edges: Iterable[EdgeId] = _e.keys
-  def edgeAttrs: Iterable[E] = _e.values
+  def adjacencyList: GenMap[VertexId, Map[EdgeId, VertexId]] = adj
+  def vertices: GenIterable[VertexId] = _v.keys
+  def edges: GenIterable[EdgeId] = _e.keys
+  def edgeAttrs: GenIterable[E] = _e.values
   def edgeKVPairs: Iterator[(EdgeId, E)] = _e.iterator
-  def vertexAttrs: Iterable[V] = _v.values
+  def vertexAttrs: GenIterable[V] = _v.values
   def edgeAttrOf(e: EdgeId): Option[E] =
     if (_e.isDefinedAt(e)) Some(_e(e))
     else None
@@ -41,6 +46,7 @@ class LocalGraph [V, E] private[localgraph]
     neighborTriplets(v)
       .map(triplet => edgeAttrOf(triplet.e))
       .flatten
+
   def updateVertex(v: VertexId, attr: V): LocalGraph[V, E] =
     new LocalGraph(adj, _v.updated(v, attr), _e)
   def deleteVertex(v: VertexId): LocalGraph[V, E] =
@@ -61,6 +67,8 @@ class LocalGraph [V, E] private[localgraph]
     }
     else this
   }
+  def parallelize: LocalGraph[V, E] =
+    new LocalGraph(adj.par, _v.par, _e.par)
 
   override def toString: String =
     adjacencyList.map(kv => s"${kv._1.toString} | ${kv._2.mkString("->")}").mkString("\n")
@@ -69,4 +77,6 @@ class LocalGraph [V, E] private[localgraph]
 object LocalGraph {
   def apply[A,B](): LocalGraph[A,B] =
     new LocalGraph[A,B](Map.empty[VertexId, Map[EdgeId, VertexId]], Map.empty[VertexId, A], Map.empty[EdgeId, B])
+  def apply[A,B](adj: Map[VertexId, Map[EdgeId, VertexId]], v: Map[VertexId, A], e: Map[EdgeId, B]): LocalGraph[A,B] =
+    new LocalGraph[A,B](adj, v, e)
 }

@@ -41,9 +41,9 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
       "called with valid network file and snapshot file urls" should {
         "build a graph with edge flows" in {
           val result = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          result.edgeAttrOf(1L).get.cost.zeroValue should equal (123.0D)
-          result.edgeAttrOf(2L).get.cost.zeroValue should equal (456.0D)
-          result.edgeAttrOf(3L).get.cost.zeroValue should equal (789.0D)
+          result.edgeAttrOf(1L).get.cost.snapshotFlow should equal (123.0D)
+          result.edgeAttrOf(2L).get.cost.snapshotFlow should equal (456.0D)
+          result.edgeAttrOf(3L).get.cost.snapshotFlow should equal (789.0D)
         }
       }
     }

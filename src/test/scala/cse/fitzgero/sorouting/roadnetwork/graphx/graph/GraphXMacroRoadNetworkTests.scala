@@ -58,7 +58,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           val grabEdges = PrivateMethod[EdgeRDD[MacroscopicEdgeProperty]]('grabEdges)
           val result: RDD[Edge[MacroscopicEdgeProperty]] = GraphXMacroRoadNetwork(sc, TestCostFunction) invokePrivate grabEdges(testXML, testFlows)
           // confirm that the flow values in our graph are equivalent to those stored in the test object
-          result.toLocalIterator.foreach(edge => edge.attr.cost.zeroValue should equal (testFlowsMap(edge.attr.id)))
+          result.toLocalIterator.foreach(edge => edge.attr.cost.snapshotFlow should equal (testFlowsMap(edge.attr.id)))
           // confirm the TestCostFunction, which should be (x) => 1
           result.map(edge => edge.attr.linkCostFlow).sum should equal (3)
         }
@@ -123,7 +123,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
           for (linkId <- result.edges.map(_.attr.id).toLocalIterator) {
             List("1", "2", "3") should contain (linkId)
           }
-          for (flow <- result.edges.map(_.attr.cost.zeroValue).toLocalIterator) {
+          for (flow <- result.edges.map(_.attr.cost.snapshotFlow).toLocalIterator) {
             List(123D, 456D, 789D) should contain (flow)
           }
         }
@@ -143,7 +143,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
 
           val edgeSrcMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.srcId.toString)))
           val edgeDstMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.dstId.toString)))
-          val edgeZeroValueMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.cost.zeroValue.toInt.toString)))
+          val edgeZeroValueMap: Map[String, String] = result.edges.toLocalIterator.foldLeft(Map.empty[String, String])((map, e) => map ++ List((e.attr.id, e.attr.cost.snapshotFlow.toInt.toString)))
 
           // just testing our mock data here - the cardinality and id-uniqueness of the edge set is confirmed
           networkFlows.keys.foreach(networkLinks.keys.toSeq should contain (_))

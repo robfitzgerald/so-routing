@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.localgraph.edge
+package cse.fitzgero.sorouting.roadnetwork.edge
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFunction}
 
@@ -7,15 +7,15 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFu
   * basic requirements for a traffic assignment optimization framework
   *
   * @param id the MATSim edge id, used when converting back to MATSim
-  * @param flow current flow on edge (vehicles/time)
+  * @param flow current flow assignment on edge (vehicles/time), not including the snapshot flows
   * @param cost a cost/flow function such as BPL, which is a function of
-  *                 free flow capacity, free flow speed, and the current flow
+  *                 free flow capacity, free flow speed, and the current snapshot flow
   */
-case class MacroscopicEdgeProperty (
-  id: EdgeIdType = "",
+case class MacroscopicEdgeProperty [Id] (
+  id: Id,
   flow: Double = 1.0D,
   cost: CostFunction = TestCostFunction())  // default cost function is identity function of flow variable
   extends EdgeProperty {
   def linkCostFlow: Double = this.cost.costFlow(flow)
-  def allFlow: Double = flow + this.cost.zeroValue
+  def allFlow: Double = flow + this.cost.snapshotFlow
 }

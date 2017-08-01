@@ -240,7 +240,9 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
         "create an edge and connect the associated vertices in the adjacency list" in {
           new TestGraph {
             val result: LocalGraph[String, Double] = graph.addEdge(graph.Triplet(1L, 14L, 3L), 14.0D)
-            result.edges.toSeq.sorted should equal(Seq(10L, 11L, 12L, 13L, 14L))
+            result.edges.toSeq.foreach(edge => {
+              Set(10L, 11L, 12L, 13L, 14L)(edge) should be (true)
+            })
             result.edges.foreach(e => {
               result.edgeAttrOf(e).get should equal (e.toDouble)
             })

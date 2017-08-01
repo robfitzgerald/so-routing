@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.localgraph.edge
+package cse.fitzgero.sorouting.roadnetwork.edge
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 

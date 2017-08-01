@@ -4,8 +4,8 @@ import java.io.IOException
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.roadnetwork.graph._
-import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._
-import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
+import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, NodeSeq}
@@ -15,13 +15,13 @@ class LocalGraphMATSimFactory (
   var MATSimFlowRate: Double,
   var AlgorithmFlowRate: Double
 ) extends
-  CanReadNetworkFiles[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] with
-  CanReadFlowSnapshotFiles[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] {
+  CanReadNetworkFiles[LocalGraphMATSim] with
+  CanReadFlowSnapshotFiles[LocalGraphMATSim] {
 
-  override def fromFile(fileName: String): Try[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] =
+  override def fromFile(fileName: String): Try[LocalGraphMATSim] =
     fromFileAndSnapshot(fileName)
 
-  override def fromFileAndSnapshot(networkFilePath: String, snapshotFilePath: String = ""): Try[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]] = {
+  override def fromFileAndSnapshot(networkFilePath: String, snapshotFilePath: String = ""): Try[LocalGraphMATSim] = {
     Try[xml.Elem]({
       if (snapshotFilePath == "") <network><links></links></network>
       else xml.XML.loadFile(snapshotFilePath)
@@ -30,14 +30,14 @@ class LocalGraphMATSimFactory (
       case Success(snapshot) =>
         Try({
           val network = xml.XML.loadFile(networkFilePath)
-          val newGraph = LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]()
+          val newGraph = LocalGraphMATSim()
           val nodeList = grabVertices(newGraph, network)
           grabEdges(nodeList, network, snapshot)
         })
     }
   }
 
-  private def grabVertices(graph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty], xmlData: Elem): LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+  private def grabVertices(graph: LocalGraphMATSim, xmlData: Elem): LocalGraphMATSim = {
     require((xmlData \ "nodes").nonEmpty)
     require((xmlData \ "nodes" \ "node").nonEmpty)
     (xmlData \ "nodes" \ "node").foldLeft(graph)((graph, node) => {
@@ -45,12 +45,12 @@ class LocalGraphMATSimFactory (
       val name: VertexId = attrs("id").toLong
       val x: Double = attrs("x").toDouble
       val y: Double = attrs("y").toDouble
-      val prop: CoordinateVertexProperty = CoordinateVertexProperty(position = Euclidian(x, y))
-      graph.addVertex(name, prop)
+      val prop: VertexMATSim = CoordinateVertexProperty(position = Euclidian(x, y))
+      graph.addVertex(name, prop).asInstanceOf[LocalGraphMATSim]
     })
   }
 
-  private def grabEdges(graph: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty], xmlData: Elem, flowData: Elem): LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+  private def grabEdges(graph: LocalGraphMATSim, xmlData: Elem, flowData: Elem): LocalGraphMATSim = {
     Try({
       val links: xml.NodeSeq = flowData \ "links" \ "link"
       if (links.isEmpty) Map.empty[String, Double]
@@ -77,11 +77,11 @@ class LocalGraphMATSimFactory (
           acc.addEdge(
             newTriplet,
             MacroscopicEdgeProperty(
-              linkId,
+              linkId.toLong,
               0D,
               costFunctionFactory(attrsObject)
             )
-          )
+          ).asInstanceOf[LocalGraphMATSim]
         })
     }
   }

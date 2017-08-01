@@ -2,13 +2,13 @@ package cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp
 
 import cse.fitzgero.sorouting.algorithm.shortestpath._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
-import cse.fitzgero.sorouting.roadnetwork.localgraph.edge._
-import cse.fitzgero.sorouting.roadnetwork.localgraph.vertex._
+import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 import scala.annotation.tailrec
 
-class SimpleSSSP [V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[LocalGraph[V, E], SimpleSSSP_ODPair, SimpleSSSP_ODPath] {
-  override def shortestPath (graph: LocalGraph[V, E], od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =
+class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, SimpleSSSP_ODPair, SimpleSSSP_ODPath] {
+  override def shortestPath (graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =
     djikstrasAlgorithm(graph, od)
 
   def djikstrasAlgorithm(graph: LocalGraph[V, E], od: SimpleSSSP_ODPair): SimpleSSSP_ODPath = {
@@ -17,6 +17,12 @@ class SimpleSSSP [V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[LocalG
     val DistanceLowerBound = 0D
     val NoPathFound = SimpleSSSP_ODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
+    implicit val tripletOrdering: Ordering[graph.Triplet] =
+      (t: graph.Triplet) => {
+        val edge: E =  graph.edgeAttrOf(t.e).get
+        val flow: Double = edge.flow
+        edge.cost.costFlow(flow)
+      }
 
     @tailrec
     def _djikstrasAlgorithm(solution: Map[VertexId, SimpleSSSP_SearchNode], frontier: Iterator[graph.Triplet]): SimpleSSSP_ODPath = {
@@ -25,9 +31,12 @@ class SimpleSSSP [V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[LocalG
         val currentTriplet = frontier.next
         val edgeCostAttr = graph.edgeAttrOf(currentTriplet.e).get
         val edgeCost: Double = edgeCostAttr.cost.costFlow(edgeCostAttr.flow)  // @TODO: decide on cost function needs!  revise class heirarchy?
+        // check if our current working solution has a path already that terminates at the current triplet's destination
         val nextSolution =
-          if (!solution.isDefinedAt(currentTriplet.d))
-            solution.updated(currentTriplet.d, SimpleSSSP_SearchNode(π(currentTriplet.e, currentTriplet.o), edgeCost))
+          if (!solution.isDefinedAt(currentTriplet.d)) {
+            val updatedDistance = solution(currentTriplet.o).d + edgeCost
+            solution.updated(currentTriplet.d, SimpleSSSP_SearchNode(π(currentTriplet.e, currentTriplet.o), updatedDistance))
+          }
           else solution
         if (currentTriplet.d == goal) {
           val backPropagation: List[(EdgeId, Double)] = _backPropagate(nextSolution)(goal)
@@ -56,9 +65,11 @@ class SimpleSSSP [V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[LocalG
         _backPropagate(searchResults)(src, result :+ (edge, currentNode.d))
     }
   }
+
+
 }
 
 
 object SimpleSSSP {
-  def apply[V <: VertexProperty[_], E <: EdgeProperty](): SimpleSSSP[V, E] = new SimpleSSSP[V, E]()
+  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): SimpleSSSP[G, V, E] = new SimpleSSSP[G, V, E]()
 }
