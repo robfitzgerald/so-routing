@@ -10,17 +10,27 @@ import scala.collection.{GenIterable, GenSeq}
 
 object LocalGraphFrankWolfe2
   extends TrafficAssignment[LocalGraphMATSim, SimpleSSSP_ODPair] {
+
+  val SSSP: SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
+    SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+
   override def solve (
     graph: LocalGraphMATSim,
-    odPairs: Seq[SimpleSSSP_ODPair],
+    odPairs: GenSeq[SimpleSSSP_ODPair],
     terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
 
     val startTime = Instant.now().toEpochMilli
 
     def _solve(previousGraph: LocalGraphMATSim, iteration: Int = 1): LocalGraphFWSolverResult = {
-      println(s"_solve at iteration $iteration")
       val oracleGraph = generateOracleGraph(previousGraph, odPairs)
       val phi = Phi.linearFromIteration(iteration)
+//      println(s"_solve at iteration $iteration with phi ${phi.value}")
+//      println("previousGraph")
+//      println(s"${previousGraph.edgeAttrs.map(_.flow).mkString(" ")}")
+//      println(s"${previousGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
+//      println("oracleGraph")
+//      println(s"${oracleGraph.edgeAttrs.map(_.flow).mkString(" ")}")
+//      println(s"${oracleGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
       val currentGraph = calculateCurrentFlows(previousGraph, oracleGraph, phi)
 
       val stoppingConditionIsMet: Boolean =
@@ -36,7 +46,7 @@ object LocalGraphFrankWolfe2
       }
     }
 
-    println(s"solve at iteration 0")
+//    println(s"solve at iteration 0")
     _solve(graph)
 
   }
@@ -62,10 +72,13 @@ object LocalGraphFrankWolfe2
     * @return the road network updated with the flows associated with this set of shortest paths
     */
   def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[SimpleSSSP_ODPair]): LocalGraphMATSim = {
-    val SSSP = SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
     val edgesToUpdate: GenSeq[EdgeMATSim] =
       odPairs
-      .flatMap(od => SSSP.shortestPath(g, od).path)
+      .flatMap(od => {
+        val path = SSSP.shortestPath(g, od)
+//        println(path)
+        path.path
+      })
       .groupBy(identity)
       .map(edgeIdGrouped => {
         g.edgeAttrOf(edgeIdGrouped._1).get.copy(flow = edgeIdGrouped._2.size)

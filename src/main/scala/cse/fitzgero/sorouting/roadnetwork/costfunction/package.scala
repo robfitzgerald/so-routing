@@ -18,7 +18,7 @@ package object costfunction {
 
 
   case class CostFunctionAttributes (
-    capacity: Double = 100D,
+    capacity: Double = 1000D,
     freespeed: Double = 50D,
     flow: Double = 0D,
     flowRate: Double = 3600D,

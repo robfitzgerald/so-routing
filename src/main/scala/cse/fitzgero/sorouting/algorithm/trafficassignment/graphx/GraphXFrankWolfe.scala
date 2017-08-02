@@ -9,9 +9,13 @@ import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork
 import org.apache.spark.graphx.{EdgeRDD, Graph}
 
 import scala.annotation.tailrec
+import scala.collection.GenSeq
 import scala.math.abs
 
 object GraphXFrankWolfe extends GraphXTrafficAssignment {
+
+  // TODO: switch to DataFrames or GenSeqs for odPairs/odPaths
+  override def solve(graph: RoadNetwork, odPairs: GenSeq[SimpleMSSP_ODPair], terminationCriteria: TerminationCriteria): TrafficAssignmentResult = ???
 
   case class RelativeGapSummation(currentFlowTimesCost: Double, aonFlowTimesCost: Double)
 

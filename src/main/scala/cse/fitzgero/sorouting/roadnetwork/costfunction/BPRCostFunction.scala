@@ -19,7 +19,7 @@ class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, val snapshotFlow
 
 object BPRCostFunction extends CostFunctionFactory {
   val expectedAttributes = Map("capacity" -> 100D, "freespeed" -> 50D, "flow" -> 0D, "flowRate" -> 3600D, "algorithmFlowRate" -> 3600D)
-  def apply(attributes: Map[String, String]): BPRCostFunction = {
+  def apply(attributes: Map[String, String] = Map()): BPRCostFunction = {
     parseAttributes(attributes, expectedAttributes) match {
       case cap :: freeFlowSpeed :: steadyStateNetworkFlow :: flowRate :: algorithmFlowRate :: _ =>
         println(s"$cap $freeFlowSpeed $steadyStateNetworkFlow $flowRate $algorithmFlowRate")

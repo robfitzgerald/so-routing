@@ -48,4 +48,9 @@ class LocalGraphMATSim
 object LocalGraphMATSim {
   def apply(): LocalGraphMATSim =
     new LocalGraphMATSim(Map(), Map(), Map())
+  def apply(
+    adj: GenMap[VertexId, Map[EdgeId, VertexId]],
+    _v: GenMap[VertexId, VertexMATSim],
+    _e: GenMap[EdgeId, EdgeMATSim]): LocalGraphMATSim =
+    new LocalGraphMATSim(adj, _v, _e)
 }

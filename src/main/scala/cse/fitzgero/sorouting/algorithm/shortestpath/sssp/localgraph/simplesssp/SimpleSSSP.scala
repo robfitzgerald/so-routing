@@ -13,7 +13,7 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
   override def shortestPath (graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =
     djikstrasAlgorithm(graph, od)
 
-  def djikstrasAlgorithm(graph: LocalGraph[V, E], od: SimpleSSSP_ODPair): SimpleSSSP_ODPath = {
+  def djikstrasAlgorithm(graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath = {
     val origin = od.srcVertex
     val goal = od.dstVertex
     val DistanceLowerBound = 0D
@@ -26,13 +26,16 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
         edge.cost.costFlow(flow)
       }
     }
-    val startFrontier: collection.mutable.PriorityQueue[graph.Triplet] = collection.mutable.PriorityQueue()(tripletOrdering)
+    val startFrontier: collection.mutable.PriorityQueue[graph.Triplet] = collection.mutable.PriorityQueue()(tripletOrdering.reverse)
     graph
       .neighborTriplets(od.srcVertex)
       .foreach(t => startFrontier.enqueue(t))
 
     @tailrec
-    def _djikstrasAlgorithm(solution: Map[VertexId, SimpleSSSP_SearchNode], frontier: collection.mutable.PriorityQueue[graph.Triplet]): SimpleSSSP_ODPath = {
+    def _djikstrasAlgorithm(
+      solution: Map[VertexId, SimpleSSSP_SearchNode],
+      frontier: collection.mutable.PriorityQueue[graph.Triplet],
+      visited: Set[EdgeId] = Set.empty[EdgeId]): SimpleSSSP_ODPath = {
       if (frontier.isEmpty) NoPathFound
       else {
         val currentTriplet = frontier.dequeue
@@ -41,19 +44,28 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
         val edgeCost: Double = edgeCostAttr.cost.costFlow(edgeCostAttr.flow)
         // check if our current working solution has a path already that terminates at the current triplet's destination
         val nextSolution =
-          if (!solution.isDefinedAt(currentTriplet.d)) {
+          if (!visited(currentTriplet.e) && !solution.isDefinedAt(currentTriplet.d)) {
             val updatedDistance = solution(currentTriplet.o).d + edgeCost
             solution.updated(currentTriplet.d, SimpleSSSP_SearchNode(π(currentTriplet.e, currentTriplet.o), updatedDistance))
           }
-          else solution
+          else {
+            solution
+          }
         if (currentTriplet.d == goal) {
           val backPropagation: List[(EdgeId, Double)] = _backPropagate(nextSolution)(goal)
           SimpleSSSP_ODPath(origin, goal, backPropagation.map(_._1), backPropagation.map(_._2))
         }
-        else _djikstrasAlgorithm(
-          nextSolution,
-          frontier ++ graph.neighborTriplets(currentTriplet.d)
-        )
+        else {
+          val addToFrontier =
+             graph
+              .neighborTriplets(currentTriplet.d)
+              .filter(triplet => !visited(triplet.e))
+          _djikstrasAlgorithm(
+            nextSolution,
+            frontier ++ addToFrontier,
+            visited + currentTriplet.e
+          )
+        }
       }
     }
     _djikstrasAlgorithm(

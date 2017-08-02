@@ -22,7 +22,33 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
           val sssp = SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: SimpleSSSP_ODPath = sssp.shortestPath(graph, SimpleSSSP_ODPair(1L, 3L))
           result.path should equal (List(1L, 2L))
-          println(result.toString)
+//          println(result.toString)
+        }
+      }
+      "run on a set of od pairs that is giving me trouble" should {
+        "magically fix itself" in {
+          val odPairs = Vector(
+            SimpleSSSP_ODPair(14,9),
+            SimpleSSSP_ODPair(4,1),
+            SimpleSSSP_ODPair(8,2),
+            SimpleSSSP_ODPair(13,1),
+            SimpleSSSP_ODPair(13,11),
+            SimpleSSSP_ODPair(1,1),
+            SimpleSSSP_ODPair(11,9),
+            SimpleSSSP_ODPair(4,5),
+            SimpleSSSP_ODPair(7,14),
+            SimpleSSSP_ODPair(11,1)
+          )
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction).fromFile(equilNetworkFilePath).get
+          val sssp = SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+          val result: Seq[SimpleSSSP_ODPath] =
+            odPairs
+            .map(od => {
+              println(s"starting $od")
+              val path = sssp.shortestPath(graph, od)
+              println(s"done with $od")
+              path })
+          result.foreach(println)
         }
       }
     }

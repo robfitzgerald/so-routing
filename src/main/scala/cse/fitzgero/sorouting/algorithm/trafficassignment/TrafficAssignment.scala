@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment
 
 import java.time.Instant
 
+import scala.collection.GenSeq
+
 abstract class TrafficAssignment [G, O] {
   /**
     * solves the traffic assignment problem for the given graph and set of origin/destination pairs. od pairs are assumed to be individual agents, not flows of agents.
@@ -10,7 +12,7 @@ abstract class TrafficAssignment [G, O] {
     * @param terminationCriteria the way to determine convergence
     * @return a solution which contains the final graph estimation, or no solution
     */
-  def solve (graph: G, odPairs: Seq[O], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
+  def solve (graph: G, odPairs: GenSeq[O], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
 
   /**
     * holds the percentage value 'phi' and it's inverse during an iteration of a traffic assignment step
@@ -42,22 +44,4 @@ abstract class TrafficAssignment [G, O] {
     * @return the flow value for the next step
     */
   def frankWolfeFlowCalculation(phi: Phi, linkFlow: Double, aonFlow: Double): Double = (phi.inverse * linkFlow) + (phi.value * aonFlow)
-
-//  /**
-//    * parses the user-passed termination criteria and evaluates it with values taken from the current assignment iteration
-//    * @param terminationCriteria a case class object that defines the type of criteria and results in it's calculation
-//    * @param relGap the calculated relative gap (error) value
-//    * @param startTime the time that the assignment algorithm began
-//    * @param iter the current iteration of the assignment algorithm
-//    * @return
-//    */
-//  def evaluateStoppingCriteria(terminationCriteria: TerminationCriteria, relGap: => Double, startTime: Long, iter: Int): Boolean = terminationCriteria match {
-//    case RelativeGapTerminationCriteria(relGapThresh) => relGap > relGapThresh
-//    case IterationTerminationCriteria(iterThresh) => iter >= iterThresh
-//    case RunningTimeTerminationCriteria(timeThresh) => Instant.now().toEpochMilli - startTime > timeThresh
-//    case AllTerminationCriteria(relGapThresh, iterThresh, timeThresh) =>
-//      relGap > relGapThresh &&
-//        iter >= iterThresh &&
-//        Instant.now().toEpochMilli - startTime > timeThresh
-//  }
 }
