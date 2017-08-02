@@ -7,9 +7,9 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
     trait TestGraph {
       val graph = new LocalGraph[String, Double](
         Map[VertexId, Map[EdgeId, VertexId]](
-          1L -> Map(10L -> 2L),
-          2L -> Map(11L -> 1L, 12L -> 3L),
-          3L -> Map(13L -> 1L)
+          1L -> Map("10" -> 2L),
+          2L -> Map("11" -> 1L, "12" -> 3L),
+          3L -> Map("13" -> 1L)
         ),
         Map[VertexId, String](
           1L -> "1",
@@ -17,10 +17,10 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
           3L -> "3"
         ),
         Map[EdgeId, Double](
-          10L -> 10.0D,
-          11L -> 11.0D,
-          12L -> 12.0D,
-          13L -> 13.0D
+          "10" -> 10.0D,
+          "11" -> 11.0D,
+          "12" -> 12.0D,
+          "13" -> 13.0D
         )
       )
     }
@@ -28,14 +28,14 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called with a valid edge id" should {
         "give us the edge attribute corresponding to that edge id" in {
           new TestGraph {
-            graph.edgeAttrOf(10L).get should equal (10.0D)
+            graph.edgeAttrOf("10").get should equal (10.0D)
           }
         }
       }
       "called with an invalid edge id" should {
         "return None" in {
           new TestGraph {
-            graph.edgeAttrOf(123456L) should equal (None)
+            graph.edgeAttrOf("123456") should equal (None)
           }
         }
       }
@@ -60,11 +60,11 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called with a valid vertex id" should {
         "give us an iterator of the adjacent/incident v-e->v tuples" in {
           new TestGraph {
-            val result: Iterator[graph.Triplet] = graph.neighborTriplets(2L)
+            val result: Iterator[Triplet] = graph.neighborTriplets(2L)
             result.hasNext should equal (true)
-            result.next should equal (graph.Triplet(2L, 11L, 1L))
+            result.next should equal (Triplet(2L, "11", 1L))
             result.hasNext should equal (true)
-            result.next should equal (graph.Triplet(2L, 12L, 3L))
+            result.next should equal (Triplet(2L, "12", 3L))
             result.isEmpty should equal (true)
           }
         }
@@ -72,7 +72,7 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called with an invalid vertex id" should {
         "return an empty iterator" in {
           new TestGraph {
-            val result: Iterator[graph.Triplet] = graph.neighborTriplets(2351346L)
+            val result: Iterator[Triplet] = graph.neighborTriplets(2351346L)
             result.isEmpty should be (true)
           }
         }
@@ -181,7 +181,7 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called with a new EdgeId and an attribute" should {
         "return the graph updated with the new attribute" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.updateEdge(14L, 14.0D)
+            val result: LocalGraph[String, Double] = graph.updateEdge("14", 14.0D)
             result.edges.foreach(e=> {
               val edgeAttr = result.edgeAttrOf(e).get
               edgeAttr should equal (e.toDouble)
@@ -192,10 +192,10 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called with an attribute at a pre-existing id" should {
         "over write the attribute at that id" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.updateEdge(10L, 0D).updateEdge(11L, 1D).updateEdge(12L, 2D).updateEdge(13L, 3D)
+            val result: LocalGraph[String, Double] = graph.updateEdge("10", 0D).updateEdge("11", 1D).updateEdge("12", 2D).updateEdge("13", 3D)
             result.edges.foreach(e => {
               val edgeAttr = result.edgeAttrOf(e).get
-              edgeAttr should equal ((e - 10).toDouble)
+              edgeAttr should equal ((e.toLong - 10).toDouble)
             })
           }
         }
@@ -205,8 +205,8 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called at a pre-existing id" should {
         "removes edge at this id" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.deleteEdge(11L)
-            result.edges.toSeq should equal(Seq(10L,12L,13L))
+            val result: LocalGraph[String, Double] = graph.deleteEdge("11")
+            result.edges.toSeq should equal(Seq("10", "12", "13"))
             result.edges.foreach(e => {
               result.edgeAttrOf(e).get should equal (e.toDouble)
             })
@@ -217,7 +217,7 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
         "have no effect" in {
           new TestGraph {
             val result: LocalGraph[String, Double] = graph.deleteVertex(5L)
-            result.edges.toSeq should equal(Seq(10L, 11L, 12L, 13L))
+            result.edges.toSeq should equal(Seq("10", "11", "12", "13"))
             result.edges.foreach(e => {
               result.edgeAttrOf(e).get should equal (e.toDouble)
             })
@@ -229,9 +229,9 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called at a pre-existing id" should {
         "overwrite the edge attribute at that id but not change the adjacency matrix" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.addEdge(graph.Triplet(1L, 10L, 2L), 1234.0D)
-            result.edges.toSeq should equal(Seq(10L,11L,12L,13L))
-            result.edgeAttrOf(10L).get should equal (1234.0D)
+            val result: LocalGraph[String, Double] = graph.addEdge(Triplet(1L, "10", 2L), 1234.0D)
+            result.edges.toSeq should equal(Seq("10", "11", "12", "13"))
+            result.edgeAttrOf("10").get should equal (1234.0D)
             result.adjacencyList should equal (graph.adjacencyList)
           }
         }
@@ -239,9 +239,9 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called at a non-existing id" should {
         "create an edge and connect the associated vertices in the adjacency list" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.addEdge(graph.Triplet(1L, 14L, 3L), 14.0D)
+            val result: LocalGraph[String, Double] = graph.addEdge(Triplet(1L, "14", 3L), 14.0D)
             result.edges.toSeq.foreach(edge => {
-              Set(10L, 11L, 12L, 13L, 14L)(edge) should be (true)
+              Set("10", "11", "12", "13", "14")(edge) should be (true)
             })
             result.edges.foreach(e => {
               result.edgeAttrOf(e).get should equal (e.toDouble)
@@ -252,7 +252,7 @@ class LocalGraphTests extends SORoutingUnitTestTemplate {
       "called at a non-existing id but with a non-existing vertex" should {
         "make no change" in {
           new TestGraph {
-            val result: LocalGraph[String, Double] = graph.addEdge(graph.Triplet(100L, 14L, 3L), 14.0D)
+            val result: LocalGraph[String, Double] = graph.addEdge(Triplet(100L, "14", 3L), 14.0D)
             result should equal (graph)
           }
         }

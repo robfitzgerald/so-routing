@@ -68,20 +68,20 @@ class LocalGraphMATSimFactory (
             MATSimFlowRate,
             AlgorithmFlowRate
           )
-          val newTriplet: acc.Triplet =
-            acc.Triplet(
-              linkData("from").toLong,
-              linkId.toLong,
-              linkData("to").toLong
+          val newTriplet: Triplet =
+            Triplet(
+              o = linkData("from").toLong,
+              e = linkId,
+              d = linkData("to").toLong
             )
           acc.addEdge(
             newTriplet,
             MacroscopicEdgeProperty(
-              linkId.toLong,
+              linkId,
               0D,
               costFunctionFactory(attrsObject)
             )
-          ).asInstanceOf[LocalGraphMATSim]
+          )
         })
     }
   }

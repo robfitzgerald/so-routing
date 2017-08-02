@@ -4,11 +4,11 @@ import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
 
 import scala.collection.{GenIterable, GenMap}
 
+case class Triplet(o: VertexId, e: EdgeId, d: VertexId)
 class LocalGraph [V, E] private[localgraph]
-(adj: GenMap[VertexId, Map[EdgeId, VertexId]], _v: GenMap[VertexId, V], _e: GenMap[EdgeId, E])
-extends RoadNetwork {
+  (adj: GenMap[VertexId, Map[EdgeId, VertexId]], _v: GenMap[VertexId, V], _e: GenMap[EdgeId, E])
+  extends RoadNetwork {
 
-  case class Triplet(o: VertexId, e: EdgeId, d: VertexId)
   case class TripletAttrs(o: V, e: E, d: V)
 
   def adjacencyList: GenMap[VertexId, Map[EdgeId, VertexId]] = adj

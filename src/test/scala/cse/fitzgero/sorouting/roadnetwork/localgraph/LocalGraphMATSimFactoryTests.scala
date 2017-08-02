@@ -30,10 +30,10 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
         "build a graph from that file" in {
           val result = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           result.vertices.toList.sorted should equal (List(1L, 2L, 3L))
-          result.edges.toList.sorted should equal (List(1L, 2L, 3L))
-          result.adjacencyList(1L) should equal (Map[EdgeId, VertexId](1L -> 2L))
-          result.adjacencyList(2L) should equal (Map[EdgeId, VertexId](2L -> 3L))
-          result.adjacencyList(3L) should equal (Map[EdgeId, VertexId](3L -> 1L))
+          result.edges.toList.sorted should equal (List("1", "2", "3"))
+          result.adjacencyList(1L) should equal (Map[EdgeId, VertexId]("1" -> 2L))
+          result.adjacencyList(2L) should equal (Map[EdgeId, VertexId]("2" -> 3L))
+          result.adjacencyList(3L) should equal (Map[EdgeId, VertexId]("3" -> 1L))
         }
       }
     }
@@ -41,9 +41,9 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
       "called with valid network file and snapshot file urls" should {
         "build a graph with edge flows" in {
           val result = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          result.edgeAttrOf(1L).get.cost.snapshotFlow should equal (123.0D)
-          result.edgeAttrOf(2L).get.cost.snapshotFlow should equal (456.0D)
-          result.edgeAttrOf(3L).get.cost.snapshotFlow should equal (789.0D)
+          result.edgeAttrOf("1").get.cost.snapshotFlow should equal (123.0D)
+          result.edgeAttrOf("2").get.cost.snapshotFlow should equal (456.0D)
+          result.edgeAttrOf("3").get.cost.snapshotFlow should equal (789.0D)
         }
       }
     }

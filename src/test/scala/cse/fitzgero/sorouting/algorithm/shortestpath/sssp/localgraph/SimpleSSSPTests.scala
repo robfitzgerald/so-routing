@@ -21,7 +21,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           val sssp = SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: SimpleSSSP_ODPath = sssp.shortestPath(graph, SimpleSSSP_ODPair(1L, 3L))
-          result.path should equal (List(1L, 2L))
+          result.path should equal (List("1", "2"))
 //          println(result.toString)
         }
       }
@@ -57,15 +57,15 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
         "find the path through the edges associated with those nodes" in {
           val sssp = new SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val aSolution = Map(
-            3L -> SimpleSSSP_SearchNode(π(102L, 2L), 5D),
-            2L -> SimpleSSSP_SearchNode(π(101L, 1L), 5D),
+            3L -> SimpleSSSP_SearchNode(π("102", 2L), 5D),
+            2L -> SimpleSSSP_SearchNode(π("101", 1L), 5D),
             1L -> SimpleSSSP_SearchNode(Origin, 0D)
           )
           val goalVertex: VertexId = 3L
           val result: List[(EdgeId, Double)] = sssp._backPropagate(aSolution)(goalVertex)
           val path = result.map(_._1)
           val totalCost = result.map(_._2).sum
-          path should equal (List(101, 102))
+          path should equal (List("101", "102"))
           totalCost should equal (10D)
         }
       }
@@ -78,7 +78,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
           val sssp = new SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
           result.cost.sum should equal (2D)
-          result.path should equal (List(1L, 2L))
+          result.path should equal (List("1", "2"))
         }
       }
       "called with an itty bitty triangle graph, snapshot, and valid od pair" should {
@@ -88,7 +88,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
           val sssp = new SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
           result.cost.sum should be > 55D
-          result.path should equal (List(1L, 2L))
+          result.path should equal (List("1", "2"))
         }
       }
       "called with the MATSim Equil network and valid od pair" should {
@@ -97,7 +97,7 @@ class SimpleSSSPTests extends SORoutingUnitTestTemplate {
           val odPair = SimpleSSSP_ODPair(1L, 15L)
           val sssp = new SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
-          result.path should equal (List(1L, 5L, 14L, 20L, 21L, 22L))
+          result.path should equal (List("1", "5", "14", "20", "21", "22"))
           // @TODO: confirm this is running correctly. cost function evaluation?
         }
       }

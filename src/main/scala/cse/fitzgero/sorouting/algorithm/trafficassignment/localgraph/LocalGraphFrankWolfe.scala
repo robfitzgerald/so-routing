@@ -1,152 +1,143 @@
-//package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
-//
-//import java.time.Instant
-//
-//import cse.fitzgero.sorouting.algorithm.trafficassignment._
-//import cse.fitzgero.sorouting.roadnetwork.localgraph._
-//import cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp._
-//import cse.fitzgero.sorouting.roadnetwork.edge._
-//import cse.fitzgero.sorouting.roadnetwork.vertex._
-//
-//import scala.annotation.tailrec
-//import scala.math.abs
-//
-//object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraphMATSim, SimpleSSSP_ODPair] {
-//
-//  override def solve(
-//    initialGraph: LocalGraphMATSim,
-//    odPairs: Seq[SimpleSSSP_ODPair],
-//    terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
-//    if (odPairs.isEmpty)
-//      NoTrafficAssignmentSolution()
-//    else {
-//      val startTime = Instant.now().toEpochMilli
-//
-//      /**
-//        * recursive inner function describing the Frank-Wolfe algorithm
-//        *
-//        * @param previousGraph result of previous iteration
-//        * @param iter          current iteration
-//        * @return results of this traffic assignment
-//        */
-//      @tailrec
-//      def _solve(
-//        previousGraph: LocalGraphMATSim,
-//        iter: Int = 1): LocalGraphFWSolverResult = {
-//
-////        println(s"_solve iteration $iter (total: ${previousGraph.edgeAttrs.map(_.allFlow).sum})")
-////        println(s"${previousGraph.edgeAttrs.map(_.allFlow).mkString(" ")}")
-//
-//        // all-or-nothing assignment
-//        // TODO: this should output a new set of flows, not add to the flows of previousGraph
-//        val oracleGraph = assignment(previousGraph, odPairs)
-//
-//        val phi = Phi.linearFromIteration(iter)
-//
-//
-//        val currentGraph: LocalGraphMATSim =
-//          previousGraph
-//          .edges
-//            // TODO: better UNION here please. don't like the assumption that id/edge ordering is consistent
-//          .map((id: EdgeId) => (id, previousGraph.edgeAttrOf(id).get)).zip(oracleGraph.edgeAttrs)
-//          .foldLeft(initialGraph)(
-//            (newGraph: LocalGraphMATSim,
-//                tuple: ((EdgeId, EdgeMATSim), EdgeMATSim)) => {
-//              val edgeIdToModify = tuple._1._1
-//              val edgePreviousAttr = tuple._1._2
-//              val edgePreviousFlow = edgePreviousAttr.flow
-//              val edgeCurrentFlow = tuple._2.flow
-//              newGraph
-//                .updateEdge(
-//                    edgeIdToModify,
-//                    edgePreviousAttr
-//                      .copy(flow = frankWolfeFlowCalculation(phi, edgePreviousFlow, edgeCurrentFlow)))
-//            })
-//
-//        println(s"current graph at iteration $iter ")
-//        println(s"phi: ${phi.value} phiInverse: ${phi.inverse}")
-//        println(s"links used: ${currentGraph.edgeAttrs.map(_.allFlow).sum}")
-//        println(s"network cost: ${currentGraph.edgeAttrs.map(_.linkCostFlow).sum}")
-//        println(s"${currentGraph.edgeAttrs.map(_.allFlow).mkString(" ")}")
-//
-//        val stoppingConditionIsMet: Boolean =
-//          terminationCriteria
-//            .eval(TerminationData(
-//              startTime,
-//              iter,
-//              relativeGap(currentGraph, oracleGraph)
-//            ))
-//
-//        if (stoppingConditionIsMet) {
-//          val totalTime = Instant.now().toEpochMilli - startTime
-//          LocalGraphFWSolverResult(currentGraph, iter, totalTime)
-//        }
-//        else {
-//          _solve(currentGraph, iter + 1)
-//        }
-//      }
-//
-//      _solve(initialGraph)
-//    }
-//  }
-//
-//  /**
-//    * given a graph and a set of od pairs, we perform an "all-or-nothing" assignment based on the link costs of srcGraph
-//    * @param srcGraph graph to grab flow costs from, to copy, reset flow values, and add the path flows to
-//    * @param odPairs set of origin destination pairs
-//    * @return
-//    */
-//  def assignment(
-//    srcGraph: LocalGraphMATSim,
-//    odPairs: Seq[SimpleSSSP_ODPair]
-//  ): LocalGraphMATSim = {
-//    val SSSP = SimpleSSSP[CoordinateVertexProperty, EdgeMATSim]()
-//
-//    val flowsToAdd: Map[EdgeId, Double] =
-//      odPairs
-//      .map(od => SSSP.shortestPath(srcGraph, od))
-//      .foldLeft(Map.empty[EdgeId, Double])((flows: Map[EdgeId, Double], odPath) => {
-//        odPath.path.zip(odPath.cost).foldLeft(flows)((updatedFlows, pathCostTuple) => {
-//          val eId = pathCostTuple._1
-//          if (updatedFlows.isDefinedAt(eId))
-//            updatedFlows.updated(eId, updatedFlows(eId) + 1D)
-//          else updatedFlows.updated(eId, 1D)
-//        })
-//      })
-//
-//    val dstGraph =
-//      srcGraph
-//        .edgeKVPairs
-//        .foldLeft(srcGraph: LocalGraphMATSim)((g, eTup) => {
-//          g.updateEdge(eTup._1, eTup._2.copy(flow = 0D))
-//        })
-//
-//    flowsToAdd.foldLeft(dstGraph)((updatedGraph, flowDelta) => {
-//      srcGraph.edgeAttrOf(flowDelta._1) match {
-//        case Some(edgeAttr: EdgeMATSim) =>
-//          updatedGraph.updateEdge(flowDelta._1, edgeAttr.copy(flow = edgeAttr.flow + flowDelta._2))
-//        case None => updatedGraph
-//      }
-//    })
-//  }
-//
-//  /**
-//    * calculates the relative gap from the current graph to the aon graph, which as it goes to zero, identifies a minima (horiz. tangent line)
-//    * @param currentGraph the most recent estimation of the flow
-//    * @param allOrNothingGraph the artificial step beyond the direction of the nearest minima
-//    * @return a value in the range [0.0, 1.0]
-//    */
-//  def relativeGap(
-//    currentGraph: LocalGraphMATSim,
-//    allOrNothingGraph: LocalGraphMATSim
-//  ): Double = {
-//    val (currentFlowTimesCost: Double, aonFlowTimesCost: Double) =
-//      currentGraph
-//      .edgeAttrs
-//      .zip(allOrNothingGraph.edgeAttrs)
-//      .map(tuple => (tuple._1.allFlow * tuple._1.linkCostFlow, tuple._2.allFlow * tuple._2.linkCostFlow))
-//      .reduce((a,b) => (a._1 + b._1, a._2 + b._2))
-//    val result = abs((currentFlowTimesCost - aonFlowTimesCost) / currentFlowTimesCost)
-//    math.max(math.min(result, 1.0D), 0D)  // result has domain [0.0, 1.0]
-//  }
-//}
+package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
+
+import java.time.Instant
+
+import cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp._
+import cse.fitzgero.sorouting.algorithm.trafficassignment._
+import cse.fitzgero.sorouting.roadnetwork.localgraph._
+
+import scala.collection.{GenIterable, GenSeq}
+
+object LocalGraphFrankWolfe
+  extends TrafficAssignment[LocalGraphMATSim, SimpleSSSP_ODPair] {
+
+  val SSSP: SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
+    SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+
+  /**
+    * solve a traffic assignment for the given network state and set of origin/destination pairs
+    * @param graph the network to solve on
+    * @param odPairs the set of origin/destination pairs
+    * @param terminationCriteria the way to determine convergence
+    * @return a solution which contains the final graph estimation, or no solution
+    */
+  override def solve (
+    graph: LocalGraphMATSim,
+    odPairs: GenSeq[SimpleSSSP_ODPair],
+    terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
+
+    val startTime = Instant.now().toEpochMilli
+
+    def _solve(previousGraph: LocalGraphMATSim, iteration: Int = 1): LocalGraphFWSolverResult = {
+      val oracleGraph = generateOracleGraph(previousGraph, odPairs)
+      val phi = Phi.linearFromIteration(iteration)
+      println(s"_solve at iteration $iteration with phi ${phi.value}")
+//      println("previousGraph")
+//      println(s"${previousGraph.edgeAttrs.map(_.flow).mkString(" ")}")
+//      println(s"${previousGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
+//      println("oracleGraph")
+//      println(s"${oracleGraph.edgeAttrs.map(_.flow).mkString(" ")}")
+//      println(s"${oracleGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
+      val currentGraph = calculateCurrentFlows(previousGraph, oracleGraph, phi)
+
+      val stoppingConditionIsMet: Boolean =
+        terminationCriteria
+          .eval(TerminationData(startTime, iteration, relativeGap(currentGraph, oracleGraph)))
+
+      if (stoppingConditionIsMet) {
+        val totalTime = Instant.now().toEpochMilli - startTime
+        LocalGraphFWSolverResult(currentGraph, iteration, totalTime)
+      }
+      else {
+        _solve(currentGraph, iteration + 1)
+      }
+    }
+
+    println(s"solve at iteration 0")
+    _solve(graph)
+
+  }
+
+  /**
+    * wipes any flow data from the graph, except any set from the current snapshot data
+    * @param g the road network
+    * @return the road network where network flows from traffic assignment equals zero
+    */
+  def initializeFlows(g: LocalGraphMATSim): LocalGraphMATSim = {
+    val newEdges: GenSeq[EdgeMATSim] =
+      g
+      .edgeAttrs
+      .map(_.copy(flow = 0D))
+      .toSeq
+    g.replaceEdgeList(newEdges)
+  }
+
+  /**
+    * for each od pair, find it's shortest path, then update the graph flows with the number of vehicles assigned to each road segment
+    * @param g the road network we will load flows onto
+    * @param odPairs the set of origin/destination pairs to find paths between
+    * @return the road network updated with the flows associated with this set of shortest paths
+    */
+  def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[SimpleSSSP_ODPair]): LocalGraphMATSim = {
+    val edgesToUpdate: GenSeq[EdgeMATSim] =
+      odPairs
+      .flatMap(od => {
+        val path = SSSP.shortestPath(g, od)
+//        println(path)
+        path.path
+      })
+      .groupBy(identity)
+      .map(edgeIdGrouped => {
+        g.edgeAttrOf(edgeIdGrouped._1).get.copy(flow = edgeIdGrouped._2.size)
+      })
+      .toSeq
+    initializeFlows(g).integrateEdgeList(edgesToUpdate)
+  }
+
+  /**
+    * given the previous graph and the most recent all-or-nothing assignment, calculate a new flow value for each link based on a proportion
+    * @param previousGraph either the initial graph or the graph at the ith - 1 iteration of the traffic assignment algorithm
+    * @param oracle a graph with flows updated based on assigning all of the origin/destination pairs provided by the user
+    * @param phi proportional argument used to determine how much of each source value to use
+    * @return
+    */
+  def calculateCurrentFlows(previousGraph: LocalGraphMATSim, oracle: LocalGraphMATSim, phi: Phi): LocalGraphMATSim = {
+    val edgesWithUpdatedFlows: GenSeq[EdgeMATSim] = previousGraph.edges.map(edgeId => {
+      val thisAttr = previousGraph.edgeAttrOf(edgeId).get
+      val flowPrevious = thisAttr.flow
+      val flowOracle = oracle.edgeAttrOf(edgeId).get.flow
+      thisAttr.copy(flow = calculateThisFlow(flowPrevious, flowOracle, phi))
+    }).toSeq
+    previousGraph.replaceEdgeList(edgesWithUpdatedFlows)
+  }
+
+  /**
+    * calculate the next flows as a step toward the local minimum by a proportion of a real solution and an oracle solution which is outside of the solution space. taken from Modeling Transport 4th Ed., pg 398 in figure 11.2.3.1 step 4
+    * @param flowPrevious a real (suboptimal) solution - the previous (ith - 1) algorithm step
+    * @param flowOracle an oracle solution which we will use to construct a linear gradient
+    * @param phi the descent step proportion (how far to proceed down the tangent between flowPrevious + flowAON)
+    * @return
+    */
+  def calculateThisFlow(flowPrevious: Double, flowOracle: Double, phi: Phi): Double =
+    (phi.inverse * flowPrevious) + (phi.value * flowOracle)
+
+    /**
+      * calculates the relative gap from the current graph to the aon graph, which as it goes to zero, identifies a minima (horiz. tangent line)
+      * @param currentGraph the most recent estimation of the flow
+      * @param allOrNothingGraph the artificial step beyond the direction of the nearest minima
+      * @return a value in the range [0.0, 1.0]
+      */
+    def relativeGap(
+      currentGraph: LocalGraphMATSim,
+      allOrNothingGraph: LocalGraphMATSim
+    ): Double = {
+      val (currentFlowTimesCost: Double, aonFlowTimesCost: Double) =
+        currentGraph
+        .edgeAttrs
+        .zip(allOrNothingGraph.edgeAttrs)
+        .map(tuple => (tuple._1.allFlow * tuple._1.linkCostFlow, tuple._2.allFlow * tuple._2.linkCostFlow))
+        .reduce((a,b) => (a._1 + b._1, a._2 + b._2))
+      val result = math.abs((currentFlowTimesCost - aonFlowTimesCost) / currentFlowTimesCost)
+      math.max(math.min(result, 1.0D), 0D)  // result has domain [0.0, 1.0]
+    }
+}

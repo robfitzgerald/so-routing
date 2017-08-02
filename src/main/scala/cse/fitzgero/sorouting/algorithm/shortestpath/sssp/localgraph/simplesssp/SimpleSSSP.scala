@@ -19,14 +19,14 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
     val DistanceLowerBound = 0D
     val NoPathFound = SimpleSSSP_ODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
-    implicit val tripletOrdering: Ordering[graph.Triplet] = Ordering.by {
-      (t: graph.Triplet) => {
+    implicit val tripletOrdering: Ordering[Triplet] = Ordering.by {
+      (t: Triplet) => {
         val edge: E =  graph.edgeAttrOf(t.e).get
         val flow: Double = edge.flow
         edge.cost.costFlow(flow)
       }
     }
-    val startFrontier: collection.mutable.PriorityQueue[graph.Triplet] = collection.mutable.PriorityQueue()(tripletOrdering.reverse)
+    val startFrontier: collection.mutable.PriorityQueue[Triplet] = collection.mutable.PriorityQueue()(tripletOrdering.reverse)
     graph
       .neighborTriplets(od.srcVertex)
       .foreach(t => startFrontier.enqueue(t))
@@ -34,7 +34,7 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
     @tailrec
     def _djikstrasAlgorithm(
       solution: Map[VertexId, SimpleSSSP_SearchNode],
-      frontier: collection.mutable.PriorityQueue[graph.Triplet],
+      frontier: collection.mutable.PriorityQueue[Triplet],
       visited: Set[EdgeId] = Set.empty[EdgeId]): SimpleSSSP_ODPath = {
       if (frontier.isEmpty) NoPathFound
       else {
