@@ -41,7 +41,7 @@ class LocalGraphMATSim
     }
     else this
   }
-  override def parallelize: LocalGraphMATSim =
+  override def par: LocalGraphMATSim =
     new LocalGraphMATSim(adj.par, _v.par, _e.par)
 }
 

@@ -31,7 +31,6 @@ object LocalGraphFrankWolfe
     def _solve(previousGraph: LocalGraphMATSim, iteration: Int = 1): LocalGraphFWSolverResult = {
       val oracleGraph = generateOracleGraph(previousGraph, odPairs)
       val phi = Phi.linearFromIteration(iteration)
-      println(s"_solve at iteration $iteration with phi ${phi.value}")
 //      println("previousGraph")
 //      println(s"${previousGraph.edgeAttrs.map(_.flow).mkString(" ")}")
 //      println(s"${previousGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
@@ -41,9 +40,10 @@ object LocalGraphFrankWolfe
       val currentGraph = calculateCurrentFlows(previousGraph, oracleGraph, phi)
 
       val stoppingConditionIsMet: Boolean =
-        terminationCriteria
-          .eval(TerminationData(startTime, iteration, relativeGap(currentGraph, oracleGraph)))
+      terminationCriteria
+        .eval(TerminationData(startTime, iteration, relativeGap(currentGraph, oracleGraph)))
 
+//      println(s"_solve at iteration $iteration with phi ${phi.value}")
       if (stoppingConditionIsMet) {
         val totalTime = Instant.now().toEpochMilli - startTime
         LocalGraphFWSolverResult(currentGraph, iteration, totalTime)
@@ -53,7 +53,7 @@ object LocalGraphFrankWolfe
       }
     }
 
-    println(s"solve at iteration 0")
+//    println(s"solve at iteration 0")
     _solve(graph)
 
   }
@@ -131,13 +131,20 @@ object LocalGraphFrankWolfe
       currentGraph: LocalGraphMATSim,
       allOrNothingGraph: LocalGraphMATSim
     ): Double = {
-      val (currentFlowTimesCost: Double, aonFlowTimesCost: Double) =
-        currentGraph
+      case class RelGapData(currentCoef: Double, aonCoef: Double)
+      val relGapData: RelGapData =
+        allOrNothingGraph
         .edgeAttrs
-        .zip(allOrNothingGraph.edgeAttrs)
-        .map(tuple => (tuple._1.allFlow * tuple._1.linkCostFlow, tuple._2.allFlow * tuple._2.linkCostFlow))
-        .reduce((a,b) => (a._1 + b._1, a._2 + b._2))
-      val result = math.abs((currentFlowTimesCost - aonFlowTimesCost) / currentFlowTimesCost)
+        .map(aonEdge => {
+          val currentEdge = currentGraph.edgeAttrOf(aonEdge.id).get
+          RelGapData(
+            currentEdge.linkCostFlow * currentEdge.allFlow,
+            currentEdge.linkCostFlow * aonEdge.allFlow
+          )
+        }).reduce((a,b) => {
+          RelGapData(a.currentCoef + b.currentCoef, a.aonCoef + b.aonCoef)
+        })
+      val result = math.abs((relGapData.currentCoef - relGapData.aonCoef) / relGapData.currentCoef)
       math.max(math.min(result, 1.0D), 0D)  // result has domain [0.0, 1.0]
     }
 }

@@ -13,7 +13,7 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFu
   */
 case class MacroscopicEdgeProperty [Id] (
   id: Id,
-  flow: Double = 1.0D,
+  flow: Double = 0.0D,
   cost: CostFunction = TestCostFunction())  // default cost function is identity function of flow variable
   extends EdgeProperty {
   def linkCostFlow: Double = this.cost.costFlow(flow)

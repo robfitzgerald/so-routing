@@ -28,11 +28,11 @@ abstract class TrafficAssignment [G, O] {
     */
   case object Phi {
     /**
-      * calculates a linear phi value that starts from 1 and takes simple fraction steps (at first) toward 0
+      * calculates a linear phi value that starts from 0.66 and takes simple fraction steps (at first) toward 0
       * @param i current assignment algorithm iteration (assumed to begin at 1)
       * @return Phi
       */
-    def linearFromIteration(i: Int): Phi = Phi(2.0D / (i + 1.0D))
+    def linearFromIteration(i: Int): Phi = Phi(2.0D / (i + 2.0D))
   }
 
   /**

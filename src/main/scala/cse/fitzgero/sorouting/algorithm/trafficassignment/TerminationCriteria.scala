@@ -25,10 +25,11 @@ sealed trait TerminationCriteria {
 }
 
 /**
-  * evaluate the tangent (i.e. optimization) as a termination criteria
+  * evaluate the tangent (i.e. optimization) as a termination criteria. default threshold should not exceed 0.1% and is recommended to be 0.0001% (Boyce, 2004)
   * @param relGapThresh a value in the range [0.0, 1.0] which will test as an upper threshold in a boolean function
   */
-final case class RelativeGapTerminationCriteria (relGapThresh: Double) extends TerminationCriteria {
+final case class RelativeGapTerminationCriteria (relGapThresh: Double = 0.0001D) extends TerminationCriteria {
+  require(relGapThresh <= 0.1D)
   override def eval(t: TerminationData): Boolean = t.relGap < relGapThresh
 }
 

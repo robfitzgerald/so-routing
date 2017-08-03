@@ -15,11 +15,11 @@ import scala.xml.XML
 
 class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
   "LocalGraphFrankWolfe" when {
-    val networkFilePath: String =   "src/test/resources/LocalGraphFrankWolfe2Tests/network.xml"
-    val snapshotFilePath: String =   "src/test/resources/LocalGraphFrankWolfe2Tests/snapshot.xml"
-    val networkNoSolutionFilePath: String = "src/test/resources/LocalGraphFrankWolfe2Tests/networkNoSolution.xml"
-    val equilNetwork: String =  "src/test/resources/LocalGraphFrankWolfe2Tests/network-matsim-example-equil.xml"
-    val equilSnapshot: String = "src/test/resources/LocalGraphFrankWolfe2Tests/snapshot-matsim-example-equil.xml"
+    val networkFilePath: String =   "src/test/resources/LocalGraphFrankWolfeTests/network.xml"
+    val snapshotFilePath: String =   "src/test/resources/LocalGraphFrankWolfeTests/snapshot.xml"
+    val networkNoSolutionFilePath: String = "src/test/resources/LocalGraphFrankWolfeTests/networkNoSolution.xml"
+    val equilNetwork: String =  "src/test/resources/LocalGraphFrankWolfeTests/network-matsim-example-equil.xml"
+    val equilSnapshot: String = "src/test/resources/LocalGraphFrankWolfeTests/snapshot-matsim-example-equil.xml"
     val ryeNetworkFilePath: String = "src/main/resources/matsimNetworks/RyeNetwork.xml"
     "initializeFlows" when {
       "called with a road network which has some flow assignments" should {
@@ -59,9 +59,10 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
           // correct shortest path:
           // (1) -- [1] -- [5] -- [14] -- [20] -- [21] -- [22] -> (15)
+          inspectResult.foreach(println)
           inspectResult("1").flow should equal (100D)
-          inspectResult("5").flow should equal (100D)
-          inspectResult("14").flow should equal (100D)
+          inspectResult("8").flow should equal (100D)
+          inspectResult("17").flow should equal (100D)
           inspectResult("20").flow should equal (100D)
           inspectResult("21").flow should equal (100D)
           inspectResult("22").flow should equal (100D)
@@ -95,8 +96,8 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           inspectResult.foreach(println)
           inspectResult("5").flow should equal (0D)
           inspectResult("1").flow should equal (100D)
-          inspectResult("10").flow should equal (100D)
-          inspectResult("19").flow should equal (100D)
+          inspectResult("8").flow should equal (100D)
+          inspectResult("17").flow should equal (100D)
           inspectResult("20").flow should equal (100D)
           inspectResult("21").flow should equal (100D)
           inspectResult("22").flow should equal (100D)
@@ -150,15 +151,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           "give us only oracle flow values" in {
             val result = LocalGraphFrankWolfe.calculateCurrentFlows(previousGraph, oracleGraph, LocalGraphFrankWolfe.Phi(1.0D))
             val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
-            inspectResult.foreach(println)
-            inspectResult("1").flow should equal (2D)
-            inspectResult("10").flow should equal (1D)
-            inspectResult("13").flow should equal (1D)
-            inspectResult("19").flow should equal (1D)
-            inspectResult("20").flow should equal (2D)
-            inspectResult("21").flow should equal (2D)
-            inspectResult("22").flow should equal (2D)
-            inspectResult("23").flow should equal (1D)
+            inspectResult.foreach(result => {
+              result._2.flow should equal(oracleGraph.edgeAttrOf(result._1).get.flow)
+            })
           }
         }
       }
@@ -177,21 +172,6 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
               val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
               fwCost should be < aonCost
-//              println(s"~~with fw~~")
-////              println(s"${result.toString}")
-//              println(s"${result.edgeAttrs.map(edge => f"${edge.allFlow}%1.2f").mkString(" ")}")
-//              println(s"${result.edgeAttrs.map(edge => f"${edge.linkCostFlow}%1.2f").mkString(" ")}")
-//              println(s"edges assigned ${result.edgeAttrs.map(_.allFlow).sum}")
-//              println(s"network cost ${result.edgeAttrs.map(_.linkCostFlow).sum}")
-////              println(s"${result.edgeAttrs.map(_.linkCostFlow).mkString(" ")}")
-//              println(s"~~without fw~~")
-////              println(s"${blindAssignment.toString}")
-//              println(s"${blindAssignment.edgeAttrs.map(edge => f"${edge.allFlow}%1.2f").mkString(" ")}")
-//              println(s"${blindAssignment.edgeAttrs.map(edge => f"${edge.linkCostFlow}%1.2f").mkString(" ")}")
-//              println(s"edges assigned ${blindAssignment.edgeAttrs.map(_.allFlow).sum}")
-//              println(s"network cost ${blindAssignment.edgeAttrs.map(_.linkCostFlow).sum}")
-////              println(s"${blindAssignment.edgeAttrs.map(_.linkCostFlow).mkString(" ")}")
-//              println(s"iterations $iter time $time relGap $relGap")
             case _ => fail()
           }
         }
@@ -209,18 +189,38 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
               val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
               fwCost should be < aonCost
+              // all 9 alternate routes should have traffic
+              result.edgeAttrs.foreach(_.flow should be > 0D)
             case _ => fail()
           }
         }
       }
-      "called with the network of Rye, Colorado" should {
-        "estimate a minimal cost network flow" in {
+      "called with the MATSim equil example network and 500 drivers with random od pairs" when {
+        "estimate a minimal cost network flow given a relative gap termination criteria" in {
+          val rand = new scala.util.Random
+          def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
+          val odPairs: GenSeq[SimpleSSSP_ODPair] = (1 to 500).map(n => SimpleSSSP_ODPair(randomNodeId(n), randomNodeId(n))).par
+          val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get.par
+          val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
+
+          LocalGraphFrankWolfe.solve(graph, odPairs, RelativeGapTerminationCriteria()) match {
+            case LocalGraphFWSolverResult(result, iter, time, relGap) =>
+              val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
+              val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
+              println(s"fwCost $fwCost aonCost $aonCost")
+              fwCost should be < aonCost
+            case _ => fail()
+          }
+        }
+      }
+      "called with the network of Rye, Colorado and 10 drivers" should {
+        "estimate a minimal cost network flow and terminate after 10 seconds" in {
           val ryeNetworkXML = XML.loadFile(ryeNetworkFilePath)
           PopulationFactory.setSeed(1)
           val population: Population = PopulationFactory.generateSimpleRandomPopulation(ryeNetworkXML, 10)
           val odPairsMSSP = population.fromTimeGroup(LocalTime.parse("00:00:00"), LocalTime.parse("23:59:59"))
           val odPairs = odPairsMSSP.map(od => {SimpleSSSP_ODPair(od.srcVertex, od.dstVertex)}).par
-          val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(ryeNetworkFilePath).get
+          val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(ryeNetworkFilePath).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
           LocalGraphFrankWolfe.solve(graph, odPairs, RunningTimeTerminationCriteria(10 * 1000L)) match {

@@ -67,7 +67,7 @@ class LocalGraph [V, E] private[localgraph]
     }
     else this
   }
-  def parallelize: LocalGraph[V, E] =
+  def par: LocalGraph[V, E] =
     new LocalGraph(adj.par, _v.par, _e.par)
 
   override def toString: String =
