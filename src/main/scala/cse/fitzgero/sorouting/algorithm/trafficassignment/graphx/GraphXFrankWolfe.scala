@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment.graphx
 
 import java.time._
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph.RoadNetwork

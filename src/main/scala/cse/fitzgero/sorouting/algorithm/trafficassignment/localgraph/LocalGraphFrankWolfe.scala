@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
 
 import java.time.Instant
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraph.simplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 
@@ -67,7 +67,7 @@ object LocalGraphFrankWolfe
     val newEdges: GenSeq[EdgeMATSim] =
       g
       .edgeAttrs
-      .map(_.copy(flow = 0D))
+      .map(_.copy(flowUpdate = 0D))
       .toSeq
     g.replaceEdgeList(newEdges)
   }
@@ -88,7 +88,7 @@ object LocalGraphFrankWolfe
       })
       .groupBy(identity)
       .map(edgeIdGrouped => {
-        g.edgeAttrOf(edgeIdGrouped._1).get.copy(flow = edgeIdGrouped._2.size)
+        g.edgeAttrOf(edgeIdGrouped._1).get.copy(flowUpdate = edgeIdGrouped._2.size)
       })
       .toSeq
     initializeFlows(g).integrateEdgeList(edgesToUpdate)
@@ -106,7 +106,7 @@ object LocalGraphFrankWolfe
       val thisAttr = previousGraph.edgeAttrOf(edgeId).get
       val flowPrevious = thisAttr.flow
       val flowOracle = oracle.edgeAttrOf(edgeId).get.flow
-      thisAttr.copy(flow = calculateThisFlow(flowPrevious, flowOracle, phi))
+      thisAttr.copy(flowUpdate = calculateThisFlow(flowPrevious, flowOracle, phi))
     }).toSeq
     previousGraph.replaceEdgeList(edgesWithUpdatedFlows)
   }

@@ -33,7 +33,7 @@ object BPRCostFunction extends CostFunctionFactory {
     }
   }
   def apply(attr: CostFunctionAttributes): BPRCostFunction = {
-    val capacity = attr.capacity * (attr.flowRate / attr.algorithmFlowRate)
+    val capacity = attr.capacity * (attr.algorithmFlowRate / attr.flowRate)
     new BPRCostFunction(capacity, attr.freespeed, attr.flow)
   }
 }

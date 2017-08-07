@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.shortestpath.sssp.localgraph.simplesssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraph.simplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph._
 import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationFactory, RandomPopulationConfig}
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, TestCostFunction}
@@ -26,7 +26,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "reset those to zeroes" in {
           val rand = new scala.util.Random
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(networkFilePath).get
-          val edgesWithRandomFlows = graph.edgeAttrs.map(_.copy(flow = rand.nextDouble() * 10D)).toSeq
+          val edgesWithRandomFlows = graph.edgeAttrs.map(_.copy(flowUpdate = rand.nextDouble() * 10D)).toSeq
           val graphWithRandomFlows = graph.replaceEdgeList(edgesWithRandomFlows)
           val result = LocalGraphFrankWolfe.initializeFlows(graphWithRandomFlows)
           graphWithRandomFlows.edgeAttrs.map(_.flow).sum should be > 0D
@@ -244,14 +244,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 10))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 11))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 11))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should be < 0.5
@@ -265,14 +265,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 10))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 18))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 18))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should be > 0.5
@@ -286,14 +286,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 10))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flow = edgeData._2.flow + 5000))
+                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.flow + 5000))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should equal (1.0D)

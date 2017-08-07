@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment.graphx
 
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.roadnetwork.graphx.graph._
 
 abstract class GraphXTrafficAssignment extends TrafficAssignment[RoadNetwork, SimpleMSSP_ODPair] with Serializable {

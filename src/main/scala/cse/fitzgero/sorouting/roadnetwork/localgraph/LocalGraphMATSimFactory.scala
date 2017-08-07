@@ -8,7 +8,7 @@ import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 
 import scala.util.{Failure, Success, Try}
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq, XML}
 
 class LocalGraphMATSimFactory (
   var costFunctionFactory: CostFunctionFactory,
@@ -24,12 +24,12 @@ class LocalGraphMATSimFactory (
   override def fromFileAndSnapshot(networkFilePath: String, snapshotFilePath: String = ""): Try[LocalGraphMATSim] = {
     Try[xml.Elem]({
       if (snapshotFilePath == "") <network><links></links></network>
-      else xml.XML.loadFile(snapshotFilePath)
+      else XML.load(new java.io.InputStreamReader(new java.io.FileInputStream(snapshotFilePath), "UTF-8")) // xml.XML.loadFile(snapshotFilePath)
     }) match {
       case Failure(err) => throw new IOException(s"unable to read snapshot file $snapshotFilePath")
       case Success(snapshot) =>
         Try({
-          val network = xml.XML.loadFile(networkFilePath)
+          val network = XML.load(new java.io.InputStreamReader(new java.io.FileInputStream(networkFilePath), "UTF-8")) // xml.XML.loadFile(networkFilePath)
           val newGraph = LocalGraphMATSim()
           val nodeList = grabVertices(newGraph, network)
           grabEdges(nodeList, network, snapshot)
@@ -46,7 +46,7 @@ class LocalGraphMATSimFactory (
       val x: Double = attrs("x").toDouble
       val y: Double = attrs("y").toDouble
       val prop: VertexMATSim = CoordinateVertexProperty(position = Euclidian(x, y))
-      graph.addVertex(name, prop).asInstanceOf[LocalGraphMATSim]
+      graph.addVertex(name, prop)
     })
   }
 

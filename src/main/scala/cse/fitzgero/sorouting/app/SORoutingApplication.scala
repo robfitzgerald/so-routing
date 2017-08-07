@@ -5,7 +5,7 @@ import scala.util.{Failure, Success}
 
 import org.apache.spark.{SparkConf, SparkContext}
 
-import cse.fitzgero.sorouting.algorithm.shortestpath.mssp.graphx.simplemssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.graphx._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.matsimrunner._

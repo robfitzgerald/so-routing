@@ -16,6 +16,9 @@ case class MacroscopicEdgeProperty [Id] (
   flow: Double = 0.0D,
   cost: CostFunction = TestCostFunction())  // default cost function is identity function of flow variable
   extends EdgeProperty {
+  override type T = MacroscopicEdgeProperty[Id]
+  override def copy(flowUpdate: Double = flow, costUpdate: CostFunction = cost): MacroscopicEdgeProperty[Id] =
+    MacroscopicEdgeProperty[Id](id, flowUpdate, costUpdate)
   def linkCostFlow: Double = this.cost.costFlow(flow)
   def allFlow: Double = flow + this.cost.snapshotFlow
 }

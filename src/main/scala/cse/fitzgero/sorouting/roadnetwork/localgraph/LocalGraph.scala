@@ -17,6 +17,10 @@ class LocalGraph [V, E] private[localgraph]
   def edgeAttrs: GenIterable[E] = _e.values
   def edgeKVPairs: Iterator[(EdgeId, E)] = _e.iterator
   def vertexAttrs: GenIterable[V] = _v.values
+  def srcVerticesMap: GenMap[EdgeId, VertexId] =
+    adj.flatMap(row => row._2.map(_._1 -> row._1))
+  def dstVerticesMap: GenMap[EdgeId, VertexId] =
+    adj.flatMap(row => row._2.map(adjacency => adjacency._1 -> adjacency._2))
   def edgeAttrOf(e: EdgeId): Option[E] =
     if (_e.isDefinedAt(e)) Some(_e(e))
     else None
