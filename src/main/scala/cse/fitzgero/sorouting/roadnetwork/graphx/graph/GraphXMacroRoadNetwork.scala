@@ -24,7 +24,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
     * @param fileName location of file
     * @return
     */
-  def fromFile (fileName : String): Try[RoadNetwork] = {
+  def fromFile (fileName : String): Try[GraphxRoadNetwork] = {
     Try ({
       XML.loadFile(fileName)
     }) match {
@@ -45,7 +45,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
     * @param snapshotFileName location of snapshot file
     * @return
     */
-  def fromFileAndSnapshot (networkFileName: String, snapshotFileName: String): Try[RoadNetwork] = {
+  def fromFileAndSnapshot (networkFileName: String, snapshotFileName: String): Try[GraphxRoadNetwork] = {
     Try ({
       XML.loadFile(networkFileName)
     }) match {
@@ -134,7 +134,7 @@ object GraphXMacroRoadNetwork {
     * @param paths tuples where the 3rd element is a list of edge Ids
     * @return a new road network with those values assigned to the flow attributes of the edges
     */
-  def updateEdges(graph: RoadNetwork, paths: ODPaths): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+  def updateEdges(graph: GraphxRoadNetwork, paths: ODPaths): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
     val updateList: Map[EdgeIdType, Double] = paths.flatMap(_.path).groupBy(identity).map(group => (group._1, group._2.size.toDouble))
     graph.mapEdges  (edge =>
       if (updateList.isDefinedAt(edge.attr.id))

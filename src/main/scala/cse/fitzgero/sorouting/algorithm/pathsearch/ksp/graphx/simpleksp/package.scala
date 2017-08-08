@@ -29,8 +29,8 @@ package object simpleksp {
   // (that work was not completed)
 
 //  /**
-//    * Part of the Pregel message which, for some OD pair, captures the weight and path information for the current Pregel iteration
-//    * @param weight total path cost for this OD pair, at this iteration (up to whatever intermediary vertex the message has traveled)
+//    * Part of the Pregel od which, for some OD pair, captures the weight and path information for the current Pregel iteration
+//    * @param weight total path cost for this OD pair, at this iteration (up to whatever intermediary vertex the od has traveled)
 //    * @param path associated with the (possibly partial) weight, this is the possibly partial path traveled
 //    */
 //  case class SimpleKSP_PregelMsg(weight: Double = Double.PositiveInfinity, path: Path = List.empty[EdgeIdType])

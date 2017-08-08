@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.pathsearch
+package cse.fitzgero.sorouting.algorithm.pathsearch.od
 
 abstract class ODPath [V, E] {
   def srcVertex: V

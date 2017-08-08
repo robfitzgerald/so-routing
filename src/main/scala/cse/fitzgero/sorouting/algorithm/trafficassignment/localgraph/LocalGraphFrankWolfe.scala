@@ -1,18 +1,18 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
 
 import java.time.Instant
+import scala.collection.GenSeq
 
-import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraph.simplesssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 
-import scala.collection.{GenIterable, GenSeq}
-
 object LocalGraphFrankWolfe
-  extends TrafficAssignment[LocalGraphMATSim, SimpleSSSP_ODPair] {
+  extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPair] {
 
-  val SSSP: SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
-    SimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+  val SSSP: LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
+    LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
 
   /**
     * solve a traffic assignment for the given network state and set of origin/destination pairs
@@ -23,7 +23,7 @@ object LocalGraphFrankWolfe
     */
   override def solve (
     graph: LocalGraphMATSim,
-    odPairs: GenSeq[SimpleSSSP_ODPair],
+    odPairs: GenSeq[LocalGraphODPair],
     terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
 
     val startTime = Instant.now().toEpochMilli
@@ -78,7 +78,7 @@ object LocalGraphFrankWolfe
     * @param odPairs the set of origin/destination pairs to find paths between
     * @return the road network updated with the flows associated with this set of shortest paths
     */
-  def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[SimpleSSSP_ODPair]): LocalGraphMATSim = {
+  def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPair]): LocalGraphMATSim = {
     val edgesToUpdate: GenSeq[EdgeMATSim] =
       odPairs
       .flatMap(od => {

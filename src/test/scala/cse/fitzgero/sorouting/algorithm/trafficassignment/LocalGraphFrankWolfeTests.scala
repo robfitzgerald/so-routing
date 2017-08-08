@@ -3,7 +3,8 @@ package cse.fitzgero.sorouting.algorithm.trafficassignment
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraph.simplesssp._
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph._
 import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationFactory, RandomPopulationConfig}
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, TestCostFunction}
@@ -38,9 +39,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on a triangle graph where no od pair has any alternate paths" should {
         "result in an expected assignment of flow" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(networkFilePath).get
-          val odPairs: Seq[SimpleSSSP_ODPair] = Seq(
-            SimpleSSSP_ODPair(1, 3),
-            SimpleSSSP_ODPair(2, 1)
+          val odPairs: Seq[LocalGraphODPair] = Seq(
+            LocalGraphODPair(1, 3),
+            LocalGraphODPair(2, 1)
           )
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
@@ -52,9 +53,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on the MATSim equil network with 100 od pairs with the same o/d" should {
         "result in an expected assignment of flow" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(equilNetwork).get
-          val odPairs: Seq[SimpleSSSP_ODPair] =
+          val odPairs: Seq[LocalGraphODPair] =
             (0 until 100)
-            .map(n => SimpleSSSP_ODPair(1, 15))
+            .map(n => LocalGraphODPair(1, 15))
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
           // correct shortest path:
@@ -71,10 +72,10 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on the MATSim equil network with 5000 od pairs in parallel with the same o/d" should {
         "run faster than sequential" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(equilNetwork).get
-          val odPairsSeq: Seq[SimpleSSSP_ODPair] =
+          val odPairsSeq: Seq[LocalGraphODPair] =
             (0 until 5000)
-              .map(n => SimpleSSSP_ODPair(1, 15))
-          val odPairsPar: ParSeq[SimpleSSSP_ODPair] = odPairsSeq.par
+              .map(n => LocalGraphODPair(1, 15))
+          val odPairsPar: ParSeq[LocalGraphODPair] = odPairsSeq.par
           val startSeq = System.currentTimeMillis
           val resultSeq = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsSeq)
           val seqDur = System.currentTimeMillis - startSeq
@@ -87,9 +88,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "on the MATSim equil network with 100 od pairs and with snapshot flows" should {
         "find an alternate route than the solution with no snapshot flows" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
-          val odPairs: Seq[SimpleSSSP_ODPair] =
+          val odPairs: Seq[LocalGraphODPair] =
             (0 until 100)
-              .map(n => SimpleSSSP_ODPair(1, 15))
+              .map(n => LocalGraphODPair(1, 15))
           // has a traffic jam on link [5]
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
@@ -107,9 +108,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
     "calculateCurrentFlows" when {
       "3 node network" when {
         val previousGraph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(networkFilePath).get
-        val odPairs: Seq[SimpleSSSP_ODPair] = Seq(
-          SimpleSSSP_ODPair(1, 3),
-          SimpleSSSP_ODPair(2, 1)
+        val odPairs: Seq[LocalGraphODPair] = Seq(
+          LocalGraphODPair(1, 3),
+          LocalGraphODPair(2, 1)
         )
         val oracleGraph = LocalGraphFrankWolfe.generateOracleGraph(previousGraph, odPairs)
         "passed a simple graph and a simple oracle and 100% phi value" should {
@@ -142,9 +143,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       }
       "equil network with snapshot" when {
         val previousGraph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
-        val odPairs: Vector[SimpleSSSP_ODPair] = Vector(
-          SimpleSSSP_ODPair(1, 15),
-          SimpleSSSP_ODPair(5, 2)
+        val odPairs: Vector[LocalGraphODPair] = Vector(
+          LocalGraphODPair(1, 15),
+          LocalGraphODPair(5, 2)
         )
         val oracleGraph = LocalGraphFrankWolfe.generateOracleGraph(previousGraph, odPairs)
         "passed the equil network with snapshot and an oracle and a 100% phi value" should {
@@ -163,7 +164,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow" in {
           val rand = new scala.util.Random
 //          def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[SimpleSSSP_ODPair] = (1 to 500).map(n => SimpleSSSP_ODPair(1, 15)).par
+          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair(1, 15)).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -180,7 +181,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow" in {
           val rand = new scala.util.Random
           def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[SimpleSSSP_ODPair] = (1 to 500).map(n => SimpleSSSP_ODPair(randomNodeId(n), randomNodeId(n))).par
+          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair(randomNodeId(n), randomNodeId(n))).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -199,7 +200,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow given a relative gap termination criteria" in {
           val rand = new scala.util.Random
           def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[SimpleSSSP_ODPair] = (1 to 500).map(n => SimpleSSSP_ODPair(randomNodeId(n), randomNodeId(n))).par
+          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair(randomNodeId(n), randomNodeId(n))).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -219,7 +220,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           PopulationFactory.setSeed(1)
           val population: Population = PopulationFactory.generateSimpleRandomPopulation(ryeNetworkXML, 10)
           val odPairsMSSP = population.fromTimeGroup(LocalTime.parse("00:00:00"), LocalTime.parse("23:59:59"))
-          val odPairs = odPairsMSSP.map(od => {SimpleSSSP_ODPair(od.srcVertex, od.dstVertex)}).par
+          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.srcVertex, od.dstVertex)}).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(ryeNetworkFilePath).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 

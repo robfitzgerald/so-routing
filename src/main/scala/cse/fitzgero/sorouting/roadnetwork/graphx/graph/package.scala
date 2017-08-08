@@ -5,5 +5,5 @@ import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.CoordinateVertexProperty
 import org.apache.spark.graphx.Graph
 
 package object graph {
-  type RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]
+  type GraphxRoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty]
 }

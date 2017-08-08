@@ -176,7 +176,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
     "updateEdges" when {
       "called with a road network and a collection of paths" should {
         "increment the flows on the corresponding edges" in {
-          val graph: RoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
+          val graph: GraphxRoadNetwork = Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](
             sc.parallelize(List(
               (1, CoordinateVertexProperty(Euclidian(0,0))),
               (2, CoordinateVertexProperty(Euclidian(0,0))),
@@ -186,7 +186,7 @@ class GraphXMacroRoadNetworkTests extends SparkUnitTestTemplate("GraphXMacroRoad
               Edge(2,3,MacroscopicEdgeProperty("2", 10, BPRCostFunction(CostFunctionAttributes(10, 25)))))))
           val paths: ODPaths = Seq(SimpleMSSP_ODPath("1",1,3,List("1", "2")))
 
-          val result: RoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)
+          val result: GraphxRoadNetwork = GraphXMacroRoadNetwork.updateEdges(graph, paths)
 
           result.edges.toLocalIterator.foreach(edge => {
             if (edge.attr.id == "1") edge.attr.flow should equal (6)

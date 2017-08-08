@@ -23,7 +23,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @param odPairs tuples of (Origin Vertex Id, Destination Vertex Id)
     * @return a collection of tuples (Origin Vertex Id, Destination Vertex Id, Shortest Path as Edge Ids)
     */
-  override def shortestPaths (graph: RoadNetwork, odPairs: ODPairs): ODPaths = {
+  override def shortestPaths (graph: GraphxRoadNetwork, odPairs: ODPairs): ODPaths = {
     val destinations: Seq[VertexId] = odPairs.map(_.dstVertex)
     val shortestPathsGraph: ShortestPathsGraph =
       initializeShortestPathsGraph(graph, odPairs)
@@ -44,7 +44,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @param odPairs tuples of OD pairs
     * @return A Shortest Paths graph where each vertex contains shortest path information from each listed origin vertex
     */
-  private def runPregelShortestPaths (graph: RoadNetwork, odPairs: ODPairs): ShortestPathsGraph =
+  private def runPregelShortestPaths (graph: GraphxRoadNetwork, odPairs: ODPairs): ShortestPathsGraph =
     initializeShortestPathsGraph(graph, odPairs)
       .pregel(initialShorestPathsMessage(odPairs))(
         shortestPathVertexProgram,
@@ -70,7 +70,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @param odPairs origin/destination tuples for this shortest path search
     * @return
     */
-  private def initializeShortestPathsGraph (graph: RoadNetwork, odPairs: ODPairs): ShortestPathsGraph = {
+  private def initializeShortestPathsGraph (graph: GraphxRoadNetwork, odPairs: ODPairs): ShortestPathsGraph = {
     val startVals: SimpleMSSG_PregelVertex = initialShorestPathsMessage(odPairs)  // was the shortestPathMap function
     graph.mapVertices((id, _) =>
       if (startVals isDefinedAt id) startVals.updated(id, startVals(id).copy(weight = Zero)) else startVals)
@@ -91,9 +91,9 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
   }
 
   /**
-    * Pregel send message function
+    * Pregel send od function
     * @param edge the current edge triplet: src-[edge]->dst
-    * @return a message to forward to the destination vertex, or no message at all
+    * @return a od to forward to the destination vertex, or no od at all
     */
   def shortestPathSendMessage(edge: EdgeTriplet[SimpleMSSG_PregelVertex, MacroscopicEdgeProperty]): Iterator[(VertexId, SimpleMSSG_PregelVertex)] = {
     val edgeWeight: Double = costMethod match {
@@ -131,7 +131,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * Pregel merge function
     * @param a left operand of a merge between two messages
     * @param b right operand of a merge between two messages
-    * @return a single message to be received by the vertex program
+    * @return a single od to be received by the vertex program
     */
   private def shortestPathMergeMessage (a: SimpleMSSG_PregelVertex, b: SimpleMSSG_PregelVertex): SimpleMSSG_PregelVertex = {
     a.foldLeft(b.withDefaultValue(SimpleMSSP_PregelMsg()))((pathDistances, tuple) => {

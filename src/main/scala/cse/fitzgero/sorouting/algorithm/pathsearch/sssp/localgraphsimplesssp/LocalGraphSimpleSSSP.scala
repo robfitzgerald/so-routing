@@ -1,23 +1,23 @@
-package cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraph.simplesssp
-
-import scala.annotation.tailrec
-import scala.collection.mutable.PriorityQueue
+package cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp
 
 import cse.fitzgero.sorouting.algorithm.pathsearch._
-import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
 
+import scala.annotation.tailrec
 
-class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, SimpleSSSP_ODPair, SimpleSSSP_ODPath] {
-  override def shortestPath (graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath =
+
+class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, LocalGraphODPair, LocalGraphODPath] {
+  override def shortestPath (graph: G, od: LocalGraphODPair): LocalGraphODPath =
     djikstrasAlgorithm(graph, od)
 
-  def djikstrasAlgorithm(graph: G, od: SimpleSSSP_ODPair): SimpleSSSP_ODPath = {
+  def djikstrasAlgorithm(graph: G, od: LocalGraphODPair): LocalGraphODPath = {
     val origin = od.srcVertex
     val goal = od.dstVertex
     val DistanceLowerBound = 0D
-    val NoPathFound = SimpleSSSP_ODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
+    val NoPathFound = LocalGraphODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
     implicit val tripletOrdering: Ordering[Triplet] = Ordering.by {
       (t: Triplet) => {
@@ -35,7 +35,7 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
     def _djikstrasAlgorithm(
       solution: Map[VertexId, SimpleSSSP_SearchNode],
       frontier: collection.mutable.PriorityQueue[Triplet],
-      visited: Set[EdgeId] = Set.empty[EdgeId]): SimpleSSSP_ODPath = {
+      visited: Set[EdgeId] = Set.empty[EdgeId]): LocalGraphODPath = {
       if (frontier.isEmpty) NoPathFound
       else {
         val currentTriplet = frontier.dequeue
@@ -53,7 +53,7 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
           }
         if (currentTriplet.d == goal) {
           val backPropagation: List[(EdgeId, Double)] = _backPropagate(nextSolution)(goal)
-          SimpleSSSP_ODPath(origin, goal, backPropagation.map(_._1), backPropagation.map(_._2))
+          LocalGraphODPath(origin, goal, backPropagation.map(_._1), backPropagation.map(_._2))
         }
         else {
           val addToFrontier =
@@ -90,6 +90,6 @@ class SimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgePropert
 }
 
 
-object SimpleSSSP {
-  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): SimpleSSSP[G, V, E] = new SimpleSSSP[G, V, E]()
+object LocalGraphSimpleSSSP {
+  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): LocalGraphSimpleSSSP[G, V, E] = new LocalGraphSimpleSSSP[G, V, E]()
 }

@@ -4,6 +4,8 @@ import java.time.Instant
 
 // assumptions: iterations begin at 1, startTime is LocalTime as milliseconds
 
+// TODO: name of class should be less generic.  TrafficAssignmentTerminationCriteria?
+
 /**
   * Holds data from an iteration of a traffic assignment solver to be used to signal completion of the algorithm
   * @param startTime time as milliseconds when algorithm began

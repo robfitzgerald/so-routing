@@ -1,10 +1,11 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment
 
-import java.time.Instant
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPair
+import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
 
 import scala.collection.GenSeq
 
-abstract class TrafficAssignment [G, O] {
+trait TrafficAssignment [G, O <: ODPair[_]] {
   /**
     * solves the traffic assignment problem for the given graph and set of origin/destination pairs. od pairs are assumed to be individual agents, not flows of agents.
     * @param graph the network to solve on
