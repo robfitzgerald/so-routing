@@ -22,7 +22,7 @@ import scala.collection.{GenMap, GenSeq}
   * @tparam V vertex type
   * @tparam E edge type
   */
-class SimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends KSP[G, LocalGraphODPair, LocalGraphODPath] {
+class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends KSP[G, LocalGraphODPair, LocalGraphODPath] {
 
   val sssp: LocalGraphSimpleSSSP[G,V,E] = LocalGraphSimpleSSSP[G,V,E]()
 
@@ -91,6 +91,6 @@ class SimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty
 }
 
 
-object SimpleKSP {
-  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): SimpleKSP[G, V, E] = new SimpleKSP[G, V, E]()
+object LocalGraphSimpleKSP {
+  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): LocalGraphSimpleKSP[G, V, E] = new LocalGraphSimpleKSP[G, V, E]()
 }

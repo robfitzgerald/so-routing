@@ -3,11 +3,10 @@ package cse.fitzgero.sorouting.algorithm.routing
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 
 sealed trait RoutingResult {
-  type ODPathSubclass <: ODPath[_,_]
 }
 
-abstract class RoutingSolution extends RoutingResult {
-  def routes: Seq[ODPathSubclass]
+abstract class RoutingSolution [O <: ODPath[_,_]] extends RoutingResult {
+  def routes: Seq[O]
 }
 
 /**

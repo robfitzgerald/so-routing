@@ -22,7 +22,7 @@ package object simplemssp {
 
   case class SimpleMSSP_ODPair(personId: PersonIDType, srcVertex: VertexId, dstVertex: VertexId) extends GraphXODPair
   type ODPairs = Seq[SimpleMSSP_ODPair]
-  case class SimpleMSSP_ODPath(personId: PersonIDType, srcVertex: VertexId, dstVertex: VertexId, path: Path) extends GraphXODPath
+  case class SimpleMSSP_ODPath(personId: PersonIDType, srcVertex: VertexId, dstVertex: VertexId, path: Path, cost: List[Double] = List()) extends GraphXODPath
   type ODPaths = Seq[SimpleMSSP_ODPath]
 
   /**
