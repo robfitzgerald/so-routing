@@ -3,4 +3,6 @@ package cse.fitzgero.sorouting.algorithm.routing.localgraphrouting
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
 import cse.fitzgero.sorouting.algorithm.routing._
 
-case class LocalGraphRoutingResult (routes: Seq[LocalGraphODPath]) extends RoutingSolution[LocalGraphODPath]
+import scala.collection.GenSeq
+
+case class LocalGraphRoutingResult (routes: GenSeq[LocalGraphODPath] = Seq.empty[LocalGraphODPath], runTime: Long) extends RoutingSolution[LocalGraphODPath]

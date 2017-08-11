@@ -6,9 +6,9 @@ import cse.fitzgero.sorouting.roadnetwork.vertex._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 
 case class LocalGraphFWSolverResult (
-  finalNetwork: LocalGraph[VertexMATSim, EdgeMATSim],
+  finalNetwork: LocalGraphMATSim,
   iterations: Int,
   time: Long,
-  relGap: Double = 0D) extends TrafficAssignmentSolution[LocalGraph[VertexMATSim, EdgeMATSim]] {
+  relGap: Double = 0D) extends TrafficAssignmentSolution[LocalGraphMATSim] {
   require(relGap >= 0D && relGap <= 1D, "LocalGraphFWSolverResult.relGap should be in the range [0.0, 1.0]")
 }

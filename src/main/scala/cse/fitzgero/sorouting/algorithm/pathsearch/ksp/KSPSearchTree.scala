@@ -2,54 +2,78 @@ package cse.fitzgero.sorouting.algorithm.pathsearch.ksp
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 
-import scala.collection.GenSeq
+import scala.collection.{GenMap, GenSeq}
 
-//                     KSPResultTree
-//                  /                   \
-//  KSPSearchLeaf                           KSPSearchNode[E]
-//                                      /                      \
-//                    KSPSearchRoot[E]                             KSPSearchTree
+// a sealed tree hierarchy for building and traversing multiple shortest paths with a common root
+// note: there are k different leaf nodes for the k different paths, but, they represent only one
+// vertex in the real graph.
 //
-// constructChildren should be accessible for both KSPSearchNode child classes, right?
-// start with root building. get the types so they work there and we are building the children set of the root.
-// trait composition is blowing my mind up. is this even a trait composition situation?
-// case class Branch extends KSPSearchNode with Children
-// where KSPSearchNode doesn't do shit?  what am i thinking right now..? probably should just try again.
+//                                               KSPSearchTree     -- KSPEmptySearchTree(o)
+//                                              /             \
+//                                            /                \
+//                       KSPEmptyType[Nothing]                    KSPSearchNode[E]
+//                     /        |                               /        |        \
+//                   /          |                             /          |         \
+//   KSPSearchLeaf(o)   KSPInvalidNode(o)     KSPSearchLeaf(o)   KSPSearchRoot[E]   KSPSearchBranch[E]
+//
 
-sealed trait KSPSearchTree
+trait KSPSearchTree
 
-case object KSPSearchLeaf extends KSPSearchTree
 case object KSPEmptySearchTree extends KSPSearchTree
 abstract class KSPSearchNode[E] extends KSPSearchTree {
-  def children: GenSeq[(E, Double, KSPSearchTree)]
+  def children: GenMap[E, (Double, KSPSearchTree)]
+
+  def traverse(label: E): KSPSearchTree = {
+    if (children.isDefinedAt(label))
+      children(label)._2
+    else
+      KSPInvalidNode
+  }
+
+  def printChildren(tabs: String = ""): String =
+    children.map(child => s"$tabs-[id:${child._1} cost: ${child._2._1}]->\n$tabs${child._2._2.toString}").mkString("\n")
 }
-case class KSPSearchRoot[V,E] (children: GenSeq[(E, Double, KSPSearchTree)], srcVertex: V, dstVertex: V) extends KSPSearchNode[E]
-case class KSPSearchBranch[E] (children: GenSeq[(E, Double, KSPSearchTree)]) extends KSPSearchNode[E]
+case class KSPSearchRoot[V,E] (children: GenMap[E, (Double, KSPSearchTree)], srcVertex: V, dstVertex: V) extends KSPSearchNode[E] {
+  override def toString: String =
+    s"root of ksp from $srcVertex to $dstVertex\n${printChildren()}"
+}
+case class KSPSearchBranch[E] (children: GenMap[E, (Double, KSPSearchTree)], depth: Int = 1) extends KSPSearchNode[E] {
+  override def toString: String = {
+    val tabs: String = (0 until depth).map(n=>"  ").mkString("")
+    s"${tabs}branch of ksp\n${printChildren(tabs)}"
+  }
+}
+
+abstract class KSPEmptyNode extends KSPSearchNode[Nothing] {
+  def children: GenMap[Nothing, (Double, KSPSearchTree)] = GenMap.empty[Nothing, (Double, KSPSearchTree)]
+}
+case object KSPInvalidNode extends KSPEmptyNode
+case object KSPSearchLeaf extends KSPEmptyNode
 
 case class TreeBuildData [V,E] (srcVertex: V, dstVertex: V, path: List[E], cost: List[Double])
 
 object KSPSearchTree {
 
   def buildTree [O <: ODPath[V,E], V, E] (paths: GenSeq[O]): KSPSearchTree = {
-    def _buildTree(subPaths: GenSeq[TreeBuildData[V,E]]): GenSeq[(E, Double, KSPSearchTree)] = {
+    def _buildTree(subPaths: GenSeq[TreeBuildData[V,E]], depth: Int = 1): GenMap[E, (Double, KSPSearchTree)] = {
       if (subPaths.isEmpty)
-        List()
+        Map()
       else {
         discoverAlternatives(subPaths)
-          .map(tup=> (tup._1, tup._2, stepIntoPaths(filterAlternatesBy(tup._1, subPaths))))
+          .map(tup => (tup._1, tup._2, stepIntoPaths(filterAlternatesBy(tup._1, subPaths))))
           .map(tup => tup._3 match {
-            case Nil =>
-              (tup._1, tup._2, KSPSearchLeaf)
+            case y: GenSeq[TreeBuildData[V,E]] if y.forall(_.path.isEmpty) =>
+              (tup._1, (tup._2, KSPSearchLeaf))
             case x: GenSeq[TreeBuildData[V,E]] =>
-              (tup._1, tup._2, KSPSearchBranch(_buildTree(x)))
-          })
+              (tup._1, (tup._2, KSPSearchBranch(_buildTree(x, depth + 1), depth)))
+          }).toMap
       }
     }
 
     val inputData = odToTreeData[O,V,E](paths)
     paths match {
-      case x :: xs =>
-        KSPSearchRoot(_buildTree(inputData), x.srcVertex, x.dstVertex)
+      case x if x.nonEmpty =>
+        KSPSearchRoot(_buildTree(inputData), x.head.srcVertex, x.head.dstVertex)
       case _ =>
         KSPEmptySearchTree
     }
@@ -60,11 +84,6 @@ object KSPSearchTree {
       TreeBuildData[V,E](od.srcVertex, od.dstVertex, od.path, od.cost)
     )
   }
-
-//  def discoverAlternatives2 [V, E] (paths: GenSeq[TreeBuildData[V,E]]): GenSeq[E] =
-//    paths
-//      .flatMap(_.path.headOption)
-//      .distinct
 
   def discoverAlternatives [V, E] (paths: GenSeq[TreeBuildData[V,E]]): GenSeq[(E,Double)] =
     paths

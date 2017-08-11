@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.ksp
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
 
 import scala.collection.GenSeq
@@ -17,12 +18,35 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
           )
           val result = KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult)
           result match {
-            case KSPSearchRoot(children, src, dst) =>
-              children.head._1 should equal ("a")
-              children.head._3 match {
-                case KSPSearchBranch(ch) =>
-                  ch.head._1 should equal ("b")
-                  ch.tail.head._1 should equal ("d")
+            case KSPSearchRoot(ch1, src, dst) =>
+              ch1("a")._2 match {
+                case KSPSearchBranch(ch2, _) =>
+                  ch2("b")._2 match {
+                    case KSPSearchBranch(ch3, depth) =>
+                      ch3("c")._2 should equal (KSPSearchLeaf)
+                      depth should equal (3)
+                    case _ => fail()
+                  }
+                  ch2("d")._2 match {
+                    case KSPSearchBranch(ch3, _) =>
+                      ch3("e")._2 match {
+                        case KSPSearchBranch(ch4, depth) =>
+                          ch4("f")._2 should equal (KSPSearchLeaf)
+                          depth should equal (4)
+                        case _ => fail()
+                      }
+                    case _ => fail()
+                  }
+                case _ => fail()
+              }
+              ch1("b")._2 match {
+                case KSPSearchBranch(ch2, _) =>
+                  ch2("g")._2 match {
+                    case KSPSearchBranch(ch3, depth) =>
+                      ch3("n")._2 should equal (KSPSearchLeaf)
+                      depth should equal (3)
+                    case _ => fail()
+                  }
                 case _ => fail()
               }
             case _ => fail()
@@ -34,6 +58,44 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
           val kspResult = GenSeq.empty[LocalGraphODPath]
           val result = KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult)
           result should equal (KSPEmptySearchTree)
+        }
+      }
+    }
+    "traverse" when {
+      "called with an edge that exists" should {
+        "return the child node of that edge" in {
+          val kspResult: GenSeq[LocalGraphODPath] = GenSeq(
+            LocalGraphODPath(1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
+            LocalGraphODPath(1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
+            LocalGraphODPath(1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
+          )
+          KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult) match {
+            case x: KSPSearchRoot[Long, String] =>
+              x.traverse("a") match {
+                case y: KSPSearchBranch[String] =>
+                  y.traverse("b") match {
+                    case z: KSPSearchBranch[String] =>
+                      z.traverse("c") match {
+                        case KSPSearchLeaf => succeed
+                        case _ => fail()
+                      }
+                    case _ => fail()
+                  }
+                case _ => fail()
+              }
+            case _ => fail()
+          }
+
+        }
+      }
+      "called with an edge that doesn't exist" should {
+        "return a KSPInvalidNode response" in {
+          val kspResult: GenSeq[LocalGraphODPath] = GenSeq(
+            LocalGraphODPath(1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
+            LocalGraphODPath(1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
+            LocalGraphODPath(1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
+          )
+          val result = KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult)
         }
       }
     }

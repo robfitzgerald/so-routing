@@ -50,9 +50,9 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
     "grabVertices" when {
       "passed a valid network file" should {
         "create a LocalGraph instance which has all vertices described in the network file" in {
-          val grabVertices = PrivateMethod[LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]]('grabVertices)
+          val grabVertices = PrivateMethod[LocalGraphMATSim]('grabVertices)
           val emptyGraph = LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]()
-          val result: LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty] = LocalGraphMATSimFactory(TestCostFunction) invokePrivate grabVertices(emptyGraph, testXML)
+          val result: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction) invokePrivate grabVertices(emptyGraph, testXML)
           result.vertices.toList should equal (List(1L, 2L, 3L))
         }
       }

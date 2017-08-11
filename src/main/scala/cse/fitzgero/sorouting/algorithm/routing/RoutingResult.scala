@@ -2,11 +2,13 @@ package cse.fitzgero.sorouting.algorithm.routing
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 
+import scala.collection.GenSeq
+
 sealed trait RoutingResult {
 }
 
 abstract class RoutingSolution [O <: ODPath[_,_]] extends RoutingResult {
-  def routes: Seq[O]
+  def routes: GenSeq[O]
 }
 
 /**
