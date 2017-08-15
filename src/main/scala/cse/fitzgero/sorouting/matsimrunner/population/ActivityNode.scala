@@ -20,7 +20,9 @@ sealed trait ActivityNode[Pos, VertexId, EdgeId, ActOpt <: ActivityNodeOptions] 
   def opts: ActOpt
 }
 
-abstract class MatsimActivity extends ActivityNode[Double, VertexId, EdgeIdType, EndTime]
+abstract class MATSimActivity extends ActivityNode[Double, VertexId, EdgeIdType, ActivityNodeOptions] with ConvertsToXml {
+  def toXml: xml.Elem
+}
 
 final case class MorningActivity (
   `type`: String,
@@ -29,7 +31,7 @@ final case class MorningActivity (
   vertex: VertexId,
   link: EdgeIdType,
   opts: EndTime)
-  extends MatsimActivity with ConvertsToXml {
+  extends MATSimActivity {
     override def toXml: xml.Elem =
       <activity type={`type`} x={x.toString} y={y.toString} link={link.toString} end_time={opts.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
   }
@@ -41,7 +43,7 @@ final case class MiddayActivity (
   vertex: VertexId,
   link: EdgeIdType,
   opts: EndTime)
-  extends MatsimActivity with ConvertsToXml {
+  extends MATSimActivity {
     override def toXml: xml.Elem =
         <activity type={`type`} x={x.toString} y={y.toString} link={link.toString} end_time={opts.endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))}/>
   }
@@ -53,7 +55,7 @@ final case class EveningActivity (
   vertex: VertexId,
   link: EdgeIdType,
   opts: NoActivity = NoActivity())
-  extends ActivityNode[Double, VertexId, EdgeIdType, NoActivity] with ConvertsToXml {
+  extends MATSimActivity {
     override def toXml: xml.Elem =
       <activity type={`type`} x={x.toString} y={y.toString} link={link.toString}/>
   }

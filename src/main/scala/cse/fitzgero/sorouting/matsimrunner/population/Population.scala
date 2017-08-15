@@ -7,26 +7,13 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
 
-sealed trait SamplingMethod {
-  def apply(population: Set[PersonNode]): Stream[PersonNode]
-}
-object RandomSampling extends SamplingMethod {
-  val random = new java.util.Random(System.currentTimeMillis)
-  def setSeed(s: Long): Unit = random.setSeed(s)
-  def apply(population: Set[PersonNode]): Stream[PersonNode] = {
-    if (population.isEmpty) throw new IndexOutOfBoundsException("attempting to sample from empty set")
-    else {
-      val randIndex = random.nextInt(population.size)
-      val nextPerson = population.iterator.drop(randIndex).next
-      nextPerson #:: this(population - nextPerson)
-    }
-  }
-}
+
 
 case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
   // random values
-  implicit val sampling = RandomSampling
+  implicit val sampling = Population.RandomSampling
   sampling.setSeed(seed)
+
 
   // xml save operation
   val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
@@ -34,20 +21,24 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
   def toXml: xml.Elem = <population>{persons.map(_.toXml)}</population>
   def saveFile(fileName: String): Unit = XML.save(fileName, this.toXml, "UTF-8", WriteXmlDeclaration, populationDocType)
 
+
   // population operations
   def subsetPartition(percentage: Double): (Population, Population) = {
     val numSampled = (percentage * persons.size).toInt
     val thisSampling: Set[PersonNode] = sampling(persons).take(numSampled).toSet
     (Population(thisSampling), Population(persons -- thisSampling))
   }
+
   def reintegrateSubset(subset: Population): Population = {
     Population(
       subset.persons.foldLeft(this.persons)((accum, updatedPerson) => {
         val toRemove = this.persons.find(_.id == updatedPerson.id)
         (accum -- toRemove) + updatedPerson
-      })
+      }),
+      seed
     )
   }
+
   def updatePerson(data: SimpleMSSP_ODPath): Population = {
     persons.find(_.id == data.personId) match {
       case None => this
@@ -58,20 +49,45 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
   }
 
   // export ops
-  def fromTimeGroup(lowerBound: LocalTime, upperBound: LocalTime): ODPairs =
+  def exportTimeGroupAsODPairs(lowerBound: LocalTime, upperBound: LocalTime): ODPairs =
     persons.flatMap(_.unpackTrips(lowerBound, upperBound)).toSeq
   def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => SimpleMSSP_ODPair(p.id, leg.srcVertex, leg.dstVertex)))
+}
+
+object Population {
+  sealed trait SamplingMethod {
+    def apply(population: Set[PersonNode]): Stream[PersonNode]
+  }
+  object RandomSampling extends SamplingMethod {
+    val random = new java.util.Random(System.currentTimeMillis)
+    def setSeed(s: Long): Unit = random.setSeed(s)
+    def apply(population: Set[PersonNode]): Stream[PersonNode] = {
+      if (population.isEmpty) throw new IndexOutOfBoundsException("attempting to sample from empty set")
+      else {
+        val randIndex = random.nextInt(population.size)
+        val nextPerson = population.iterator.drop(randIndex).next
+        nextPerson #:: this(population - nextPerson)
+      }
+    }
+  }
 }
 
 case class HomeConfig(name: String)
 case class ActivityConfig(name: String, start: LocalTime, dur: LocalTime, dev: Long = 0L)
 case class ModeConfig(name: String, probability: Double = 1.0D)
 case class RandomPopulationConfig(populationSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
+case class RandomPopulationOneTripConfig(
+  populationSize: Int,
+  activities: Seq[ActivityConfig],
+  modes: Seq[ModeConfig]
+)
 
 object PopulationFactory {
   val Zero: Int = 0
   val random = new java.util.Random(System.currentTimeMillis)
   def setSeed(s: Long): Unit = random.setSeed(s)
+
+
   def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): Population = {
 //    val activityLocations = ??? // ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
@@ -99,24 +115,26 @@ object PopulationFactory {
       }).toSet
     )
   }
+
+
   def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): Population = {
     // @TODO: revise time generation. is currently passing start time and duration; we just use end time.
     // might be worth smarting up with case classes for types of time and different results from the time generator
     val activityTimeGenerator =
-      PopulationRandomTimeGenerator(
-        (conf.home.name, NoDeviation(conf.activities.head.start)) +:
+    PopulationRandomTimeGenerator(
+      (conf.home.name, NoDeviation(conf.activities.head.start)) +:
         conf.activities.map(act => {
           (act.name, BidirectionalBoundedDeviation(act.start.plusSeconds(act.dur.toSecondOfDay), act.dev))
         })
-      )
+    )
 
     Population(
       (Zero until conf.populationSize).map(n => {
         val times = activityTimeGenerator.next()
-//        println("generated times")
-//        println(times.mkString(" "))
-//        val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
-//        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
+        //        println("generated times")
+        //        println(times.mkString(" "))
+        //        val homeLocation = ActivityLocation.pickRandomLocation(activityLocations)
+        //        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
         val homeLocation = ActivityLocation.takeRandomLocation(network)
         val actLocations = conf.activities.map(_ => ActivityLocation.takeRandomLocation(network))
         PersonNode(
@@ -131,6 +149,7 @@ object PopulationFactory {
       }).toSet
     )
   }
+
   private def evaluateModeProbability(modeConfig: ModeConfig): Boolean =
     random.nextDouble <= modeConfig.probability
 }

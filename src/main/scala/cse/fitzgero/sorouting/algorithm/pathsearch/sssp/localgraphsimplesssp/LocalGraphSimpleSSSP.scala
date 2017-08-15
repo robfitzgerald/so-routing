@@ -17,7 +17,7 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
     val origin = od.srcVertex
     val goal = od.dstVertex
     val DistanceLowerBound = 0D
-    val NoPathFound = LocalGraphODPath(origin, goal, List.empty[EdgeId], List.empty[Double])
+    val NoPathFound = LocalGraphODPath(od.personId, origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
     implicit val tripletOrdering: Ordering[Triplet] = Ordering.by {
       (t: Triplet) => {
@@ -53,7 +53,7 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
           }
         if (currentTriplet.d == goal) {
           val backPropagation: List[(EdgeId, Double)] = _backPropagate(nextSolution)(goal)
-          LocalGraphODPath(origin, goal, backPropagation.map(_._1), backPropagation.map(_._2))
+          LocalGraphODPath(od.personId, origin, goal, backPropagation.map(_._1), backPropagation.map(_._2))
         }
         else {
           val addToFrontier =

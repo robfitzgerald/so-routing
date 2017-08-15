@@ -19,7 +19,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
         "find that solution" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
           val sssp = LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
-          val result: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair(1L, 3L))
+          val result: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair("", 1L, 3L))
           result.path should equal (List("1", "2"))
 //          println(result.toString)
         }
@@ -29,7 +29,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(kspNetworkFilePath, kspSnapshotFilePath).get
           val sssp = LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           graph.edgeAttrs.foreach(println)
-          val result: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair(1L, 11L))
+          val result: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair("", 1L, 11L))
           result.path should equal (List("1-4", "4-6", "6-9", "9-11"))
           //          println(result.toString)
         }
@@ -57,7 +57,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
       "called with an itty bitty triangle graph and valid od pair" should {
         "produce the shortest path" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction).fromFile(networkFilePath).get
-          val odPair = LocalGraphODPair(1L, 3L)
+          val odPair = LocalGraphODPair("", 1L, 3L)
           val sssp = new LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
           result.cost.sum should equal (2D)
@@ -67,7 +67,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
       "called with an itty bitty triangle graph, snapshot, and valid od pair" should {
         "produce the shortest path" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          val odPair = LocalGraphODPair(1L, 3L)
+          val odPair = LocalGraphODPair("", 1L, 3L)
           val sssp = new LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
           result.cost.sum should be > 55D
@@ -77,7 +77,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
       "called with the MATSim Equil network and valid od pair" should {
         "produce the shortest path" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(equilNetworkFilePath, equilSnapshotFilePath).get
-          val odPair = LocalGraphODPair(1L, 15L)
+          val odPair = LocalGraphODPair("", 1L, 15L)
           val sssp = new LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)
 

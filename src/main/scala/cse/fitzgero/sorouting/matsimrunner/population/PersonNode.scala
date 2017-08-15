@@ -25,6 +25,17 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     }
   }
 
+  def hasActivityWithVertices(src: VertexId, dst: VertexId): Boolean = {
+    legs.indexWhere(leg => leg.srcVertex == src && leg.dstVertex == dst) != -1
+  }
+
+  def hasBeenAssignedPathWithVertices(src: VertexId, dst: VertexId): Boolean = {
+    val legIdx = legs.indexWhere(leg => leg.srcVertex == src && leg.dstVertex == dst)
+    if (legIdx != -1)
+      legs(legIdx).path.nonEmpty
+    else false
+  }
+
   private def generateLegs: List[LegNode] =
     ((homeAM.link, homeAM.vertex) +:
       work.map(w=> (w.link, w.vertex)) :+
@@ -53,12 +64,14 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
   }
 
   /**
-    * construct OD Pair objects from any trips in the range [low, high)
-    * @param low lower bound, inclusive
-    * @param high upper bound, exclusive
-    * @return
+    * generic function used to export legs using a time group mapping function
+    * @param expFn a function used to map from LegNode to T
+    * @param low lower time bound, inclusive
+    * @param high upper time bound, exclusive
+    * @tparam T type of export object
+    * @return a list of leg values exported as type T
     */
-  def unpackTrips(low: LocalTime, high: LocalTime): ODPairs = {
+  def exportLegsByTimeGroup[T](expFn: (LegNode)=>T)(low: LocalTime, high: LocalTime): List[T] = {
     val srcVerticesInTimeRange: Seq[VertexId] = ((homeAM.vertex, homeAM.opts) +: work.map(a => (a.vertex, a.opts)))
       .map({
         case (vertex, EndTime(time)) => Some((vertex, time))
@@ -71,8 +84,18 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
         } else false
       })
       .map(_.get._1)
-    legs.filter(srcVerticesInTimeRange contains _.srcVertex).map(asODPair)
+    legs.filter(srcVerticesInTimeRange contains _.srcVertex).map(expFn)
   }
+
+  /**
+    * construct OD Pair objects from any trips in the range [low, high)
+    * @param low lower bound, inclusive
+    * @param high upper bound, exclusive
+    * @return
+    */
+  def unpackTrips(low: LocalTime, high: LocalTime): ODPairs =
+    exportLegsByTimeGroup[SimpleMSSP_ODPair](asODPair)(low, high)
+
 
   def asODPair(leg: LegNode): SimpleMSSP_ODPair =
     SimpleMSSP_ODPair(

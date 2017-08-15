@@ -43,7 +43,7 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
     val startTime = Instant.now().toEpochMilli
 
     // find the true shortest path
-    val trueShortestPath: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair(od.srcVertex, od.dstVertex))
+    val trueShortestPath: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex))
     // a way to lookup source vertex ids from an edge id
     val srcVerticesLookup: GenMap[EdgeId, VertexId] = graph.srcVerticesMap
     // our solution, a ranked list of paths
@@ -70,12 +70,12 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
         val spurSourceVertex: VertexId = srcVerticesLookup(thisEdge)
 
         // find source vertex of this edge, run a new shortest paths search from there to end
-        val alternatePathSpur: LocalGraphODPath = sssp.shortestPath(blockedGraph, LocalGraphODPair(spurSourceVertex, od.dstVertex))
+        val alternatePathSpur: LocalGraphODPath = sssp.shortestPath(blockedGraph, LocalGraphODPair(od.personId, spurSourceVertex, od.dstVertex))
 
         // combine spur with prefix (trueSPRev.tail.reverse) and add to solution
         val alternativePath: List[EdgeId] = walkBack.path.tail.reverse ::: alternatePathSpur.path
         val alternativePathCosts: List[Double] = walkBack.cost.tail.reverse ::: alternatePathSpur.cost
-        val alterativeODPath: LocalGraphODPath = LocalGraphODPath(od.srcVertex, od.dstVertex, alternativePath, alternativePathCosts)
+        val alterativeODPath: LocalGraphODPath = LocalGraphODPath(od.personId, od.srcVertex, od.dstVertex, alternativePath, alternativePathCosts)
         solution.enqueue(alterativeODPath)
 
         // take a step back and repeat

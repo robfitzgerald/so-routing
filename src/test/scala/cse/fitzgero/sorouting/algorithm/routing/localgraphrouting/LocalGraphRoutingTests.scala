@@ -26,7 +26,7 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           import scala.concurrent.ExecutionContext.Implicits.global
           val config = LocalRoutingConfig(4, NoKSPBounds, IterationTerminationCriteria(5 iterations))
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          val odPairs: Seq[LocalGraphODPair] = Seq(LocalGraphODPair(1L, 11L))
+          val odPairs: Seq[LocalGraphODPair] = Seq(LocalGraphODPair("", 1L, 11L))
           LocalGraphRouting.route(graph, odPairs, config) map {
             case LocalGraphRoutingResult(res, _) =>
               println("result")
@@ -50,8 +50,8 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val fiveByFiveNetworkXML = XML.loadFile(fiveByFiveNetworkFilePath)
           PopulationFactory.setSeed(1)
           val population: Population = PopulationFactory.generateSimpleRandomPopulation(fiveByFiveNetworkXML, 200 persons)
-          val odPairsMSSP = population.fromTimeGroup(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
-          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.srcVertex, od.dstVertex)})
+          val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
+          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
               LocalGraphRouting.route(graph, odPairs, parConfig) map {
@@ -79,8 +79,8 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val puebloNetworkXML = XML.loadFile(ryeNetworkFilePath)
           PopulationFactory.setSeed(1)
           val population: Population = PopulationFactory.generateSimpleRandomPopulation(puebloNetworkXML, 20 persons)
-          val odPairsMSSP = population.fromTimeGroup(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
-          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.srcVertex, od.dstVertex)})
+          val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
+          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
               LocalGraphRouting.route(graph, odPairs, parConfig) map {

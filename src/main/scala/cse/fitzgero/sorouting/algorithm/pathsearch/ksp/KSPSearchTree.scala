@@ -33,7 +33,7 @@ abstract class KSPSearchNode[E] extends KSPSearchTree {
   def printChildren(tabs: String = ""): String =
     children.map(child => s"$tabs-[id:${child._1} cost: ${child._2._1}]->\n$tabs${child._2._2.toString}").mkString("\n")
 }
-case class KSPSearchRoot[V,E] (children: GenMap[E, (Double, KSPSearchTree)], srcVertex: V, dstVertex: V) extends KSPSearchNode[E] {
+case class KSPSearchRoot[V,E] (children: GenMap[E, (Double, KSPSearchTree)], srcVertex: V, dstVertex: V, personId: String) extends KSPSearchNode[E] {
   override def toString: String =
     s"root of ksp from $srcVertex to $dstVertex\n${printChildren()}"
 }
@@ -73,7 +73,7 @@ object KSPSearchTree {
     val inputData = odToTreeData[O,V,E](paths)
     paths match {
       case x if x.nonEmpty =>
-        KSPSearchRoot(_buildTree(inputData), x.head.srcVertex, x.head.dstVertex)
+        KSPSearchRoot(_buildTree(inputData), x.head.srcVertex, x.head.dstVertex, x.head.personId)
       case _ =>
         KSPEmptySearchTree
     }

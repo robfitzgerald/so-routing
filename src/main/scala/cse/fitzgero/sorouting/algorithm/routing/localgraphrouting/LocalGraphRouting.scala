@@ -91,9 +91,9 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
         val node = x.asInstanceOf[KSPSearchRoot[VertexId,EdgeId]]
         val result: List[(EdgeId, Double)] = _selectRoute(x)
         val (path, cost) = result.unzip
-        LocalGraphODPath(node.srcVertex, node.dstVertex, path, cost)
+        LocalGraphODPath(node.personId, node.srcVertex, node.dstVertex, path, cost)
       case _ =>
-        LocalGraphODPath(0,0,List(), List())
+        LocalGraphODPath("",0,0,List(), List())
     })
   }
 

@@ -63,7 +63,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "randomly sample from that population when streamed" in {
           val network = XML.loadFile(equilNetworkFile)
           val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
-          val result = RandomSampling(pop.persons)
+          val result = Population.RandomSampling(pop.persons)
           result.take(10).foreach(println)
         }
       }
@@ -148,7 +148,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
             LocalTime.parse("23:59:59").toSecondOfDay by 30
             ).map(timeNumber => LocalTime.ofSecondOfDay(timeNumber))
           val result = allTimesInRange.sliding(2).map(bounds => {
-            pop.fromTimeGroup(bounds(0), bounds(1))
+            pop.exportTimeGroupAsODPairs(bounds(0), bounds(1))
           })
           result.flatten.size should be (popSize * 2)
         }

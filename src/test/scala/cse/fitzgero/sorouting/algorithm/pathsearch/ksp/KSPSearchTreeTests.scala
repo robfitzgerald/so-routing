@@ -12,13 +12,13 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
       "called with the output of a KSP algorithm" should {
         "produce a tree of shortest paths" in {
           val kspResult: GenSeq[LocalGraphODPath] = GenSeq(
-            LocalGraphODPath(1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
+            LocalGraphODPath("bob", 1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
+            LocalGraphODPath("alice", 1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
+            LocalGraphODPath("lord byron", 1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
           )
           val result = KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult)
           result match {
-            case KSPSearchRoot(ch1, src, dst) =>
+            case KSPSearchRoot(ch1, src, dst, id) =>
               ch1("a")._2 match {
                 case KSPSearchBranch(ch2, _) =>
                   ch2("b")._2 match {
@@ -65,9 +65,9 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
       "called with an edge that exists" should {
         "return the child node of that edge" in {
           val kspResult: GenSeq[LocalGraphODPath] = GenSeq(
-            LocalGraphODPath(1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
+            LocalGraphODPath("carlo", 1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
+            LocalGraphODPath("jerry", 1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
+            LocalGraphODPath("jeremy", 1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
           )
           KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult) match {
             case x: KSPSearchRoot[Long, String] =>
@@ -91,9 +91,9 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
       "called with an edge that doesn't exist" should {
         "return a KSPInvalidNode response" in {
           val kspResult: GenSeq[LocalGraphODPath] = GenSeq(
-            LocalGraphODPath(1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
-            LocalGraphODPath(1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
+            LocalGraphODPath("A", 1L, 5L, List("a", "b", "c"), List(1.0, 1.0, 1.0)),
+            LocalGraphODPath("B", 1L, 5L, List("a", "d", "e", "f"), List(1.0, 1.0, 1.0, 1.0)),
+            LocalGraphODPath("C", 1L, 5L, List("b", "g", "n"), List(1.0, 1.0, 1.0))
           )
           val result = KSPSearchTree.buildTree[LocalGraphODPath, Long, String](kspResult)
         }
