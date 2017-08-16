@@ -126,7 +126,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
           MiddayActivity("soccer-practice", 789D, 1011D, 123, "2000", EndTime(LocalTime.parse("01:00:00")))
         )
         val a3 = EveningActivity("home", 0D, 1D, 2, "20")
-        val legs = List(LegNode("car", 1, 3, "1", "3", List("1", "2", "3")), LegNode("car", 3, 5, "3", "5", List("3", "4", "5")), LegNode("car", 5, 1, "5", "1", List("5", "1")))
+        val legs = List(UnroutedLeg("car", 1, 3, "1", "3", List("1", "2", "3")), UnroutedLeg("car", 3, 5, "3", "5", List("3", "4", "5")), UnroutedLeg("car", 5, 1, "5", "1", List("5", "1")))
         val result = PersonNode("1", "car", a1, a2, a3, legs).toXml
 
         result.attribute("id").get.text should equal ("1")

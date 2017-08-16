@@ -7,12 +7,12 @@ import org.apache.spark.graphx.VertexId
 
 import scala.xml.Elem
 
-case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legsParam: List[LegNode] = List.empty[LegNode]) extends ConvertsToXml {
+case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legsParam: List[UnroutedLeg] = List.empty[UnroutedLeg]) extends ConvertsToXml {
 //  private val legList: List[LegNode] =
 //    if (legsParam.nonEmpty) legsParam
 //    else generateLegs
 
-  lazy val legs: List[LegNode] =
+  lazy val legs: List[UnroutedLeg] =
     if (legsParam.nonEmpty) legsParam
     else generateLegs
 
@@ -20,7 +20,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     val legIdx: Int = legs.indexWhere(leg => leg.srcVertex == src && leg.dstVertex == dst)
     if (legIdx == -1) {println(s"PersonNode.updatePath failed to find leg with src $src and dst $dst with path values ${path.mkString(" ")}"); this }
     else {
-      val newLegVal: LegNode = legs(legIdx).copy(path = path)
+      val newLegVal: UnroutedLeg = legs(legIdx).copy(path = path)
       this.copy(legsParam = legs.updated(legIdx, newLegVal))
     }
   }
@@ -36,13 +36,13 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     else false
   }
 
-  private def generateLegs: List[LegNode] =
+  private def generateLegs: List[UnroutedLeg] =
     ((homeAM.link, homeAM.vertex) +:
       work.map(w=> (w.link, w.vertex)) :+
       (homePM.link, homePM.vertex)
     ).sliding(2)
       .toList
-    .map((odPair) => LegNode(mode, odPair(0)._2, odPair(1)._2, odPair(0)._1, odPair(1)._1))
+    .map((odPair) => UnroutedLeg(mode, odPair(0)._2, odPair(1)._2, odPair(0)._1, odPair(1)._1))
 
 
   def stripedLegsAndActivities: Seq[ConvertsToXml] = {
@@ -71,7 +71,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     * @tparam T type of export object
     * @return a list of leg values exported as type T
     */
-  def exportLegsByTimeGroup[T](expFn: (LegNode)=>T)(low: LocalTime, high: LocalTime): List[T] = {
+  def exportLegsByTimeGroup[T](expFn: (UnroutedLeg)=>T)(low: LocalTime, high: LocalTime): List[T] = {
     val srcVerticesInTimeRange: Seq[VertexId] = ((homeAM.vertex, homeAM.opts) +: work.map(a => (a.vertex, a.opts)))
       .map({
         case (vertex, EndTime(time)) => Some((vertex, time))
@@ -97,7 +97,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     exportLegsByTimeGroup[SimpleMSSP_ODPair](asODPair)(low, high)
 
 
-  def asODPair(leg: LegNode): SimpleMSSP_ODPair =
+  def asODPair(leg: UnroutedLeg): SimpleMSSP_ODPair =
     SimpleMSSP_ODPair(
       id,
       leg.srcVertex,

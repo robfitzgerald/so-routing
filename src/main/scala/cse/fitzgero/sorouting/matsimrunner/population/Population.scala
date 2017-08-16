@@ -76,11 +76,6 @@ case class HomeConfig(name: String)
 case class ActivityConfig(name: String, start: LocalTime, dur: LocalTime, dev: Long = 0L)
 case class ModeConfig(name: String, probability: Double = 1.0D)
 case class RandomPopulationConfig(populationSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
-case class RandomPopulationOneTripConfig(
-  populationSize: Int,
-  activities: Seq[ActivityConfig],
-  modes: Seq[ModeConfig]
-)
 
 object PopulationFactory {
   val Zero: Int = 0

@@ -7,4 +7,5 @@ abstract class MATSimLeg {
   def srcLink: String
   def dstLink: String
   def path: List[String]
+  def toXml: xml.Elem
 }

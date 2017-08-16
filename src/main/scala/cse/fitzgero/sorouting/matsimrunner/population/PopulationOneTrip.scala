@@ -9,8 +9,14 @@ import scala.xml.XML
 import scala.xml.dtd.{DocType, SystemID}
 
 
+// TODO finish Population overhaul
+// we rushed this the first time through
+// breaking this up better should lead to simpler code anyway
+// finish that, toward the plan to remove the older version
+// think about role of inheritance or collection-oriented functional style
 
-case class PopulationOneTrip (persons: Set[PersonOneTripNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+
+case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
   // random values
   implicit val sampling = PopulationOneTrip.RandomSampling
   sampling.setSeed(seed)
@@ -25,7 +31,7 @@ case class PopulationOneTrip (persons: Set[PersonOneTripNode], seed: Long = Syst
   // population operations
   def subsetPartition(percentage: Double): (PopulationOneTrip, PopulationOneTrip) = {
     val numSampled = (percentage * persons.size).toInt
-    val thisSampling: Set[PersonOneTripNode] = sampling(persons).take(numSampled).toSet
+    val thisSampling: Set[PersonOneTrip] = sampling(persons).take(numSampled).toSet
     (PopulationOneTrip(thisSampling), PopulationOneTrip(persons -- thisSampling))
   }
 
@@ -40,19 +46,21 @@ case class PopulationOneTrip (persons: Set[PersonOneTripNode], seed: Long = Syst
   }
 
   def updatePerson(data: LocalGraphODPath): PopulationOneTrip = {
-    persons.find(_.id == data.personId) match {
+    val toUpdate = persons.find(_.id.toString == data.personId)
+    toUpdate match {
       case None => this
       case Some(person) =>
-        val updatedPerson: PersonOneTripNode = person.updatePath(data.path)
+        val updatedPerson: PersonOneTrip = person.updatePath(data.path)
         PopulationOneTrip((persons - person) + updatedPerson)
     }
   }
 
   def updatePerson(data: SimpleMSSP_ODPath): PopulationOneTrip = {
-    persons.find(_.id == data.personId) match {
+    val toUpdate = persons.find(_.id.toString == data.personId)
+    toUpdate match {
       case None => this
       case Some(person) =>
-        val updatedPerson: PersonOneTripNode = person.updatePath(data.path)
+        val updatedPerson: PersonOneTrip = person.updatePath(data.path)
         PopulationOneTrip((persons - person) + updatedPerson)
     }
   }
@@ -66,15 +74,17 @@ case class PopulationOneTrip (persons: Set[PersonOneTripNode], seed: Long = Syst
 
 }
 
+case class RandomPopulationOneTripConfig(populationSize: Int, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
+
 object PopulationOneTrip {
 
   sealed trait SamplingMethod {
-    def apply(population: Set[PersonOneTripNode]): Stream[PersonOneTripNode]
+    def apply(population: Set[PersonOneTrip]): Stream[PersonOneTrip]
   }
   object RandomSampling extends SamplingMethod {
     val random = new java.util.Random(System.currentTimeMillis)
     def setSeed(s: Long): Unit = random.setSeed(s)
-    def apply(population: Set[PersonOneTripNode]): Stream[PersonOneTripNode] = {
+    def apply(population: Set[PersonOneTrip]): Stream[PersonOneTrip] = {
       if (population.isEmpty) throw new IndexOutOfBoundsException("attempting to sample from empty set")
       else {
         val randIndex = random.nextInt(population.size)
@@ -102,23 +112,29 @@ object PopulationOneTrip {
       (Zero until conf.populationSize).flatMap(n => {
         val times = activityTimeGenerator.next()
         val numLegs = conf.activities.size
-        val idRange: Iterator[Int] = (n * numLegs until (n * numLegs) + numLegs).iterator
+//        val idRange: Iterator[Int] = (n * numLegs until (n * numLegs) + numLegs).iterator
+        val idRange: Iterator[Int] = (0 until numLegs).iterator
         val actLocations = conf.activities.map(_ => ActivityLocation.takeRandomLocation(network))
         val allActivities = conf.activities.zip(actLocations).sliding(2)
 
         allActivities.zip(idRange).map(actTuple => {
+          val personID = CombinedPersonID(n.toString, actTuple._2.toString)
+          val isLastActivity = actTuple._2 == numLegs - 1
           val a1Tup = actTuple._1(0)
           val a2Tup = actTuple._1(1)
           val act1 = MiddayActivity(a1Tup._1.name, a1Tup._2._2.x, a1Tup._2._2.y, a1Tup._2._1, a1Tup._2._3, EndTime(times(a1Tup._1.name)))
-          val act2 = MiddayActivity(a2Tup._1.name, a2Tup._2._2.x, a2Tup._2._2.y, a2Tup._2._1, a2Tup._2._3, EndTime(times(a2Tup._1.name)))
+          // TODO: may need to manage a case to produce a true MATSim evening activity as the final one
+          val act2 =
+            if (isLastActivity)
+              EveningActivity(a2Tup._1.name, a2Tup._2._2.x, a2Tup._2._2.y, a2Tup._2._1, a2Tup._2._3)
+            else
+              MiddayActivity(a2Tup._1.name, a2Tup._2._2.x, a2Tup._2._2.y, a2Tup._2._1, a2Tup._2._3, EndTime(times(a2Tup._1.name)))
           val mode = conf.modes.filter(evaluateModeProbability).map(_.name).mkString(",")
-
-          PersonOneTripNode(
-            actTuple._2.toString,
+          PersonOneTrip(
+            personID,
             mode,
             act1,
-            act2,
-            PersonOneTripNode.generateLeg(mode, act1, act2)
+            act2
           )
         })
       }).toSet
