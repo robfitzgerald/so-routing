@@ -4,6 +4,7 @@ abstract class PopulationTimeGenerator {
   def next(): GeneratedTimeValues
 }
 
+
 case class PopulationRandomTimeGenerator (
   activitiesWithTime: ModeTargetTimeAndDeviation
 ) extends PopulationTimeGenerator {

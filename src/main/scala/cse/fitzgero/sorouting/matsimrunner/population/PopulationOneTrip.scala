@@ -1,12 +1,12 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
+import scala.xml.XML
+import scala.xml.dtd.{DocType, SystemID}
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPair, LocalGraphODPath}
-
-import scala.xml.XML
-import scala.xml.dtd.{DocType, SystemID}
+import cse.fitzgero.sorouting.util.convenience._
 
 
 // TODO finish Population overhaul
@@ -69,12 +69,19 @@ case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.c
   def exportTimeGroupAsODPairs(lowerBound: LocalTime, upperBound: LocalTime): Seq[LocalGraphODPair] =
     persons.filter(_.activityInTimeGroup(lowerBound, upperBound)).map(_.toLocalGraphODPair).toSeq
 
+  def exportTimeGroup(lowerBound: LocalTime, upperBound: LocalTime): PopulationOneTrip =
+    PopulationOneTrip(persons.filter(_.activityInTimeGroup(lowerBound, upperBound)))
+
+  def exportAsODPairs: Seq[LocalGraphODPair] =
+    persons.map(_.toLocalGraphODPair).toSeq
+
   def toODPairs: Set[LocalGraphODPair] = persons.map(_.toLocalGraphODPair)
 
 
 }
 
-case class RandomPopulationOneTripConfig(populationSize: Int, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
+case class ActivityConfig2(name: String, endTime: LocalTime = LocalTime.MIDNIGHT, dev: Long = 0L minutesDeviation)
+case class RandomPopulationOneTripConfig(populationSize: Int, activities: Seq[ActivityConfig2], modes: Seq[ModeConfig])
 
 object PopulationOneTrip {
 
@@ -99,12 +106,10 @@ object PopulationOneTrip {
   def setSeed(s: Long): Unit = random.setSeed(s)
 
   def generateRandomOneTripPopulation (network: xml.Elem, conf: RandomPopulationOneTripConfig): PopulationOneTrip = {
-    // @TODO: revise time generation. is currently passing start time and duration; we just use end time.
-    // might be worth smarting up with case classes for types of time and different results from the time generator
     val activityTimeGenerator =
     PopulationRandomTimeGenerator(
       conf.activities.map(act => {
-        (act.name, BidirectionalBoundedDeviation(act.start.plusSeconds(act.dur.toSecondOfDay), act.dev))
+        (act.name, BidirectionalBoundedDeviation(act.endTime, act.dev))
       })
     )
 
@@ -119,17 +124,19 @@ object PopulationOneTrip {
 
         allActivities.zip(idRange).map(actTuple => {
           val personID = CombinedPersonID(n.toString, actTuple._2.toString)
-          val isLastActivity = actTuple._2 == numLegs - 1
           val a1Tup = actTuple._1(0)
           val a2Tup = actTuple._1(1)
+
           val act1 = MiddayActivity(a1Tup._1.name, a1Tup._2._2.x, a1Tup._2._2.y, a1Tup._2._1, a1Tup._2._3, EndTime(times(a1Tup._1.name)))
-          // TODO: may need to manage a case to produce a true MATSim evening activity as the final one
+
+          val isLastActivity = actTuple._2 == numLegs - 1
           val act2 =
             if (isLastActivity)
               EveningActivity(a2Tup._1.name, a2Tup._2._2.x, a2Tup._2._2.y, a2Tup._2._1, a2Tup._2._3)
             else
               MiddayActivity(a2Tup._1.name, a2Tup._2._2.x, a2Tup._2._2.y, a2Tup._2._1, a2Tup._2._3, EndTime(times(a2Tup._1.name)))
           val mode = conf.modes.filter(evaluateModeProbability).map(_.name).mkString(",")
+
           PersonOneTrip(
             personID,
             mode,

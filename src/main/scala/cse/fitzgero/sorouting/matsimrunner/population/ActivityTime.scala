@@ -15,7 +15,7 @@ final case class NoDeviation(time: LocalTime) extends ActivityTime(time) {
 
 /**
   * produces random values in a gaussian distribution within the range [-deviation, deviation]
-  * @param deviation standard deviation
+  * @param deviation standard deviation, in minutes
   * @param seed random seed value
   */
 final case class BidirectionalDeviation(time: LocalTime, deviation: Long, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {
@@ -25,8 +25,8 @@ final case class BidirectionalDeviation(time: LocalTime, deviation: Long, seed: 
 
 /**
   * produces random values in a gaussian distribution within the range [-low, high]
-  * @param low lower bound of the range
-  * @param high upper bound of the range
+  * @param low lower bound of the range, in minutes
+  * @param high upper bound of the range, in minutes
   * @param seed random seed value
   */
 final case class RangeDeviation(time: LocalTime, low: Long, high: Long, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {
@@ -37,7 +37,7 @@ final case class RangeDeviation(time: LocalTime, low: Long, high: Long, seed: Lo
 
 /**
   * produces random values in a gaussian distribution within the range [-deviation, deviation]
-  * @param maxDistance 2 standard deviations from the mean, which will also serve as an upper/lower bound of the result value
+  * @param maxDistance 2 standard deviations from the mean, which will also serve as an upper/lower bound of the result value, in minutes
   * @param seed random seed value
   */
 final case class BidirectionalBoundedDeviation(time: LocalTime, maxDistance: Long = 0L, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {

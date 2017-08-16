@@ -8,7 +8,6 @@ import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
 
 
-
 case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
   // random values
   implicit val sampling = Population.RandomSampling
@@ -72,9 +71,7 @@ object Population {
   }
 }
 
-case class HomeConfig(name: String)
-case class ActivityConfig(name: String, start: LocalTime, dur: LocalTime, dev: Long = 0L)
-case class ModeConfig(name: String, probability: Double = 1.0D)
+
 case class RandomPopulationConfig(populationSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
 
 object PopulationFactory {

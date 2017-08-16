@@ -15,8 +15,8 @@ case class SORoutingApplicationConfig (
   algorithmTimeWindow: String,
   populationSize: Int,
   routePercentage: Double,
-  startTime: String,
-  endTime: String
+  startTime: String,   // HH:mm:ss
+  endTime: String      // HH:mm:ss
 ) extends SOAppConfig
 
 object SORoutingApplicationConfigParseArgs {

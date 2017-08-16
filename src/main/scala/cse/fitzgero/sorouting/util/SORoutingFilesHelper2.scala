@@ -8,7 +8,7 @@ import scala.collection.JavaConverters._
 import scala.xml.{Elem, XML}
 import scala.util.matching.Regex
 import scala.xml.dtd.{DocType, SystemID}
-import cse.fitzgero.sorouting.matsimrunner.population.Population
+import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
 
 // what characters are valid for all file systems?
 // [0-9a-zA-Z-.,_]
@@ -27,6 +27,7 @@ import cse.fitzgero.sorouting.matsimrunner.population.Population
 //       *matsim-snapshot-run-<time>/
 //         *population-snapshot.xml
 //         *config-snapshot.xml
+//         *network-snapshot.xml
 //         *matsim-output/
 //     results/
 //       full-ue/
@@ -107,15 +108,30 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
   }
 
 
-  def scaffoldSnapshot(uePopulation: Population, soPopulation: Population, startOfTimeRange: LocalTime, endOfTimeRange: LocalTime): String = {
+  /**
+    * set up the directory for this snapshot run
+    * @param population the population which we wish to use in this MATSim snapshot run
+    * @param timeGroup start time of this timeGroup, which is also the end time of this MATSim Snapshot run
+    * @return
+    */
+  def scaffoldSnapshot(population: PopulationOneTrip, timeGroup: LocalTime): String = {
     // creates a directory with the population and config files
-    val thisSnapGroup = startOfTimeRange.format(HHmmssFormat)
+    val thisSnapGroup = timeGroup.format(HHmmssFormat)
     val thisSnapDir = s"$snapshotsBaseDirectory/matsim-snapshot-run-$thisSnapGroup"
-    val result = Files.createDirectories(Paths.get(thisSnapDir)).toString
+    val matsimOutputDir = s"$thisSnapDir/matsim-output"
+    val popFilePath = s"$thisSnapDir/population-snapshot.xml"
+    val networkFilePath = s"$thisSnapDir/network-snapshot.xml"
 
-    // TODO: make a snapshot file from the two populations
+    Files.createDirectories(Paths.get(thisSnapDir)).toString
+    Files.createDirectories(Paths.get(matsimOutputDir)).toString
 
-    result
+    val configSnapshot = updateFileNameIn("network", updateFileNameIn("plans", config, popFilePath), networkFilePath)
+
+    makeXmlFile(thisSnapDir, configDocType)("config-snapshot.xml", configSnapshot)
+    makeXmlFile(thisSnapDir, networkDocType)("network-snapshot.xml", network)
+    makeXmlFile(thisSnapDir, populationDocType)("population-snapshot.xml", population.toXml)
+
+    thisSnapDir
   }
 
 //  /**
@@ -150,27 +166,27 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 //  def matsimSnapshotRunPath(time: LocalTime): String =
 //    s"$tempDirectory/matsim-snapshot-run-${time.format(DateTimeFormatter.ofPattern("HH.mm.ss"))}"
 
-//  /**
-//    * finds the last enumerated results directory. see MATSim > output for example.
-//    * @param dir the directory where results are found, a directory of enumerated directories beginning at 00
-//    * @return the name of the last enumerated directory
-//    */
-//  def getLastIterationDirectory(dir: String): String = {
-//    val paths: Iterator[Path] = Files.list(Paths.get(dir)).iterator.asScala
-//    paths.map(_.getFileName).toArray.map(_.toString.toInt).max.toString
-//  }
-
-
-  private val snapshotTimeParse: Regex = ".*snapshot-([0-9]{2}.[0-9]{2}.[0-9]{2}).*".r
   /**
-    * parses the LocalTime value from the naming of a snapshot file
-    * @param s file name to be tested against the snapshot file pattern
-    * @return time associated with the snapshot, or LocalTime.MIDNIGHT if failed to match
+    * finds the last enumerated results directory. see MATSim > output for example.
+    * @param dir the directory where results are found, a directory of enumerated directories beginning at 00
+    * @return the name of the last enumerated directory
     */
-  def parseSnapshotForTime(s: String): LocalTime = s match {
-    case snapshotTimeParse(time) => LocalTime.parse(time.map(ch=>if (ch == '.') ':' else ch))
-    case _ => LocalTime.MIDNIGHT
+  def getLastIterationDirectory(dir: String): String = {
+    val paths: Iterator[Path] = Files.list(Paths.get(dir)).iterator.asScala
+    paths.map(_.getFileName).toArray.map(_.toString.toInt).max.toString
   }
+
+
+//  private val snapshotTimeParse: Regex = ".*snapshot-([0-9]{2}.[0-9]{2}.[0-9]{2}).*".r
+//  /**
+//    * parses the LocalTime value from the naming of a snapshot file
+//    * @param s file name to be tested against the snapshot file pattern
+//    * @return time associated with the snapshot, or LocalTime.MIDNIGHT if failed to match
+//    */
+//  def parseSnapshotForTime(s: String): LocalTime = s match {
+//    case snapshotTimeParse(time) => LocalTime.parse(time.map(ch=>if (ch == '.') ':' else ch))
+//    case _ => LocalTime.MIDNIGHT
+//  }
 
 
   /**
@@ -202,7 +218,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
   def makeConfigXml(fileName: String, elem: xml.Elem): String = makeXmlFile(thisExperimentDirectory, configDocType)(fileName, elem)
   def makeNetworkXml(fileName: String, elem: xml.Elem): String = makeXmlFile(thisExperimentDirectory, networkDocType)(fileName, elem)
 //  def makePopulationXml()(fileName: String, elem: xml.Elem): String = makeXmlFile(thisExperimentDirectory, populationDocType)(fileName, elem)
-  def savePopulation(pop: Population, expType: SORoutingExperimentType, popType: SORoutingPopulationType): Unit =
+  def savePopulation(pop: PopulationOneTrip, expType: SORoutingExperimentType, popType: SORoutingPopulationType): Unit =
     popType match {
       case FullUEPopulation =>
         XML.save(finalPopulationFilePath(expType), pop.toXml, "UTF-8", WriteXmlDeclaration, populationDocType)
@@ -213,15 +229,6 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 }
 
 object SORoutingFilesHelper {
-  // list of names which should be found in the experiment directory
-//  def scaffolding: Set[String] =
-//    Set(
-//      "config-full-ue.xml",
-//      "config-partial-ue.xml",
-//      "config-combined-ue-so.xml",
-//      "snapshot",
-//      "experiments"
-//    )
   def apply(config: SORoutingApplicationConfig): SORoutingFilesHelper =
     new SORoutingFilesHelper(config)
 }

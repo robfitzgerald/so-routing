@@ -89,4 +89,24 @@ object NetworkStateCollector {
       filePath
     })
   }
+
+  /**
+    * saves as an xml file to a directory and with the default name of "snapshot.xml"
+    * @param path path to directory for writing xml file
+    * @param network a NetworkStateCollector we wish to save
+    * @param fileName optionally give this a unique file name
+    * @return
+    */
+  def toXMLFile(path: String, network: NetworkStateCollector, fileName: String = "snapshot.xml"): Try[String] = {
+    Try({
+      val filePath: String = s"$path/$fileName"
+      val file = new File(filePath)
+      file.getParentFile.mkdirs
+      val pretty: String = new PrettyPrinter(80, 2).format(network.toXML)
+      val writer: PrintWriter = new PrintWriter(file)
+      writer.write(pretty)
+      writer.close()
+      filePath
+    })
+  }
 }
