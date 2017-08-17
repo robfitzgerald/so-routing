@@ -16,19 +16,16 @@ class PopulationOneTripTests extends SORoutingUnitTestTemplate {
       RandomPopulationOneTripConfig(
         pop,
         Seq(
-          ActivityConfig(
+          ActivityConfig2(
             "home",
-            LocalTime.parse("00:00:00"),
             LocalTime.parse("08:00:00"),
             30L),
-          ActivityConfig(
+          ActivityConfig2(
             "work",
-            LocalTime.parse("09:00:00"),
             LocalTime.parse("17:00:00"),
             30L),
-          ActivityConfig(
+          ActivityConfig2(
             "home",
-            LocalTime.parse("18:00:00"),
             LocalTime.parse("23:00:00"),
             30L)
         ),

@@ -64,15 +64,15 @@ class SORoutingFilesHelperTests extends FileWriteSideEffectTestTemplate("SORouti
 //        filesHelper.configDirectoryExists should equal (false)
 //      }
 //    }
-    "parseSnapshotForTime" when {
-      "passed a snapshot filename which contains a time" should {
-        "parse out that time value and make it a LocalTime object" in new Config {
-          val result: LocalTime = SORoutingFilesHelper(goodConfig).parseSnapshotForTime("/Users/robertfitzgerald/dev/ucd/phd/projects/2017su/SO-Routing/result/equil/snapshot/10/snapshot-06:52:45.nscData")
-          result.getHour should equal (6)
-          result.getMinute should equal (52)
-          result.getSecond should equal (45)
-        }
-      }
-    }
+//    "parseSnapshotForTime" when {
+//      "passed a snapshot filename which contains a time" should {
+//        "parse out that time value and make it a LocalTime object" in new Config {
+//          val result: LocalTime = SORoutingFilesHelper(goodConfig).parseSnapshotForTime("/Users/robertfitzgerald/dev/ucd/phd/projects/2017su/SO-Routing/result/equil/snapshot/10/snapshot-06:52:45.nscData")
+//          result.getHour should equal (6)
+//          result.getMinute should equal (52)
+//          result.getSecond should equal (45)
+//        }
+//      }
+//    }
   }
 }

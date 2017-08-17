@@ -53,9 +53,9 @@ case object CombinedUESOPopulation extends SORoutingPopulationType {
 //case object PrefixPopulation extends SORoutingPopulationType {
 //  override def toString: String = s"population-prefix"
 //}
-case object SnapshotPopulation extends SORoutingPopulationType {
-  override def toString: String = s"population-snapshot"
-}
+//case object SnapshotPopulation extends SORoutingPopulationType {
+//  override def toString: String = s"population-snapshot"
+//}
 
 class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH.mm.ss")
@@ -95,6 +95,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 
   private def scaffoldFileRequirements(): Set[String] = {
     val confWithNetwork = updateFileNameIn("network", config, thisNetworkFilePath)
+    println(confWithNetwork.toString)
     Set(
       // directories
       Files.createDirectories(Paths.get(thisExperimentDirectory)).toString,

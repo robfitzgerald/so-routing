@@ -7,11 +7,10 @@ import scala.collection.GenSeq
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPair, LocalGraphODPath}
-import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
+import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, NoRoutingSolution, ParallelRoutingConfig, RoutingResult}
 import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting.{LocalGraphRouting, LocalGraphRoutingResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.graphx._
@@ -27,6 +26,8 @@ import cse.fitzgero.sorouting.util.convenience._
 
 
 object SORoutingLocalGraphInlineApplication extends App {
+
+  val RoutingAlgorithmTimeout = 120 seconds
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
 
@@ -83,18 +84,6 @@ object SORoutingLocalGraphInlineApplication extends App {
     ArgsNotMissingValues
   ))
 
-  //----------------------------------------------------------------------------------------------
-  //  2. Run 1-p% UE Simulation, get snapshots
-  //----------------------------------------------------------------------------------------------
-//  MATSimSnapshotRunnerModule(MATSimRunnerConfig(
-//    fileHelper.finalConfigFilePath(PartialUEExp),
-//    fileHelper.experimentPath(PartialUEExp),
-//    conf.algorithmTimeWindow,
-//    conf.startTime,
-//    conf.endTime,
-//    ArgsNotMissingValues
-//  ))
-
 
   //----------------------------------------------------------------------------------------------
   //  3. For each snapshot, load as graphx and run our algorithm
@@ -111,7 +100,7 @@ object SORoutingLocalGraphInlineApplication extends App {
       .map(vec => TimeGroup(vec(0), vec(1)))
 
 
-  timeGroups.foldLeft(populationPartial)((populationWithUpdates, timeGroupSecs) => {
+  val populationCombinedUESO: PopulationOneTrip = timeGroups.foldLeft(populationPartial)((populationWithUpdates, timeGroupSecs) => {
     val (timeGroupStart, timeGroupEnd) =
       (LocalTime.ofSecondOfDay(timeGroupSecs.startRange),
         LocalTime.ofSecondOfDay(timeGroupSecs.endRange))
@@ -134,9 +123,6 @@ object SORoutingLocalGraphInlineApplication extends App {
     val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
     val snapshotFilePath: String = matsimSnapshotRun.filePath
 
-//    val snapshotResultDir: String = s"$snapshotDirectory/matsim-output/snapshot/snapshot.xml"
-
-
     // ----------------------------------------------------------------------------------------
     // 2. run routing algorithm for the SO routed population for current time group, using snapshot
 
@@ -158,31 +144,19 @@ object SORoutingLocalGraphInlineApplication extends App {
         ParallelRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
 
 
-    val routingResult: Future[RoutingResult] = LocalGraphRouting.route(graph, odPairs, routingConfig)
+    val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, odPairs, routingConfig)
 
-    Await.result(routingResult, 1 minute)
-
-    // TODO: connect Future with updating the "populationWithUpdates" accumulator in this foldLeft combinator
-
-
-    //    onComplete {
-    //      case Success(routingResult: LocalGraphRoutingResult) =>
-    //
-    //        // ----------------------------------------------------------------------------------------
-    //        // 3. add routes to SO persons and add them to the populationWithUpdates which is an accumulato
-    //
-    //        routingResult.routes.foldLeft(groupToRoute)(_.updatePerson(_))
-    //
-    //      case Failure(e) =>
-    //        println(e)
-    //        populationWithUpdates
-    //    }
-
-
-    populationWithUpdates
+    val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
+    routingResult match {
+      case LocalGraphRoutingResult(routes, runTime) =>
+        val withUpdatedRoutes = routes.foldLeft(groupToRoute)(_.updatePerson(_))
+        populationWithUpdates.reintegrateSubset(withUpdatedRoutes)
+      case _ =>
+        populationWithUpdates
+    }
   })
 
-  fileHelper.savePopulation(populationFull.reintegrateSubset(populationSubsetRouted), CombinedUESOExp)
+  fileHelper.savePopulation(populationCombinedUESO, CombinedUESOExp, CombinedUESOPopulation)
 
   //----------------------------------------------------------------------------------------------
   //  4. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
@@ -201,6 +175,4 @@ object SORoutingLocalGraphInlineApplication extends App {
   //  5. Analyze Results (what kinds of analysis?)
   //----------------------------------------------------------------------------------------------
   // TODO: determine how to measure results
-
-  sc.stop()
 }
