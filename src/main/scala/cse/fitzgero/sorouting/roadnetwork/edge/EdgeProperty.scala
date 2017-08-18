@@ -7,7 +7,8 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction._
   */
 abstract class EdgeProperty () extends Serializable {
   type T <: EdgeProperty
-  def flow: Double
+  def assignedFlow: Double
+  def linkCostFlow: Double
   def cost: CostFunction
-  def copy (flowUpdate: Double = flow, costUpdate: CostFunction = cost): T
+  def copy (flowUpdate: Double = assignedFlow, costUpdate: CostFunction = cost): T
 }

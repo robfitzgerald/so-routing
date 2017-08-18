@@ -32,19 +32,19 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 
   // Directory information for this experiment
   private val baseDir: String = if (conf.workingDirectory.head == '/') conf.workingDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.workingDirectory}"
-  val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
-  val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
-  val resultsDirectory: String = s"$thisExperimentDirectory/results"
-  val fullUEResultsDirectory: String = s"$resultsDirectory/$FullUEExp"
-  val combinedUESOResultsDirectory: String = s"$resultsDirectory/$CombinedUESOExp"
+  private val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
+  private val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
+  private val resultsDirectory: String = s"$thisExperimentDirectory/results"
+  private val fullUEResultsDirectory: String = s"$resultsDirectory/$FullUEExp"
+  private val combinedUESOResultsDirectory: String = s"$resultsDirectory/$CombinedUESOExp"
   val thisNetworkFilePath: String = s"$thisExperimentDirectory/network.xml"
 
 
   // MATSim XML DocTypes for writing new files
-  val WriteXmlDeclaration = true
-  val configDocType = DocType("config", SystemID("http://www.matsim.org/files/dtd/config_v1.dtd"), Nil)
-  val networkDocType = DocType("network", SystemID("http://www.matsim.org/files/dtd/network_v1.dtd"), Nil)
-  val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
+  private val WriteXmlDeclaration = true
+  private val configDocType = DocType("config", SystemID("http://www.matsim.org/files/dtd/config_v1.dtd"), Nil)
+  private val networkDocType = DocType("network", SystemID("http://www.matsim.org/files/dtd/network_v1.dtd"), Nil)
+  private val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
 
 
   // build the basic file directory setup for this experiment
@@ -63,12 +63,13 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
   /**
     * set up the directory for this snapshot run
     * @param population the population which we wish to use in this MATSim snapshot run
-    * @param timeGroup start time of this timeGroup, which is also the end time of this MATSim Snapshot run
+    * @param timeGroupStart start time of this timeGroup, which is also the end time of this MATSim Snapshot run
+    * @param timeGroupEnd end time for this timegroup
     * @return
     */
-  def scaffoldSnapshot(population: PopulationOneTrip, timeGroup: LocalTime): String = {
+  def scaffoldSnapshot(population: PopulationOneTrip, timeGroupStart: LocalTime, timeGroupEnd: LocalTime): String = {
     // creates a directory with the population and config files
-    val thisSnapGroup = timeGroup.format(HHmmssFormat)
+    val thisSnapGroup = timeGroupStart.format(HHmmssFormat)
     val thisSnapDir = s"$snapshotsBaseDirectory/matsim-snapshot-run-$thisSnapGroup"
     val matsimOutputDir = s"$thisSnapDir/matsim-output"
     val popFilePath = s"$thisSnapDir/population-snapshot.xml"
@@ -77,7 +78,9 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
     Files.createDirectories(Paths.get(thisSnapDir)).toString
     Files.createDirectories(Paths.get(matsimOutputDir)).toString
 
-    val configSnapshot = updateFileNameIn("network", updateFileNameIn("plans", config, popFilePath), networkFilePath)
+    // TODO: pass timeGroupStart and timeGroupEnd into config file
+
+    val configSnapshot = modifyModuleValue("network", modifyModuleValue("plans", config, popFilePath), networkFilePath)
 
     makeXmlFile(thisSnapDir, configDocType)("config-snapshot.xml", configSnapshot)
     makeXmlFile(thisSnapDir, networkDocType)("network-snapshot.xml", network)
@@ -140,7 +143,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
     * @return the list of files and folders created
     */
   private def scaffoldFileRequirements(): Set[String] = {
-    val confWithNetwork = updateFileNameIn("network", config, thisNetworkFilePath)
+    val confWithNetwork = modifyModuleValue("network", config, thisNetworkFilePath)
     println(confWithNetwork.toString)
     Set(
     // directories
@@ -149,8 +152,8 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
     Files.createDirectories(Paths.get(fullUEResultsDirectory)).toString,
     Files.createDirectories(Paths.get(combinedUESOResultsDirectory)).toString,
     makeNetworkXml(s"network.xml", network),
-    makeConfigXml(s"config-$FullUEExp.xml", updateFileNameIn("plans", confWithNetwork, finalPopulationFilePath(FullUEExp))),
-    makeConfigXml(s"config-$CombinedUESOExp.xml", updateFileNameIn("plans", confWithNetwork, finalPopulationFilePath(CombinedUESOExp)))
+    makeConfigXml(s"config-$FullUEExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(FullUEExp))),
+    makeConfigXml(s"config-$CombinedUESOExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(CombinedUESOExp)))
     )
   }
 
@@ -168,19 +171,19 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 
   /**
     * dives into a MATSim config.xml file and alters all values it finds within a <param name="" value=""/> tag (should be one)
-    * @param moduleName should likely be "plans" or "network"
+    * @param moduleName name of a module in the config file
     * @param configFile MATSim config.xml file
     * @param newFilePath substitute parameter value for the input file of this module
     * @return
     */
-  private def updateFileNameIn(moduleName: String, configFile: xml.Elem, newFilePath: String): xml.Elem = {
+  private def modifyModuleValue(moduleName: String, configFile: xml.Elem, newFilePath: String): xml.Elem = {
     val plans = configFile \ "module" filter (_.attribute("name").head.text == moduleName)
-    val currentConfigFilename = (plans \ "param" \ "@value").text
-    if (currentConfigFilename.isEmpty) throw new IllegalArgumentException(s"due to the design of Scala's XML library, updates to XML properties is performed by string replacement. The $moduleName value was found to be the empty string, which cannot be used for string replacement.")
-    val updated: String = configFile.toString.replace(currentConfigFilename, newFilePath)
+    val currentValue = (plans \ "param" \ "@value").text
+    if (currentValue.isEmpty) throw new IllegalArgumentException(s"due to the design of Scala's XML library, updates to XML properties is performed by string replacement. The $moduleName value was found to be the empty string, which cannot be used for string replacement.")
+    val updated: String = configFile.toString.replace(currentValue, newFilePath)
     Try({XML.loadString(updated)}) match {
       case Success(xml) => xml
-      case Failure(e) => throw new IllegalArgumentException(s"XML file deserialization failed when modifying value $currentConfigFilename at key $moduleName: ${e.getMessage}")
+      case Failure(e) => throw new IllegalArgumentException(s"XML file deserialization failed when modifying value $currentValue at key $moduleName: ${e.getMessage}")
     }
   }
 

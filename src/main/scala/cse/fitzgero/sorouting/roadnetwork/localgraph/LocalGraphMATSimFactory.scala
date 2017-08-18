@@ -12,8 +12,8 @@ import scala.xml.{Elem, NodeSeq, XML}
 
 class LocalGraphMATSimFactory (
   var costFunctionFactory: CostFunctionFactory,
-  var MATSimFlowRate: Double,
-  var AlgorithmFlowRate: Double
+  var AlgorithmFlowRate: Double,
+var MATSimFlowRate: Double
 ) extends
   CanReadNetworkFiles[LocalGraphMATSim] with
   CanReadFlowSnapshotFiles[LocalGraphMATSim] {
@@ -90,7 +90,7 @@ class LocalGraphMATSimFactory (
 object LocalGraphMATSimFactory{
   def apply(
     costFunctionFactory: CostFunctionFactory,
-    MATSimFlowRate: Double = 3600D,
-    AlgorithmFlowRate: Double = 3600D): LocalGraphMATSimFactory =
-    new LocalGraphMATSimFactory(costFunctionFactory, MATSimFlowRate, AlgorithmFlowRate)
+    AlgorithmFlowRate: Double = 3600D,
+    MATSimFlowRate: Double = 3600D): LocalGraphMATSimFactory =
+    new LocalGraphMATSimFactory(costFunctionFactory, AlgorithmFlowRate, MATSimFlowRate)
 }

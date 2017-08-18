@@ -8,7 +8,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.NoKSPBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
 import cse.fitzgero.sorouting.algorithm.routing._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.matsimrunner.population.{PopulationMultipleTrips, PopulationMultipleTripsFactory}
+import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
 import cse.fitzgero.sorouting.util.convenience._
@@ -19,20 +19,38 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
     val snapshotFilePath =           "src/test/resources/SimpleKSPTests/ksp-simple-alternate-routes-snapshot.xml"
     val ryeNetworkFilePath =         "src/main/resources/matsimNetworks/RyeNetwork.xml"
     val fiveByFiveNetworkFilePath =         "src/main/resources/matsimNetworks/5X5Network.xml"
-
+    def config(pop: Int) =
+      RandomPopulationOneTripConfig(
+        pop,
+        Seq(
+          ActivityConfig2(
+            "home",
+            LocalTime.parse("08:00:00"),
+            30L),
+          ActivityConfig2(
+            "work",
+            LocalTime.parse("17:00:00"),
+            30L),
+          ActivityConfig2(
+            "home",
+            LocalTime.parse("23:00:00"),
+            30L)
+        ),
+        Seq(ModeConfig("car"))
+      )
     "route" when {
       "called with a road network, valid od pairs, and a local processing config" should {
         "produce the correct set of system-optimal routes" in {
           import scala.concurrent.ExecutionContext.Implicits.global
-          val config = LocalRoutingConfig(4, NoKSPBounds, IterationTerminationCriteria(5 iterations))
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+
+          val config = LocalRoutingConfig(4, NoKSPBounds, IterationTerminationCriteria(20 iterations))
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10D).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val odPairs: Seq[LocalGraphODPair] = Seq(LocalGraphODPair("", 1L, 11L))
           LocalGraphRouting.route(graph, odPairs, config) map {
             case LocalGraphRoutingResult(res, _) =>
-              println("result")
-              println(res)
-              succeed
-            case _ => fail()
+              res.head.path should equal (List("1-3","3-5","5-9","9-8","8-11"))
+            case _ =>
+              fail()
           }
         }
       }
@@ -46,12 +64,11 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
               IterationTerminationCriteria(10 iterations))
           val localConfig = LocalRoutingConfig(10, NoKSPBounds, terminationCriteria)
           val parConfig = ParallelRoutingConfig(10, NoKSPBounds, terminationCriteria)
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(fiveByFiveNetworkFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(fiveByFiveNetworkFilePath).get
           val fiveByFiveNetworkXML = XML.loadFile(fiveByFiveNetworkFilePath)
           PopulationMultipleTripsFactory.setSeed(1)
-          val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(fiveByFiveNetworkXML, 200 persons)
-          val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
-          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
+          val population = PopulationOneTrip.generateRandomOneTripPopulation(fiveByFiveNetworkXML, config(200 persons))
+          val odPairs = population.exportAsODPairs
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
               LocalGraphRouting.route(graph, odPairs, parConfig) map {
@@ -74,18 +91,15 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
               IterationTerminationCriteria(5 iterations))
           val localConfig = LocalRoutingConfig(4, NoKSPBounds, terminationCriteria)
           val parConfig = ParallelRoutingConfig(4, NoKSPBounds, terminationCriteria)
-//          val config = ParallelRoutingConfig(4, NoKSPBounds, terminationCriteria)
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(ryeNetworkFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get
           val puebloNetworkXML = XML.loadFile(ryeNetworkFilePath)
-          PopulationMultipleTripsFactory.setSeed(1)
-          val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(puebloNetworkXML, 20 persons)
-          val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
-          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
+          val population = PopulationOneTrip.generateRandomOneTripPopulation(puebloNetworkXML, config(20 persons))
+          val odPairs = population.exportAsODPairs
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
               LocalGraphRouting.route(graph, odPairs, parConfig) map {
                 case LocalGraphRoutingResult(resPar, runTimePar) =>
-                  println(s"networkSize: ${} edges; runTimePar: ${runTimePar/1000D} secs; runTimeLocal: ${runTimeLocal/1000D} secs")
+                  println(s"networkSize: ${graph.edges.size} edges; runTimePar: ${runTimePar/1000D} secs; runTimeLocal: ${runTimeLocal/1000D} secs")
                   runTimePar should be < runTimeLocal
                 case _ => fail()
               }

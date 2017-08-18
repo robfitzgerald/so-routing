@@ -40,7 +40,7 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
             case Success(fwResult: TrafficAssignmentResult) =>
               fwResult match {
                 case LocalGraphFWSolverResult(network, iter, time, relGap) =>
-                  println(s"fw iters: $iter time: $time relGap: $relGap network:")
+//                  println(s"fw iters: $iter time: $time relGap: $relGap network:")
 //                  println(s"$network")
 //                  println(s"kShortest")
 //                  println(s"${kShortestPaths.map(_.toString)}")
@@ -71,14 +71,14 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
           val node = x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]]
           if (node.children.isEmpty) List[(String, Double)]()
           else {
-            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.flow)).maxBy(_._3)
+            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
             (edge, cost) :: _selectRoute(node.traverse(edge))
           }
         case y if y.isInstanceOf[KSPSearchBranch[_]] =>
           val node = y.asInstanceOf[KSPSearchBranch[EdgeId]]
           if (node.children.isEmpty) List[(String, Double)]()
           else {
-            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.flow)).maxBy(_._3)
+            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
             (edge, cost) :: _selectRoute(node.traverse(edge))
           }
         case KSPSearchLeaf => Nil

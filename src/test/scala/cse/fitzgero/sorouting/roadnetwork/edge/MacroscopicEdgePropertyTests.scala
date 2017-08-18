@@ -13,5 +13,22 @@ class MacroscopicEdgePropertyTests extends SORoutingUnitTestTemplate {
         mep.linkCostFlow should be > 30D
       }
     }
+    "copy" should {
+      "update the identified attributes and return a new edge" in {
+        val mep = MacroscopicEdgeProperty[String]("1-2", 0.0D, BPRCostFunction(CostFunctionAttributes(1000D vph, 30D mph, 10D, 3600D vph, 10D)))
+        mep.assignedFlow should equal (0)
+        mep.cost.fixedFlow should equal (10)
+        mep.allFlow should equal (10)
+        mep.linkCostFlow.toInt should equal (785)
+//        println(mep)
+        val result = mep.copy(flowUpdate = 20D)
+        result.assignedFlow should equal (20D)
+        result.cost.fixedFlow should equal (10)
+        result.allFlow should equal (30)
+        result.linkCostFlow.toInt should equal (1395949)
+        result.cost.costFlow(result.assignedFlow).toInt should equal (1395949)
+//        println(result)
+      }
+    }
   }
 }

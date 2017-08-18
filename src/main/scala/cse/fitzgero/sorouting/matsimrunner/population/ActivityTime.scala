@@ -5,7 +5,7 @@ import java.time.LocalTime
 import scala.util.Random
 
 abstract class ActivityTime (time: LocalTime) {
-  def nextSample(): Long = throw new NotImplementedError("Any ActivityTimeAndDeviation subclass should implement it's own random generator function with the signature 'def nextSample(): Long'")
+  protected def nextSample(): Long = throw new NotImplementedError("Any ActivityTimeAndDeviation subclass should implement it's own random generator function with the signature 'def nextSample(): Long'")
   def nextTime(): LocalTime = time.plusMinutes(nextSample())
 }
 
@@ -20,7 +20,7 @@ final case class NoDeviation(time: LocalTime) extends ActivityTime(time) {
   */
 final case class BidirectionalDeviation(time: LocalTime, deviation: Long, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {
   private val random: Random = new Random(seed)
-  override def nextSample(): Long = (random.nextGaussian() * deviation).toLong
+  protected override def nextSample(): Long = (random.nextGaussian() * deviation).toLong
 }
 
 /**
@@ -32,7 +32,7 @@ final case class BidirectionalDeviation(time: LocalTime, deviation: Long, seed: 
 final case class RangeDeviation(time: LocalTime, low: Long, high: Long, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {
   private val mid: Long = (low + high) / 2L
   private val random: Random = new Random(seed)
-  override def nextSample(): Long = (random.nextGaussian() * mid).toLong
+  protected override def nextSample(): Long = (random.nextGaussian() * mid).toLong
 }
 
 /**
@@ -43,7 +43,7 @@ final case class RangeDeviation(time: LocalTime, low: Long, high: Long, seed: Lo
 final case class BidirectionalBoundedDeviation(time: LocalTime, maxDistance: Long = 0L, seed: Long = System.currentTimeMillis) extends ActivityTime(time) {
   val deviation: Long = maxDistance / 2L
   val random: Random = new Random(seed)
-  override def nextSample(): Long = {
+  protected override def nextSample(): Long = {
     if (maxDistance == 0) 0L
     else {
       val next = (random.nextGaussian() * deviation).toLong

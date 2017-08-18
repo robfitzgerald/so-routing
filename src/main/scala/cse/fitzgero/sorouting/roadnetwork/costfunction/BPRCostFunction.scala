@@ -6,13 +6,16 @@ import scala.math.pow
   * latency function from the Bureau of Public Roads, taken from
   * U.S. Bureau of Public Roads. Traffic Assignment Manual. U.S. Department of Commerce, Washington, D.C (1964)
   */
-class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, val snapshotFlow: Double = 0D) extends CostFunction {
+class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, val fixedFlow: Double = 0D) extends CostFunction {
   val costTerm1: Double = freeFlowSpeed
   val costTerm2: Double = freeFlowSpeed * 0.15D
   val marginalCostTerm: Double = costTerm2 * 4
 
   // S_a(v_a) = t_a(1 + 0.15(v_a/c_a)^4)
-  override def costFlow(flow: Double): Double = costTerm1 + costTerm2 * pow((flow + snapshotFlow) / capacity, 4)
+  override def costFlow(flow: Double): Double = {
+    val expTerm = pow(flow + fixedFlow / capacity, 4)
+    costTerm1 + costTerm2 * expTerm
+  }
   override def freeFlowCost: Double = this.costFlow(0D)
   override def marginalCost(flow: Double): Double = marginalCostTerm * pow(flow / capacity, 3)
 }

@@ -106,12 +106,7 @@ object PopulationOneTrip {
   def setSeed(s: Long): Unit = random.setSeed(s)
 
   def generateRandomOneTripPopulation (network: xml.Elem, conf: RandomPopulationOneTripConfig): PopulationOneTrip = {
-    val activityTimeGenerator =
-    PopulationRandomTimeGenerator(
-      conf.activities.map(act => {
-        (act.name, BidirectionalBoundedDeviation(act.endTime, act.dev))
-      })
-    )
+    val activityTimeGenerator = PopulationRandomTimeGenerator2(conf.activities)
 
     PopulationOneTrip(
       (Zero until conf.populationSize).flatMap(n => {

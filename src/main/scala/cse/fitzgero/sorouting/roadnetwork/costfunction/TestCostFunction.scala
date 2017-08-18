@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.roadnetwork.costfunction
 /**
   * a cost function that evaluates any link as having a cost of "1"
   */
-class TestCostFunction(val snapshotFlow: Double = 0.0D) extends CostFunction {
+class TestCostFunction(val fixedFlow: Double = 0.0D) extends CostFunction {
   override def costFlow(flow: Double): Double = 1
   override def freeFlowCost: Double = 1
   override def marginalCost(flow: Double): Double = 1

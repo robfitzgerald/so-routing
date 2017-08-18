@@ -33,13 +33,8 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
 
   case class ReversePathData(path: List[EdgeId], cost: List[Double])
 
-  override def kShortestPaths(graph: G, od: LocalGraphODPair, k: Int = 1, boundsTestParam: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
+  override def kShortestPaths(graph: G, od: LocalGraphODPair, k: Int = 1, boundsTest: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
 
-    // allows for k to be the upper bounds on number of iterations by default
-    val boundsTest = boundsTestParam match {
-      case NoKSPBounds => PathsFoundBounds(k)
-      case _ => boundsTestParam
-    }
     val startTime = Instant.now().toEpochMilli
 
     // find the true shortest path

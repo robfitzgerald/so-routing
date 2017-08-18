@@ -2,11 +2,11 @@ package cse.fitzgero.sorouting.roadnetwork.costfunction
 
 
 abstract class CostFunction extends Serializable {
-  def snapshotFlow: Double
+  def fixedFlow: Double
   def freeFlowCost: Double
   def costFlow(flow: Double): Double
   def marginalCost(flow: Double): Double
-  override def toString: String = s"CostFunction with snapshotFlow: $snapshotFlow freeflowCost: $freeFlowCost costFlow(0): ${costFlow(0)}"
+  override def toString: String = s"CostFunction with snapshotFlow: $fixedFlow freeflowCost: $freeFlowCost"
 }
 
 abstract class CostFunctionFactory {

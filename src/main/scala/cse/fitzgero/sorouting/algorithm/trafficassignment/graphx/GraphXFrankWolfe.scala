@@ -25,7 +25,7 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
   }
 
   object SystemOptimalObjective extends FrankWolfeObjective {
-    def apply(g: GraphxRoadNetwork): Double = g.mapEdges(e => e.attr.flow * e.attr.linkCostFlow).edges.reduce((a, b) => a.copy(attr = a.attr + b.attr)).attr
+    def apply(g: GraphxRoadNetwork): Double = g.mapEdges(e => e.attr.assignedFlow * e.attr.linkCostFlow).edges.reduce((a, b) => a.copy(attr = a.attr + b.attr)).attr
   }
 
   /**
@@ -58,7 +58,7 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
 
         val updatedEdges: EdgeRDD[GraphXEdge] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
           currentEdge.copy(
-            flowUpdate = frankWolfeFlowCalculation(phi, currentEdge.flow, oracleEdge.flow)
+            flowUpdate = frankWolfeFlowCalculation(phi, currentEdge.assignedFlow, oracleEdge.assignedFlow)
           )
         })
         val currentGraph: GraphxRoadNetwork = Graph(previousGraph.vertices, updatedEdges)

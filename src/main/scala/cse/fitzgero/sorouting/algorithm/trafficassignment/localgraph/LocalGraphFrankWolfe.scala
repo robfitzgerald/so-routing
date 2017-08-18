@@ -1,12 +1,13 @@
 package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
 
 import java.time.Instant
-import scala.collection.GenSeq
 
+import scala.collection.GenSeq
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.roadnetwork.edge.MacroscopicEdgeProperty
+import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, _}
 
 object LocalGraphFrankWolfe
   extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPair] {
@@ -29,21 +30,17 @@ object LocalGraphFrankWolfe
     val startTime = Instant.now().toEpochMilli
 
     def _solve(previousGraph: LocalGraphMATSim, iteration: Int = 1): LocalGraphFWSolverResult = {
+
       val oracleGraph = generateOracleGraph(previousGraph, odPairs)
       val phi = Phi.linearFromIteration(iteration)
-//      println("previousGraph")
-//      println(s"${previousGraph.edgeAttrs.map(_.flow).mkString(" ")}")
-//      println(s"${previousGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
-//      println("oracleGraph")
-//      println(s"${oracleGraph.edgeAttrs.map(_.flow).mkString(" ")}")
-//      println(s"${oracleGraph.edgeAttrs.map(e => f"${e.linkCostFlow}%1.2f").mkString(" ")}")
       val currentGraph = calculateCurrentFlows(previousGraph, oracleGraph, phi)
 
       val stoppingConditionIsMet: Boolean =
       terminationCriteria
         .eval(TerminationData(startTime, iteration, relativeGap(currentGraph, oracleGraph)))
 
-//      println(s"_solve at iteration $iteration with phi ${phi.value}")
+//      println(s"_solve at iteration $iteration with phi ${phi.value} and network cost ${currentGraph.edgeAttrs.map(_.linkCostFlow).sum}")
+
       if (stoppingConditionIsMet) {
         val totalTime = Instant.now().toEpochMilli - startTime
         LocalGraphFWSolverResult(currentGraph, iteration, totalTime)
@@ -53,7 +50,6 @@ object LocalGraphFrankWolfe
       }
     }
 
-//    println(s"solve at iteration 0")
     _solve(graph)
 
   }
@@ -104,9 +100,10 @@ object LocalGraphFrankWolfe
   def calculateCurrentFlows(previousGraph: LocalGraphMATSim, oracle: LocalGraphMATSim, phi: Phi): LocalGraphMATSim = {
     val edgesWithUpdatedFlows: GenSeq[EdgeMATSim] = previousGraph.edges.map(edgeId => {
       val thisAttr = previousGraph.edgeAttrOf(edgeId).get
-      val flowPrevious = thisAttr.flow
-      val flowOracle = oracle.edgeAttrOf(edgeId).get.flow
-      thisAttr.copy(flowUpdate = calculateThisFlow(flowPrevious, flowOracle, phi))
+      val flowPrevious = thisAttr.assignedFlow
+      val flowOracle = oracle.edgeAttrOf(edgeId).get.assignedFlow
+      val flowUpdate = calculateThisFlow(flowPrevious, flowOracle, phi)
+      thisAttr.copy(flowUpdate = flowUpdate)
     }).toSeq
     previousGraph.replaceEdgeList(edgesWithUpdatedFlows)
   }

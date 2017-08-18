@@ -147,7 +147,7 @@ object GraphXMacroRoadNetwork {
     graph.mapEdges  (edge =>
       if (updateList.isDefinedAt(edge.attr.id))
         edge.attr.copy(
-          flowUpdate = edge.attr.flow + updateList(edge.attr.id)
+          flowUpdate = edge.attr.assignedFlow + updateList(edge.attr.id)
         )
       else edge.attr
     )

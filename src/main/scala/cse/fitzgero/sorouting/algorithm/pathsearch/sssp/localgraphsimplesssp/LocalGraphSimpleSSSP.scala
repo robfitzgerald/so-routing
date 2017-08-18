@@ -22,7 +22,7 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
     implicit val tripletOrdering: Ordering[Triplet] = Ordering.by {
       (t: Triplet) => {
         val edge: E =  graph.edgeAttrOf(t.e).get
-        val flow: Double = edge.flow
+        val flow: Double = edge.assignedFlow
         edge.cost.costFlow(flow)
       }
     }
@@ -39,9 +39,9 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
       if (frontier.isEmpty) NoPathFound
       else {
         val currentTriplet = frontier.dequeue
-        val edgeCostAttr = graph.edgeAttrOf(currentTriplet.e).get
-        // evaluate the cost function with the flow + snapshotFlow (implicitly) as input
-        val edgeCost: Double = edgeCostAttr.cost.costFlow(edgeCostAttr.flow)
+        val edgeAttr = graph.edgeAttrOf(currentTriplet.e).get
+        val edgeCost: Double = edgeAttr.linkCostFlow
+
         // check if our current working solution has a path already that terminates at the current triplet's destination
         val nextSolution =
           if (!visited(currentTriplet.e) && !solution.isDefinedAt(currentTriplet.d)) {
@@ -85,8 +85,6 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
         _backPropagate(searchResults)(src, result :+ (edge, edgeCost))
     }
   }
-
-
 }
 
 

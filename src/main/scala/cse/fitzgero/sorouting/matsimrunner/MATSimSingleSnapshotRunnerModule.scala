@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
-  println(matsimConfig.toString)
+//  println(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
@@ -42,34 +42,11 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
           case LinkEventData(e) =>
             currentNetworkState = currentNetworkState.update(e)
-
-//            if (!timeTracker.isDone && e.time >= timeTracker.currentTimeGroup) {
-//              if (timeTracker.belongsToThisTimeGroup(e))
-//                currentNetworkState = currentNetworkState.update(e)
-//              else {
-//                val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
-//                NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
-//
-//                while(!timeTracker.belongsToThisTimeGroup(e)) {
-//                  val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
-//                  NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
-//                  timeTracker = timeTracker.advance
-//                  println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker advanced due to event inaction. group is now ${timeTracker.currentTimeString}")
-//                }
-//
-//                println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker group is now ${timeTracker.currentTimeString}")
-//                currentNetworkState = currentNetworkState.update(e)
-//              }
-//            }
-
           case NewIteration(i) =>
-//            // make sure everything's written from the last
-//            val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, s"${timeTracker.currentTimeStringFS}-final")
-//            NetworkStateCollector.toXMLFile(writerData, currentNetworkState)
-
-            // start next iteration
-            timeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
-            currentNetworkState = NetworkStateCollector(networkLinks)
+//
+//            // start next iteration! - throw away any info
+//            timeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
+//            currentNetworkState = NetworkStateCollector(networkLinks)
             currentIteration = i
         }))
       }

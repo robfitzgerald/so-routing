@@ -26,7 +26,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
       }
       "run on 11-vertex test network made for the ksp problem on k=3" should {
         "find the solution" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(kspNetworkFilePath, kspSnapshotFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFileAndSnapshot(kspNetworkFilePath, kspSnapshotFilePath).get
           val sssp = LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           graph.edgeAttrs.foreach(println)
           val result: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair("", 1L, 11L))
@@ -66,7 +66,7 @@ class LocalGraphSimpleSSSPTests extends SORoutingUnitTestTemplate {
       }
       "called with an itty bitty triangle graph, snapshot, and valid od pair" should {
         "produce the shortest path" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val odPair = LocalGraphODPair("", 1L, 3L)
           val sssp = new LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]
           val result = sssp.djikstrasAlgorithm(graph, odPair)

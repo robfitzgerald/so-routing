@@ -18,12 +18,7 @@ object SORoutingLocalGraphInlineApplication extends App {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
 
-//  val sparkConf = new SparkConf()
-//    .setAppName("cse.fitzgero.sorouting.app.SORoutingApplication")
-//    .setMaster(s"local[${conf.sparkProcesses}]")
-//    .set("spark.executor.memory","1g")
-//  val sc = new SparkContext(sparkConf)
-//  sc.setLogLevel("ERROR")
+  println(conf)
 
   val fileHelper = SORoutingFilesHelper(conf)
 

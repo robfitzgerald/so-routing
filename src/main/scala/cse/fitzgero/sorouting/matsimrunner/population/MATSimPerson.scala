@@ -63,7 +63,7 @@ abstract class MATSimPerson[A <: MATSimActivity, L <: MATSimLeg] extends Convert
     */
   override def toXml: Elem =
     <person id={id.toString}>
-      <plan>
+      <plan selected="yes">
         {act1.toXml}
         {leg.toXml}
         {act2.toXml}

@@ -2,8 +2,8 @@ package cse.fitzgero.sorouting.roadnetwork.localgraph
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.roadnetwork.costfunction.TestCostFunction
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.edge.MacroscopicEdgeProperty
-import cse.fitzgero.sorouting.roadnetwork.scalagraph.vertex.CoordinateVertexProperty
+import cse.fitzgero.sorouting.roadnetwork.edge.MacroscopicEdgeProperty
+import cse.fitzgero.sorouting.roadnetwork.vertex.CoordinateVertexProperty
 
 class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
   "LocalGraphMATSimFactory" when {
@@ -41,9 +41,9 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
       "called with valid network file and snapshot file urls" should {
         "build a graph with edge flows" in {
           val result = LocalGraphMATSimFactory(TestCostFunction).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
-          result.edgeAttrOf("1").get.cost.snapshotFlow should equal (123.0D)
-          result.edgeAttrOf("2").get.cost.snapshotFlow should equal (456.0D)
-          result.edgeAttrOf("3").get.cost.snapshotFlow should equal (789.0D)
+          result.edgeAttrOf("1").get.cost.fixedFlow should equal (123.0D)
+          result.edgeAttrOf("2").get.cost.fixedFlow should equal (456.0D)
+          result.edgeAttrOf("3").get.cost.fixedFlow should equal (789.0D)
         }
       }
     }
@@ -51,7 +51,7 @@ class LocalGraphMATSimFactoryTests extends SORoutingUnitTestTemplate {
       "passed a valid network file" should {
         "create a LocalGraph instance which has all vertices described in the network file" in {
           val grabVertices = PrivateMethod[LocalGraphMATSim]('grabVertices)
-          val emptyGraph = LocalGraph[CoordinateVertexProperty, MacroscopicEdgeProperty]()
+          val emptyGraph = LocalGraph[CoordinateVertexProperty, EdgeMATSim]()
           val result: LocalGraphMATSim = LocalGraphMATSimFactory(TestCostFunction) invokePrivate grabVertices(emptyGraph, testXML)
           result.vertices.toList should equal (List(1L, 2L, 3L))
         }

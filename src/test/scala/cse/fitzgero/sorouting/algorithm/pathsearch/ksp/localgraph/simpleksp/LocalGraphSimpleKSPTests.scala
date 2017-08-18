@@ -17,7 +17,7 @@ class LocalGraphSimpleKSPTests extends SORoutingUnitTestTemplate {
     "kShortestPaths" when {
       "called with a graph and an od pair and k = 4" should {
         "find four alternative paths and return them ordered by total cost" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPair("",1L, 11L), 3)
           result.head.path should equal (List("1-3", "3-5", "5-9", "9-8", "8-11"))
@@ -27,7 +27,7 @@ class LocalGraphSimpleKSPTests extends SORoutingUnitTestTemplate {
       }
       "called with a graph, an od pair, and k is much greater than the length (size of edge set) of the shortest path" should {
         "find as many alternative paths as the length of the shortest path plus one" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPair("",1L, 11L), 100)
           // should result in shortestPath.length + 1 distinct paths
@@ -36,7 +36,7 @@ class LocalGraphSimpleKSPTests extends SORoutingUnitTestTemplate {
       }
       "called with a large road network and k is very small compared to the possible number of alternative paths" should {
         "find ten paths" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(ryeNetworkFilePath).get.par
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPair("", 2292029039L, 254874068L), 10)
           // should result in 10 distinct paths
@@ -50,7 +50,7 @@ class LocalGraphSimpleKSPTests extends SORoutingUnitTestTemplate {
       }
       "called with a large road network, setting a PathFoundBounds to 20" should {
         "find ten paths" in {
-          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(ryeNetworkFilePath).get.par
+          val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPair("", 2292029039L, 254874068L), 10, PathsFoundBounds(20))
           // should result in 10 distinct paths
