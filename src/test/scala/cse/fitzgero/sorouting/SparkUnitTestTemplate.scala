@@ -18,6 +18,7 @@ abstract class SparkUnitTestTemplate(testName: String, cores: String = "*") exte
       .setAppName(appName)
 
     sc = new SparkContext(conf)
+    sc.setLogLevel("ERROR")
   }
 
   after {

@@ -2,5 +2,10 @@ package cse.fitzgero.sorouting.roadnetwork.vertex
 
 case class Euclidian (x: Double, y: Double) extends VertexPosition
 
-case class CoordinateVertexProperty (override val position: Euclidian)
+/**
+  * a vertex with a 2D euclidian coordinate
+  * @param position x and y position of vertex
+  */
+case class CoordinateVertexProperty (
+  override val position: Euclidian)
   extends VertexProperty[Euclidian] (position) {}

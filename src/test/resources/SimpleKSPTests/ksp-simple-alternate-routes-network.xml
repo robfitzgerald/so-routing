@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<network>
+    <links>
+        <link id="1-2" from="1" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="1-3" from="1" to="3" freespeed="27.78" capacity="1000.0"/>
+        <link id="1-4" from="1" to="4" freespeed="27.78" capacity="1000.0"/>
+        <link id="2-5" from="2" to="5" freespeed="27.78" capacity="1000.0"/>
+        <link id="2-6" from="2" to="6" freespeed="27.78" capacity="1000.0"/>
+        <link id="3-5" from="3" to="5" freespeed="27.78" capacity="1000.0"/>
+        <link id="3-6" from="3" to="6" freespeed="27.78" capacity="1000.0"/>
+        <link id="3-7" from="3" to="7" freespeed="27.78" capacity="1000.0"/>
+        <link id="4-6" from="4" to="6" freespeed="27.78" capacity="1000.0"/>
+        <link id="4-7" from="4" to="7" freespeed="27.78" capacity="1000.0"/>
+        <link id="5-8" from="5" to="8" freespeed="27.78" capacity="1000.0"/>
+        <link id="5-9" from="5" to="9" freespeed="27.78" capacity="1000.0"/>
+        <link id="6-8" from="6" to="8" freespeed="27.78" capacity="1000.0"/>
+        <link id="6-9" from="6" to="9" freespeed="27.78" capacity="1000.0"/>
+        <link id="6-10" from="6" to="10" freespeed="27.78" capacity="1000.0"/>
+        <link id="7-9" from="7" to="9" freespeed="27.78" capacity="1000.0"/>
+        <link id="7-10" from="7" to="10" freespeed="27.78" capacity="1000.0"/>
+        <link id="8-10" from="8" to="10" freespeed="27.78" capacity="1000.0"/>
+        <link id="8-11" from="8" to="11" freespeed="27.78" capacity="1000.0"/>
+        <link id="9-8" from="9" to="8" freespeed="27.78" capacity="1000.0"/>
+        <link id="9-10" from="9" to="10" freespeed="27.78" capacity="1000.0"/>
+        <link id="9-11" from="9" to="11" freespeed="27.78" capacity="1000.0"/>
+        <link id="10-8" from="10" to="8" freespeed="27.78" capacity="1000.0"/>
+        <link id="10-11" from="10" to="11" freespeed="27.78" capacity="1000.0"/>
+    </links>
+    <nodes>
+        <node id="1" x="20" y="40"/>
+        <node id="2" x="10" y="30"/>
+        <node id="3" x="20" y="30"/>
+        <node id="4" x="30" y="30"/>
+        <node id="5" x="10" y="20"/>
+        <node id="6" x="20" y="20"/>
+        <node id="7" x="30" y="20"/>
+        <node id="8" x="10" y="10"/>
+        <node id="9" x="20" y="10"/>
+        <node id="10" x="30" y="10"/>
+        <node id="11" x="20" y="0"/>
+    </nodes>
+</network>

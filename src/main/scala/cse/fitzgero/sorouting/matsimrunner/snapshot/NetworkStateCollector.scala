@@ -35,6 +35,7 @@ class NetworkStateCollector private ( val networkState: Map[Id[Link], LinkData[I
     case LinkLeaveData(t, link, veh) =>
       val thisLink: LinkData[Id[Vehicle]] = networkState.getOrElse(link, EmptyLink)
       new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
+    case other => throw new IllegalArgumentException(s"passed a ${other.getClass}, but update() only handles LinkEnterData and LinkLeaveData")
   }
 
 
@@ -79,6 +80,26 @@ object NetworkStateCollector {
   def toXMLFile(dest: WriterData, network: NetworkStateCollector): Try[String] = {
     Try({
       val filePath: String = s"${dest.path}/${dest.iteration.toString}/snapshot-${dest.timeGroup}.xml"
+      val file = new File(filePath)
+      file.getParentFile.mkdirs
+      val pretty: String = new PrettyPrinter(80, 2).format(network.toXML)
+      val writer: PrintWriter = new PrintWriter(file)
+      writer.write(pretty)
+      writer.close()
+      filePath
+    })
+  }
+
+  /**
+    * saves as an xml file to a directory and with the default name of "snapshot.xml"
+    * @param path path to directory for writing xml file
+    * @param network a NetworkStateCollector we wish to save
+    * @param fileName optionally give this a unique file name
+    * @return
+    */
+  def toXMLFile(path: String, network: NetworkStateCollector, fileName: String = "snapshot.xml"): Try[String] = {
+    Try({
+      val filePath: String = s"$path/$fileName"
       val file = new File(filePath)
       file.getParentFile.mkdirs
       val pretty: String = new PrettyPrinter(80, 2).format(network.toXML)

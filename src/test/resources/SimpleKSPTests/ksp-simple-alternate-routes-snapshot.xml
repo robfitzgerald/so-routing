@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--<!DOCTYPE network SYSTEM-->
+<!--"/Users/robertfitzgerald/dev/ucd/phd/projects/2017su/SO-Routing/src/test/resources/GraphXMacroRoadNetwork/snapshot_v1.xsd"-->
+<network name="SnapshotIO Test Data">
+    <links>
+        <link id="1-2" flow="10"/>
+        <link id="1-3" flow="0"/>
+        <link id="1-4" flow="10"/>
+        <link id="2-5" flow="10"/>
+        <link id="2-6" flow="10"/>
+        <link id="3-5" flow="0"/>
+        <link id="3-6" flow="10"/>
+        <link id="3-7" flow="10"/>
+        <link id="4-6" flow="10"/>
+        <link id="4-7" flow="10"/>
+        <link id="5-8" flow="10"/>
+        <link id="5-9" flow="0"/>
+        <link id="6-8" flow="5"/>
+        <link id="6-9" flow="5"/>
+        <link id="6-10" flow="5"/>
+        <link id="7-9" flow="5"/>
+        <link id="7-10" flow="5"/>
+        <link id="8-10" flow="5"/>
+        <link id="8-11" flow="0"/>
+        <link id="9-8" flow="0"/>
+        <link id="9-10" flow="5"/>
+        <link id="9-11" flow="10"/>
+        <link id="10-8" flow="5"/>
+        <link id="10-11" flow="5"/>
+    </links>
+</network>

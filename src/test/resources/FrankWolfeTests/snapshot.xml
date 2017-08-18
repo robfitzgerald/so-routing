@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<network name="test flows">
+    <links>
+        <link id="10" flow="10"> </link>
+        <link id="11" flow="10"> </link>
+        <link id="20" flow="10"> </link>
+        <link id="21" flow="10"> </link>
+        <link id="30" flow="10"> </link>
+        <link id="31" flow="10"> </link>
+        <link id="100" flow="10"> </link>
+        <link id="101" flow="10"> </link>
+    </links>
+</network>
