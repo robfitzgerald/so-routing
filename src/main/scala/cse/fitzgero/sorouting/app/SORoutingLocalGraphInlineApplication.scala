@@ -2,6 +2,7 @@ package cse.fitzgero.sorouting.app
 
 import java.nio.file.Files
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 import scala.collection.GenSeq
 import scala.concurrent.{Await, Future}
@@ -22,11 +23,13 @@ import cse.fitzgero.sorouting.roadnetwork.graphx.graph.GraphXMacroRoadNetwork
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
 import cse.fitzgero.sorouting.util._
 import cse.fitzgero.sorouting.util.convenience._
+import org.apache.log4j.{Level, Logger}
 
 
 
 object SORoutingLocalGraphInlineApplication extends App {
-
+  Logger.getRootLogger.setLevel(Level.WARN)
+//  val log = Logger.getLogger(this.getClass)
   val RoutingAlgorithmTimeout = 120 seconds
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
@@ -51,7 +54,7 @@ object SORoutingLocalGraphInlineApplication extends App {
           Seq(
             ActivityConfig2(
               "home",
-              LocalTime.parse("08:00:00") endTime,
+              LocalTime.parse("09:00:00") endTime,
               30 minutesDeviation),
             ActivityConfig2(
               "work",
@@ -95,10 +98,11 @@ object SORoutingLocalGraphInlineApplication extends App {
 
   case class TimeGroup (startRange: Int, endRange: Int)
   val timeGroups: Iterator[TimeGroup] =
-    (0 +: (LocalTime.parse(conf.startTime).toSecondOfDay until LocalTime.parse(conf.endTime).toSecondOfDay))
+    (0 +: (LocalTime.parse(conf.startTime).toSecondOfDay until LocalTime.parse(conf.endTime).toSecondOfDay by conf.algorithmTimeWindow.toInt))
       .sliding(2)
       .map(vec => TimeGroup(vec(0), vec(1)))
 
+  val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
   val populationCombinedUESO: PopulationOneTrip = timeGroups.foldLeft(populationPartial)((populationWithUpdates, timeGroupSecs) => {
     val (timeGroupStart, timeGroupEnd) =
@@ -116,7 +120,7 @@ object SORoutingLocalGraphInlineApplication extends App {
       s"$snapshotDirectory/matsim-output",
       conf.algorithmTimeWindow,
       conf.startTime,
-      timeGroupEnd.formatted("HH:mm:ss"),
+      timeGroupEnd.format(HHmmssFormat),
       ArgsNotMissingValues
     ))
 

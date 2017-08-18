@@ -10,6 +10,8 @@ import scala.util.matching.Regex
 import scala.xml.dtd.{DocType, SystemID}
 import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
 
+import scala.util.{Failure, Success, Try}
+
 // what characters are valid for all file systems?
 // [0-9a-zA-Z-.,_]
 // from https://superuser.com/questions/358855/what-characters-are-safe-in-cross-platform-file-names-for-linux-windows-and-os
@@ -102,9 +104,9 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
       Files.createDirectories(Paths.get(snapshotsBaseDirectory)).toString,
       Files.createDirectories(Paths.get(fullUEResultsDirectory)).toString,
       Files.createDirectories(Paths.get(combinedUESOResultsDirectory)).toString,
+      makeNetworkXml(s"network.xml", network),
       makeConfigXml(s"config-$FullUEExp.xml", updateFileNameIn("plans", confWithNetwork, finalPopulationFilePath(FullUEExp))),
-//      makeConfigXml(s"config-$CombinedUESOExp.xml", updateFileNameIn("plans", confWithNetwork, populationFilePath(CombinedUESOExp))),
-      makeNetworkXml(s"network.xml", network)
+      makeConfigXml(s"config-$CombinedUESOExp.xml", updateFileNameIn("plans", confWithNetwork, finalPopulationFilePath(CombinedUESOExp)))
     )
   }
 
@@ -200,7 +202,12 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
   private def updateFileNameIn(moduleName: String, configFile: xml.Elem, newFilePath: String): xml.Elem = {
     val plans = configFile \ "module" filter (_.attribute("name").head.text == moduleName)
     val currentConfigFilename = (plans \ "param" \ "@value").text
-    XML.loadString(configFile.toString.replace(currentConfigFilename, newFilePath))
+    if (currentConfigFilename.isEmpty) throw new IllegalArgumentException(s"due to the design of Scala's XML library, updates to XML properties is performed by string replacement. The $moduleName value was found to be the empty string, which cannot be used for string replacement.")
+    val updated: String = configFile.toString.replace(currentConfigFilename, newFilePath)
+    Try({XML.loadString(updated)}) match {
+      case Success(xml) => xml
+      case Failure(e) => throw new IllegalArgumentException(s"XML file deserialization failed when modifying value $currentConfigFilename at key $moduleName: ${e.getMessage}")
+    }
   }
 
 

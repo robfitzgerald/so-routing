@@ -3,6 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
+import org.apache.log4j.{Level, Logger}
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
@@ -21,6 +22,7 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
 
   val config: Config = ConfigUtils.loadConfig(matsimConfig.matsimConfigFile)
+
   config.controler().setOutputDirectory(matsimOutputDirectory)
   val scenario: Scenario = ScenarioUtils.loadScenario(config)
   val controler: Controler = new Controler(config)

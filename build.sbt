@@ -2,7 +2,7 @@ name := "SO-Routing"
 
 version := "1.0.0"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.11"
 
 
 // ~~~ ScalaTest
@@ -11,8 +11,8 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 
 // ~~~ Spark
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.1.1"
-libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.1.1"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.2.0"
+libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.2.0"
 
 
 // ~~~ Graph For Scala (scala-graph)

@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.matsimrunner
 
+import org.apache.log4j.{Level, Logger}
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
@@ -16,7 +17,6 @@ class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) {
   config.controler().setOutputDirectory(matsimOutputDirectory)
   val scenario: Scenario = ScenarioUtils.loadScenario(config)
   val controler: Controler = new Controler(config)
-
 
   def run(): String = {
     //start the simulation
