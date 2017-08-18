@@ -8,7 +8,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.NoKSPBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
 import cse.fitzgero.sorouting.algorithm.routing._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationFactory}
+import cse.fitzgero.sorouting.matsimrunner.population.{PopulationMultipleTrips, PopulationMultipleTripsFactory}
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
 import cse.fitzgero.sorouting.util.convenience._
@@ -48,8 +48,8 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val parConfig = ParallelRoutingConfig(10, NoKSPBounds, terminationCriteria)
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(fiveByFiveNetworkFilePath).get
           val fiveByFiveNetworkXML = XML.loadFile(fiveByFiveNetworkFilePath)
-          PopulationFactory.setSeed(1)
-          val population: Population = PopulationFactory.generateSimpleRandomPopulation(fiveByFiveNetworkXML, 200 persons)
+          PopulationMultipleTripsFactory.setSeed(1)
+          val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(fiveByFiveNetworkXML, 200 persons)
           val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
           val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {
@@ -77,8 +77,8 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
 //          val config = ParallelRoutingConfig(4, NoKSPBounds, terminationCriteria)
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, 3600D, 10D).fromFile(ryeNetworkFilePath).get
           val puebloNetworkXML = XML.loadFile(ryeNetworkFilePath)
-          PopulationFactory.setSeed(1)
-          val population: Population = PopulationFactory.generateSimpleRandomPopulation(puebloNetworkXML, 20 persons)
+          PopulationMultipleTripsFactory.setSeed(1)
+          val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(puebloNetworkXML, 20 persons)
           val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("06:00:00"), LocalTime.parse("12:00:00"))
           val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)})
           LocalGraphRouting.route(graph, odPairs, localConfig) flatMap {

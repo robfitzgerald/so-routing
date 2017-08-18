@@ -8,9 +8,9 @@ import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
 
 
-case class Population (persons: Set[PersonNode], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+case class PopulationMultipleTrips (persons: Set[PersonMultipleTrips], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
   // random values
-  implicit val sampling = Population.RandomSampling
+  implicit val sampling = PopulationMultipleTrips.RandomSampling
   sampling.setSeed(seed)
 
 
@@ -22,14 +22,14 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
 
 
   // population operations
-  def subsetPartition(percentage: Double): (Population, Population) = {
+  def subsetPartition(percentage: Double): (PopulationMultipleTrips, PopulationMultipleTrips) = {
     val numSampled = (percentage * persons.size).toInt
-    val thisSampling: Set[PersonNode] = sampling(persons).take(numSampled).toSet
-    (Population(thisSampling), Population(persons -- thisSampling))
+    val thisSampling: Set[PersonMultipleTrips] = sampling(persons).take(numSampled).toSet
+    (PopulationMultipleTrips(thisSampling), PopulationMultipleTrips(persons -- thisSampling))
   }
 
-  def reintegrateSubset(subset: Population): Population = {
-    Population(
+  def reintegrateSubset(subset: PopulationMultipleTrips): PopulationMultipleTrips = {
+    PopulationMultipleTrips(
       subset.persons.foldLeft(this.persons)((accum, updatedPerson) => {
         val toRemove = this.persons.find(_.id == updatedPerson.id)
         (accum -- toRemove) + updatedPerson
@@ -38,12 +38,12 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
     )
   }
 
-  def updatePerson(data: SimpleMSSP_ODPath): Population = {
+  def updatePerson(data: SimpleMSSP_ODPath): PopulationMultipleTrips = {
     persons.find(_.id == data.personId) match {
       case None => this
       case Some(person) =>
-        val updatedPerson: PersonNode = person.updatePath(data.srcVertex, data.dstVertex, data.path)
-        Population((persons - person) + updatedPerson)
+        val updatedPerson: PersonMultipleTrips = person.updatePath(data.srcVertex, data.dstVertex, data.path)
+        PopulationMultipleTrips((persons - person) + updatedPerson)
     }
   }
 
@@ -53,14 +53,14 @@ case class Population (persons: Set[PersonNode], seed: Long = System.currentTime
   def toODPairs: ODPairs = persons.toSeq.flatMap(p => p.legs.map(leg => SimpleMSSP_ODPair(p.id, leg.srcVertex, leg.dstVertex)))
 }
 
-object Population {
+object PopulationMultipleTrips {
   sealed trait SamplingMethod {
-    def apply(population: Set[PersonNode]): Stream[PersonNode]
+    def apply(population: Set[PersonMultipleTrips]): Stream[PersonMultipleTrips]
   }
   object RandomSampling extends SamplingMethod {
     val random = new java.util.Random(System.currentTimeMillis)
     def setSeed(s: Long): Unit = random.setSeed(s)
-    def apply(population: Set[PersonNode]): Stream[PersonNode] = {
+    def apply(population: Set[PersonMultipleTrips]): Stream[PersonMultipleTrips] = {
       if (population.isEmpty) throw new IndexOutOfBoundsException("attempting to sample from empty set")
       else {
         val randIndex = random.nextInt(population.size)
@@ -74,13 +74,13 @@ object Population {
 
 case class RandomPopulationConfig(populationSize: Int, home: HomeConfig, activities: Seq[ActivityConfig], modes: Seq[ModeConfig])
 
-object PopulationFactory {
+object PopulationMultipleTripsFactory {
   val Zero: Int = 0
   val random = new java.util.Random(System.currentTimeMillis)
   def setSeed(s: Long): Unit = random.setSeed(s)
 
 
-  def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): Population = {
+  def generateSimpleRandomPopulation (network: xml.Elem, pSize: Int): PopulationMultipleTrips = {
 //    val activityLocations = ??? // ActivityLocation.takeAllLocations(network)
     val activityTimeGenerator =
       PopulationRandomTimeGenerator(
@@ -90,14 +90,14 @@ object PopulationFactory {
         )
       )
 
-    Population(
+    PopulationMultipleTrips(
       (Zero until pSize).map(n => {
         val times = activityTimeGenerator.next()
 //        val home = ActivityLocation.pickRandomLocation(activityLocations)
 //        val work = ActivityLocation.pickRandomLocation(activityLocations)
         val home = ActivityLocation.takeRandomLocation(network)
         val work = ActivityLocation.takeRandomLocation(network)
-        PersonNode(
+        PersonMultipleTrips(
           n.toString,
           "car",
           MorningActivity("home", home._2.x, home._2.y, home._1, home._3, EndTime(times("home"))),
@@ -109,7 +109,7 @@ object PopulationFactory {
   }
 
 
-  def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): Population = {
+  def generateRandomPopulation (network: xml.Elem, conf: RandomPopulationConfig): PopulationMultipleTrips = {
     // @TODO: revise time generation. is currently passing start time and duration; we just use end time.
     // might be worth smarting up with case classes for types of time and different results from the time generator
     val activityTimeGenerator =
@@ -120,7 +120,7 @@ object PopulationFactory {
         })
     )
 
-    Population(
+    PopulationMultipleTrips(
       (Zero until conf.populationSize).map(n => {
         val times = activityTimeGenerator.next()
         //        println("generated times")
@@ -129,7 +129,7 @@ object PopulationFactory {
         //        val actLocations = conf.activities.map(_ => ActivityLocation.pickRandomLocation(activityLocations))
         val homeLocation = ActivityLocation.takeRandomLocation(network)
         val actLocations = conf.activities.map(_ => ActivityLocation.takeRandomLocation(network))
-        PersonNode(
+        PersonMultipleTrips(
           n.toString,
           conf.modes.filter(evaluateModeProbability).map(_.name).mkString(","),
           MorningActivity(conf.home.name, homeLocation._2.x, homeLocation._2.y, homeLocation._1, homeLocation._3, EndTime(times(conf.home.name))),

@@ -4,8 +4,9 @@ import java.time._
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
-import cse.fitzgero.sorouting.roadnetwork.graphx.graph.GraphxRoadNetwork
+import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.graphx.{GraphXEdge, GraphxRoadNetwork}
+import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId
 import org.apache.spark.graphx.{EdgeRDD, Graph}
 
 import scala.annotation.tailrec
@@ -55,9 +56,9 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
         // TODO: step size - should be based on our objective function
         val phi = Phi(2.0D/(iter + 2.0D))
 
-        val updatedEdges: EdgeRDD[MacroscopicEdgeProperty] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
+        val updatedEdges: EdgeRDD[GraphXEdge] = previousGraph.edges.innerJoin(oracleGraph.edges)((_, _, currentEdge, oracleEdge) => {
           currentEdge.copy(
-            flow = frankWolfeFlowCalculation(phi, currentEdge.flow, oracleEdge.flow)
+            flowUpdate = frankWolfeFlowCalculation(phi, currentEdge.flow, oracleEdge.flow)
           )
         })
         val currentGraph: GraphxRoadNetwork = Graph(previousGraph.vertices, updatedEdges)
@@ -85,12 +86,12 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
   def Assignment(graph: GraphxRoadNetwork, odPairs: ODPairs, assignmentType: CostMethod): (GraphxRoadNetwork, ODPaths) = {
     SimpleMSSP.setCostMethod(assignmentType)
     val pathsResult: ODPaths = SimpleMSSP.shortestPaths(graph, odPairs)
-    val pathsToFlows: Map[EdgeIdType, Int] = pathsResult.flatMap(_.path).groupBy(identity).mapValues(_.size).map(identity)
+    val pathsToFlows: Map[EdgeId, Int] = pathsResult.flatMap(_.path).groupBy(identity).mapValues(_.size).map(identity)
     val newAssignment: GraphxRoadNetwork =
       graph
         .mapEdges(edge =>
-          if (pathsToFlows.isDefinedAt(edge.attr.id)) edge.attr.copy(flow = pathsToFlows(edge.attr.id))
-          else edge.attr.copy(flow = 0D)
+          if (pathsToFlows.isDefinedAt(edge.attr.id)) edge.attr.copy(flowUpdate = pathsToFlows(edge.attr.id))
+          else edge.attr.copy(flowUpdate = 0D)
         )
     (newAssignment, pathsResult)
   }

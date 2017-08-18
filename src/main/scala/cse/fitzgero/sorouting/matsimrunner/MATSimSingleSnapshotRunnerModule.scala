@@ -2,6 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import java.time.LocalTime
 
+import cse.fitzgero.sorouting.app.MATSimSimulator
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import org.apache.log4j.{Level, Logger}
 import org.matsim.api.core.v01.network.Link
@@ -13,7 +14,7 @@ import org.matsim.core.scenario.ScenarioUtils
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 
-class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
+class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
   println(matsimConfig.toString)
@@ -76,6 +77,7 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
 
 
     //start the simulation
+    suppressMATSimInfoLogging()
     controler.run()
 
 

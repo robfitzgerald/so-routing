@@ -6,7 +6,7 @@ import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph._
-import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationFactory, RandomPopulationConfig}
+import cse.fitzgero.sorouting.matsimrunner.population.{PopulationMultipleTrips, PopulationMultipleTripsFactory, RandomPopulationConfig}
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, TestCostFunction}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.LocalGraphMATSimFactory
 
@@ -217,8 +217,8 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "called with the network of Rye, Colorado and 10 drivers" should {
         "estimate a minimal cost network flow and terminate after 10 seconds" in {
           val ryeNetworkXML = XML.loadFile(ryeNetworkFilePath)
-          PopulationFactory.setSeed(1)
-          val population: Population = PopulationFactory.generateSimpleRandomPopulation(ryeNetworkXML, 10)
+          PopulationMultipleTripsFactory.setSeed(1)
+          val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(ryeNetworkXML, 10)
           val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("00:00:00"), LocalTime.parse("23:59:59"))
           val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)}).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, 10 /*minutes*/).fromFile(ryeNetworkFilePath).get.par

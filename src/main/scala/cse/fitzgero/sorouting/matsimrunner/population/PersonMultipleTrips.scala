@@ -2,12 +2,12 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId
 import org.apache.spark.graphx.VertexId
 
 import scala.xml.Elem
 
-case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legsParam: List[UnroutedLeg] = List.empty[UnroutedLeg]) extends ConvertsToXml {
+case class PersonMultipleTrips (id: String, mode: String, homeAM: MorningActivity, work: List[MiddayActivity], homePM: EveningActivity, legsParam: List[UnroutedLeg] = List.empty[UnroutedLeg]) extends ConvertsToXml {
 //  private val legList: List[LegNode] =
 //    if (legsParam.nonEmpty) legsParam
 //    else generateLegs
@@ -16,7 +16,7 @@ case class PersonNode (id: String, mode: String, homeAM: MorningActivity, work: 
     if (legsParam.nonEmpty) legsParam
     else generateLegs
 
-  def updatePath(src: VertexId, dst: VertexId, path: List[EdgeIdType]): PersonNode = {
+  def updatePath(src: VertexId, dst: VertexId, path: List[EdgeId]): PersonMultipleTrips = {
     val legIdx: Int = legs.indexWhere(leg => leg.srcVertex == src && leg.dstVertex == dst)
     if (legIdx == -1) {println(s"PersonNode.updatePath failed to find leg with src $src and dst $dst with path values ${path.mkString(" ")}"); this }
     else {

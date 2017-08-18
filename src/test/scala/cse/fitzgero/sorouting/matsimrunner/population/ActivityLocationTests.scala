@@ -1,8 +1,8 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.Euclidian
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.vertex.Euclidian
+import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId
 import org.apache.spark.graphx.VertexId
 
 class ActivityLocationTests extends SORoutingUnitTestTemplate {
@@ -54,8 +54,8 @@ class ActivityLocationTests extends SORoutingUnitTestTemplate {
       "called multiple times" should {
         "return random locations each time" in {
           ActivityLocation.setSeed(1L)
-          val a1: (VertexId, Euclidian, EdgeIdType) = ActivityLocation.takeRandomLocation(xmlGraph)
-          val a2: (VertexId, Euclidian, EdgeIdType) = ActivityLocation.takeRandomLocation(xmlGraph)
+          val a1: (VertexId, Euclidian, EdgeId) = ActivityLocation.takeRandomLocation(xmlGraph)
+          val a2: (VertexId, Euclidian, EdgeId) = ActivityLocation.takeRandomLocation(xmlGraph)
 
           // for each tuple, it should pair the edge with it's source vertex data in 1-[100]->2, 2-[101]->3, 3-[102]->1
           a1 should equal ((1,Euclidian(-5.0,-5.0),"100")) // 1-[100]

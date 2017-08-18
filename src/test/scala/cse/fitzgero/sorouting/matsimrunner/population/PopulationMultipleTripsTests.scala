@@ -4,33 +4,33 @@ import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId
 import org.apache.spark.graphx.VertexId
 
 import scala.xml.XML
 
-class PopulationTests extends SORoutingUnitTestTemplate {
+class PopulationMultipleTripsTests extends SORoutingUnitTestTemplate {
   val equilNetworkFile: String = "src/test/resources/PopulationTests/network.xml"
   "Population" when {
     "generateSimpleRandomPopulation" when {
       "called with a network, asking for 100 people" should {
         "generate a set of coordinates and nearest link for each location, as well as time data" in {
           val network = XML.loadFile(equilNetworkFile)
-          val result = PopulationFactory.generateSimpleRandomPopulation(network, 100).toXml
+          val result = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100).toXml
           (result \ "person").size should be (100)
         }
       }
       "called with a network, asking for 10000 people" should {
         "generate a set of coordinates and nearest link for each location, as well as time data" in {
           val network = XML.loadFile(equilNetworkFile)
-          val result = PopulationFactory.generateSimpleRandomPopulation(network, 10000).toXml
+          val result = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 10000).toXml
           (result \ "person").size should be (10000)
         }
       }
       "called with a network, asking for 100000 people" should {
         "generate a set of coordinates and nearest link for each location, as well as time data" in {
           val network = XML.loadFile(equilNetworkFile)
-          val result = PopulationFactory.generateSimpleRandomPopulation(network, 100000).toXml
+          val result = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100000).toXml
           (result \ "person").size should be (100000)
         }
       }
@@ -52,7 +52,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
               ),
               Seq(ModeConfig("car"))
             )
-          val result = PopulationFactory.generateRandomPopulation(network, config).toXml
+          val result = PopulationMultipleTripsFactory.generateRandomPopulation(network, config).toXml
           (result \ "person").size should be (1000)
 //          result.foreach(println)
         }
@@ -62,8 +62,8 @@ class PopulationTests extends SORoutingUnitTestTemplate {
       "passed a population" should {
         "randomly sample from that population when streamed" in {
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
-          val result = Population.RandomSampling(pop.persons)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100)
+          val result = PopulationMultipleTrips.RandomSampling(pop.persons)
           result.take(10).foreach(println)
         }
       }
@@ -72,7 +72,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
       "given a <population/> and a subsetPercentage Integer" should {
         "select a random subset of the population which is of size subsetPercentage * population.size" in {
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100)
           val (subset, remaining) = pop.subsetPartition(0.20)
           subset.persons.size should equal (20)
           remaining.persons.size should equal (80)
@@ -83,9 +83,9 @@ class PopulationTests extends SORoutingUnitTestTemplate {
       "given the original population and a subset of that population with different data" should {
         "replace the old data with the new and return the complete set" in {
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100)
           val (subset, remaining) = pop.subsetPartition(0.20)
-          val updated = Population(subset.persons.map(_.copy(mode = "updated")))
+          val updated = PopulationMultipleTrips(subset.persons.map(_.copy(mode = "updated")))
           val result = pop.reintegrateSubset(updated)
           result.persons.count(_.mode == "updated") should equal (20)
           result.persons.size should equal (100)
@@ -97,11 +97,11 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "inject the list of ids for that activity into the person and return the whole population" in {
           val updatedPersonId = "15"
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, 100)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, 100)
 
           val personToUpdate = pop.persons.find(_.id == updatedPersonId).get
           val (src, dst) = (personToUpdate.legs.head.srcVertex, personToUpdate.legs.head.dstVertex)
-          val newPath: List[EdgeIdType] = List("3", "4", "1234567890" , "5")
+          val newPath: List[EdgeId] = List("3", "4", "1234567890" , "5")
           val newODPath: SimpleMSSP_ODPath = SimpleMSSP_ODPath(updatedPersonId, src, dst, newPath)
 
           val newPop = pop.updatePerson(newODPath)
@@ -123,8 +123,8 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "group the population by the starttime value (w/ duplicates)" in {
           val popSize = 100
           val network = XML.loadFile(equilNetworkFile)
-          val pop: Population = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
-          Population(pop.persons.map(p => p.copy(legsParam = p.legsParam.map(_.copy(path = List("1", "2", "3"))))))
+          val pop: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, popSize)
+          PopulationMultipleTrips(pop.persons.map(p => p.copy(legsParam = p.legsParam.map(_.copy(path = List("1", "2", "3"))))))
           pop.persons.size should be (popSize)
 
           val result = pop.toODPairs
@@ -142,7 +142,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "return all 200 trips for this population" in {
           val popSize = 100
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, popSize)
           val allTimesInRange = (
             LocalTime.parse("00:00:00").toSecondOfDay to
             LocalTime.parse("23:59:59").toSecondOfDay by 30
@@ -159,7 +159,7 @@ class PopulationTests extends SORoutingUnitTestTemplate {
         "add the path information to the relevant person's relevant path leg" in {
           val popSize = 1
           val network = XML.loadFile(equilNetworkFile)
-          val pop = PopulationFactory.generateSimpleRandomPopulation(network, popSize)
+          val pop = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(network, popSize)
           val personId = pop.persons.head.id
           val personSrc = pop.persons.head.homeAM.vertex
           val personDst = pop.persons.head.work.head.vertex

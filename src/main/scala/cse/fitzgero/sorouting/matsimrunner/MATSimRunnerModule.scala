@@ -1,12 +1,13 @@
 package cse.fitzgero.sorouting.matsimrunner
 
+import cse.fitzgero.sorouting.app.MATSimSimulator
 import org.apache.log4j.{Level, Logger}
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
 
-class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) {
+class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
   println(matsimConfig)
@@ -26,6 +27,7 @@ class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) {
     matsimConfig.outputDirectory
   }
 
+  suppressMATSimInfoLogging()
   run()
 }
 

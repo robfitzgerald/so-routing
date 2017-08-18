@@ -1,8 +1,8 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.GraphXMSSP
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
-import cse.fitzgero.sorouting.roadnetwork.graphx.graph._
+import cse.fitzgero.sorouting.roadnetwork.edge._
+import cse.fitzgero.sorouting.roadnetwork.graphx._
 import org.apache.spark.graphx.{EdgeTriplet, VertexId}
 
 
@@ -95,7 +95,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @param edge the current edge triplet: src-[edge]->dst
     * @return a od to forward to the destination vertex, or no od at all
     */
-  def shortestPathSendMessage(edge: EdgeTriplet[SimpleMSSG_PregelVertex, MacroscopicEdgeProperty]): Iterator[(VertexId, SimpleMSSG_PregelVertex)] = {
+  def shortestPathSendMessage(edge: EdgeTriplet[SimpleMSSG_PregelVertex, GraphXEdge]): Iterator[(VertexId, SimpleMSSG_PregelVertex)] = {
     val edgeWeight: Double = costMethod match {
       case CostFlow() => edge.attr.linkCostFlow
       case AONFlow() => edge.attr.cost.freeFlowCost

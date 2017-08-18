@@ -5,13 +5,13 @@ import java.time.LocalTime
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.SimpleMSSP_ODPair
 
-class PersonNodeTests extends SORoutingUnitTestTemplate {
+class PersonMultipleTripsTests extends SORoutingUnitTestTemplate {
   "PersonNode" when {
     "unpackTrips" when {
       val a1 = MorningActivity("home", 0D, 1D, 1L, "10", EndTime(LocalTime.parse("09:00:00")))
       val a2 = List(MiddayActivity("work", 123D, 456D, 2L, "20", EndTime(LocalTime.parse("17:00:00"))))
       val a3 = EveningActivity("home", 0D, 1D, 1L, "10")
-      val person = PersonNode("1", "car", a1, a2, a3)
+      val person = PersonMultipleTrips("1", "car", a1, a2, a3)
       "called with the full day as the range" should {
         "return OD pairs for all trips" in {
           val result = person.unpackTrips(LocalTime.parse("00:00:00"), LocalTime.parse("23:59:59"))
@@ -61,7 +61,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
           val a1 = MorningActivity("home", 0D, 1D, 1L, "10", EndTime(LocalTime.parse("09:00:00")))
           val a2 = List(MiddayActivity("work", 123D, 456D, 2L, "20", EndTime(LocalTime.parse("00:00:10"))))
           val a3 = EveningActivity("home", 0D, 1D, 1L, "10")
-          val result = PersonNode("1", "car", a1, a2, a3).updatePath(1L, 2L, List("1","4","9"))
+          val result = PersonMultipleTrips("1", "car", a1, a2, a3).updatePath(1L, 2L, List("1","4","9"))
           (result.toXml \ "plan" \ "leg").toList.head.text should equal ("10 1 4 9 20")
         }
       }
@@ -71,7 +71,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
         val a1 = MorningActivity("home", 0D, 1D, 1L, "10", EndTime(LocalTime.parse("09:00:00")))
         val a2 = List(MiddayActivity("work", 123D, 456D, 2L, "20", EndTime(LocalTime.parse("00:00:10"))))
         val a3 = EveningActivity("home", 0D, 1D, 1L, "10")
-        val result = PersonNode("1", "car", a1, a2, a3).toXml
+        val result = PersonMultipleTrips("1", "car", a1, a2, a3).toXml
         result.attribute("id").get.text should equal ("1")
         result.size should equal (1)
         val planElements = result \ "plan" \ "_"
@@ -96,7 +96,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
           MiddayActivity("soccer-practice", 789D, 1011D, 123, "2000", EndTime(LocalTime.parse("01:00:00")))
         )
         val a3 = EveningActivity("home", 0D, 1D, 2, "20")
-        val result = PersonNode("1", "car", a1, a2, a3).toXml
+        val result = PersonMultipleTrips("1", "car", a1, a2, a3).toXml
 
         result.attribute("id").get.text should equal ("1")
         result.size should equal (1)
@@ -127,7 +127,7 @@ class PersonNodeTests extends SORoutingUnitTestTemplate {
         )
         val a3 = EveningActivity("home", 0D, 1D, 2, "20")
         val legs = List(UnroutedLeg("car", 1, 3, "1", "3", List("1", "2", "3")), UnroutedLeg("car", 3, 5, "3", "5", List("3", "4", "5")), UnroutedLeg("car", 5, 1, "5", "1", List("5", "1")))
-        val result = PersonNode("1", "car", a1, a2, a3, legs).toXml
+        val result = PersonMultipleTrips("1", "car", a1, a2, a3, legs).toXml
 
         result.attribute("id").get.text should equal ("1")
         result.size should equal (1)

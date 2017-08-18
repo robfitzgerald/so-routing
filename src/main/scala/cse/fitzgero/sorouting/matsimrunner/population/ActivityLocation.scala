@@ -1,32 +1,11 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.Euclidian
-import org.apache.spark.graphx.VertexId
-
-import scala.xml.NodeSeq
+import cse.fitzgero.sorouting.roadnetwork.vertex.Euclidian
 
 object ActivityLocation {
 
   val random = new scala.util.Random(System.currentTimeMillis)
   def setSeed(s: Long): Unit = random.setSeed(s)
-
-//  def pickRandomLocation(activities: ActivityLocations): ActivityData = {
-//    activities(random.nextInt(activities.length))
-//  }
-
-//  def takeAllLocations(g: xml.Elem): ActivityLocations = {
-//    require((g \ "nodes").nonEmpty)
-//    val nodes: NodeSeq = g \ "nodes" \ "node"
-//    nodes.map(node => {
-//      (
-//        node.attribute("id").get.text.toLong,
-//        Euclidian(
-//          node.attribute("x").get.text.toDouble,
-//          node.attribute("y").get.text.toDouble
-//        )
-//      )
-//    }).toArray
-//  }
 
   def takeRandomLocation(g: xml.Elem): ActivityData = {
     require((g \ "nodes").nonEmpty)
@@ -47,10 +26,4 @@ object ActivityLocation {
       link.attribute("id").get.text
     )
   }
-
-  // given a road network g as a matsim network_v2 file,
-  //   select a random link
-  //   grab the x and y from the node associated with the "from" attribute of this link
-  //   compile these as an activity location of the form
-  //     (linkId, Euclidian(x, y))
 }

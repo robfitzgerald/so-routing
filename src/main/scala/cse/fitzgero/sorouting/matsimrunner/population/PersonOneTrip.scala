@@ -1,12 +1,6 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
-import java.time.LocalTime
-
-import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp._
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
-
-import scala.xml.Elem
+import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId
 
 /**
   * this represents a person, or more specifically, an instance of a person with a single $leg between two activities
@@ -22,7 +16,7 @@ case class PersonOneTrip (id: PersonID, mode: String, act1: MATSimActivity, act2
     * @param path a list of edges to traverse
     * @return a new PersonOneTrip instance with the described route
     */
-  def updatePath(path: List[EdgeIdType]): PersonOneTrip = {
+  def updatePath(path: List[EdgeId]): PersonOneTrip = {
     this.copy(leg = RoutedLeg(leg.mode, leg.srcVertex, leg.dstVertex, leg.srcLink, leg.dstLink, path))
   }
 }

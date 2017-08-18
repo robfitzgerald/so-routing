@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.roadnetwork.graphx.graph
+package cse.fitzgero.sorouting.roadnetwork.graphx
 
 import java.io.IOException
 
@@ -8,14 +8,20 @@ import org.apache.spark.SparkContext
 import org.apache.spark.graphx.{Graph, _}
 import org.apache.spark.rdd.RDD
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.ODPaths
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex.{CoordinateVertexProperty, Euclidian}
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
-import cse.fitzgero.sorouting.roadnetwork.graphx.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}
-import cse.fitzgero.sorouting.roadnetwork.graphx.vertex._
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge._
+import cse.fitzgero.sorouting.roadnetwork.graph.{CanReadFlowSnapshotFiles, CanReadNetworkFiles}
+import cse.fitzgero.sorouting.roadnetwork.vertex._
+import cse.fitzgero.sorouting.roadnetwork.edge._
 
 
-class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctionFactory, algorithmFlowRate: Double = 3600D) extends CanReadNetworkFiles with CanReadFlowSnapshotFiles {
+class GraphXMacroRoadNetwork (
+  sc: SparkContext,
+  costFunctionFactory: CostFunctionFactory,
+  algorithmFlowRate: Double = 3600D) extends
+  CanReadNetworkFiles[GraphxRoadNetwork] with
+  CanReadFlowSnapshotFiles[GraphxRoadNetwork] {
+
+
   val MATSimFlowRate = 3600D // vehicles per hour is used to represent flow data
 
   /**
@@ -32,12 +38,13 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
       case Success(file: Elem) =>
         Try({
           val noSnapshotData: Elem = <network><links></links></network>
-          val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, noSnapshotData)
+          val edgeSet: RDD[Edge[GraphXEdge]] = grabEdges(file, noSnapshotData)
           val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
-          Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
+          Graph[CoordinateVertexProperty, GraphXEdge](vertexSet, edgeSet)
         })
     }
   }
+
 
   /**
     * loads a road network from an xml file written in MATSim's network format and combines it with network flows from a snapshot file written in a locally described format
@@ -57,13 +64,14 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
           case Failure(err) => throw new IOException(s"$snapshotFileName is not a valid snapshot filename. \n ${err.getStackTrace}")
           case Success(flows: Elem) =>
             Try({
-              val edgeSet: RDD[Edge[MacroscopicEdgeProperty]] = grabEdges(file, flows)
+              val edgeSet: RDD[Edge[GraphXEdge]] = grabEdges(file, flows)
               val vertexSet: RDD[(VertexId, CoordinateVertexProperty)] = grabVertices(file)
-              Graph[CoordinateVertexProperty, MacroscopicEdgeProperty](vertexSet, edgeSet)
+              Graph[CoordinateVertexProperty, GraphXEdge](vertexSet, edgeSet)
             })
         }
     }
   }
+
 
   /**
     * processes xml network and snapshot data to produce the graph's edge list
@@ -71,7 +79,7 @@ class GraphXMacroRoadNetwork (sc: SparkContext, costFunctionFactory: CostFunctio
     * @param flowData snapshot xml element
     * @return
     */
-  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[Edge[MacroscopicEdgeProperty]] = {
+  private def grabEdges (xmlData: Elem, flowData: Elem): RDD[Edge[GraphXEdge]] = {
     require((xmlData \ "links").nonEmpty)
     require((xmlData \ "links" \ "link").nonEmpty)
     Try({
@@ -134,12 +142,12 @@ object GraphXMacroRoadNetwork {
     * @param paths tuples where the 3rd element is a list of edge Ids
     * @return a new road network with those values assigned to the flow attributes of the edges
     */
-  def updateEdges(graph: GraphxRoadNetwork, paths: ODPaths): Graph[CoordinateVertexProperty, MacroscopicEdgeProperty] = {
+  def updateEdges(graph: GraphxRoadNetwork, paths: ODPaths): Graph[CoordinateVertexProperty, GraphXEdge] = {
     val updateList: Map[EdgeIdType, Double] = paths.flatMap(_.path).groupBy(identity).map(group => (group._1, group._2.size.toDouble))
     graph.mapEdges  (edge =>
       if (updateList.isDefinedAt(edge.attr.id))
         edge.attr.copy(
-          flow = edge.attr.flow + updateList(edge.attr.id)
+          flowUpdate = edge.attr.flow + updateList(edge.attr.id)
         )
       else edge.attr
     )

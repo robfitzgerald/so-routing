@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
+import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import org.apache.spark.graphx.VertexId
 
 sealed trait ActivityNodeOptions
@@ -20,7 +20,8 @@ sealed trait ActivityNode[Pos, VertexId, EdgeId, ActOpt <: ActivityNodeOptions] 
   def opts: ActOpt
 }
 
-abstract class MATSimActivity extends ActivityNode[Double, VertexId, EdgeIdType, ActivityNodeOptions] with ConvertsToXml {
+// TODO: VertexId and EdgeId belong to LocalGraph, but, Populations should be graph-agnostic
+abstract class MATSimActivity extends ActivityNode[Double, VertexId, EdgeId, ActivityNodeOptions] with ConvertsToXml {
   def toXml: xml.Elem
 }
 
@@ -29,7 +30,7 @@ final case class MorningActivity (
   x: Double,
   y: Double,
   vertex: VertexId,
-  link: EdgeIdType,
+  link: EdgeId,
   opts: EndTime)
   extends MATSimActivity {
     override def toXml: xml.Elem =
@@ -41,7 +42,7 @@ final case class MiddayActivity (
   x: Double,
   y: Double,
   vertex: VertexId,
-  link: EdgeIdType,
+  link: EdgeId,
   opts: EndTime)
   extends MATSimActivity {
     override def toXml: xml.Elem =
@@ -53,7 +54,7 @@ final case class EveningActivity (
   x: Double,
   y: Double,
   vertex: VertexId,
-  link: EdgeIdType,
+  link: EdgeId,
   opts: NoActivity = NoActivity())
   extends MATSimActivity {
     override def toXml: xml.Elem =
