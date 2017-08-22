@@ -33,7 +33,7 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
     val networkLinks: scala.collection.mutable.Map[Id[Link], _] = scenario.getNetwork.getLinks.asScala
     var currentNetworkState: NetworkStateCollector = NetworkStateCollector(networkLinks)
     var currentIteration: Int = 1
-    var timeTracker: TimeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
+    val timeTracker: TimeTracker = TimeTracker(matsimConfig.startTime, matsimConfig.endTime)
 
 
     // add the events handlers
@@ -41,7 +41,8 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
       @Override def install (): Unit = {
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
           case LinkEventData(e) =>
-            currentNetworkState = currentNetworkState.update(e)
+            if (timeTracker.belongsToThisTimeGroup(e))
+              currentNetworkState = currentNetworkState.update(e)
           case NewIteration(i) =>
 //
 //            // start next iteration! - throw away any info
@@ -57,6 +58,7 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
     suppressMATSimInfoLogging()
     controler.run()
 
+//    currentNetworkState.networkState.foreach(println)
 
     // write snapshot and return filename
     NetworkStateCollector.toXMLFile(snapshotOutputDirectory, currentNetworkState) match {

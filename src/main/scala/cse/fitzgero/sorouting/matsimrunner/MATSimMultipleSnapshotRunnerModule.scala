@@ -11,7 +11,7 @@ import org.matsim.core.scenario.ScenarioUtils
 
 import scala.collection.JavaConverters._
 
-class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
+class MATSimMultipleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
   println(matsimConfig.toString)
@@ -85,6 +85,6 @@ class MATSimSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) {
   run()
 }
 
-object MATSimSnapshotRunnerModule {
-  def apply(conf: MATSimRunnerConfig): MATSimSnapshotRunnerModule = new MATSimSnapshotRunnerModule(conf)
+object MATSimMultipleSnapshotRunnerModule {
+  def apply(conf: MATSimRunnerConfig): MATSimMultipleSnapshotRunnerModule = new MATSimMultipleSnapshotRunnerModule(conf)
 }

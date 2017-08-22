@@ -75,4 +75,10 @@ class TimeTracker (
 object TimeTracker {
   def apply(wD: String, sT: String, eT: String): TimeTracker = new TimeTracker(wD, sT, eT)
   def apply(wD: Int, sT: Int, eT: Int): TimeTracker = new TimeTracker(wD, sT, eT)
+  def apply(sT: String, eT: String): TimeTracker = {
+    val sInt: Int = TimeStringConvert.fromString(sT)
+    val eInt: Int = TimeStringConvert.fromString(eT)
+    val wInt = eInt - sInt
+    new TimeTracker(wInt, sInt, eInt)
+  }
 }

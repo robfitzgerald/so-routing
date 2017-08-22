@@ -13,7 +13,7 @@ object MATSimSnapshotGenerator extends App {
   if (appConfig.incomplete) {
     println(s"usage: ")
   } else {
-    val outputDirectory: String = MATSimSnapshotRunnerModule(appConfig).run()
+    val outputDirectory: String = MATSimMultipleSnapshotRunnerModule(appConfig).run()
     println(s"resulting snapshot stored in $outputDirectory/snapshot")
   }
 }
