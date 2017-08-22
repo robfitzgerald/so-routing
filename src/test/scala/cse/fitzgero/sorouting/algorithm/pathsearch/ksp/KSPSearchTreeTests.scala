@@ -22,17 +22,18 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
               ch1("a")._2 match {
                 case KSPSearchBranch(ch2, _) =>
                   ch2("b")._2 match {
-                    case KSPSearchBranch(ch3, depth) =>
+                    case KSPSearchBranch(ch3, branchDepth) =>
                       ch3("c")._2 should equal (KSPSearchLeaf)
-                      depth should equal (3)
+                      branchDepth should equal (2)
+                      // leaf depth is 3
                     case _ => fail()
                   }
                   ch2("d")._2 match {
                     case KSPSearchBranch(ch3, _) =>
                       ch3("e")._2 match {
-                        case KSPSearchBranch(ch4, depth) =>
+                        case KSPSearchBranch(ch4, branchDepth) =>
                           ch4("f")._2 should equal (KSPSearchLeaf)
-                          depth should equal (4)
+                          branchDepth should equal (3)
                         case _ => fail()
                       }
                     case _ => fail()
@@ -42,9 +43,9 @@ class KSPSearchTreeTests extends SORoutingUnitTestTemplate {
               ch1("b")._2 match {
                 case KSPSearchBranch(ch2, _) =>
                   ch2("g")._2 match {
-                    case KSPSearchBranch(ch3, depth) =>
+                    case KSPSearchBranch(ch3, branchDepth) =>
                       ch3("n")._2 should equal (KSPSearchLeaf)
-                      depth should equal (3)
+                      branchDepth should equal (2)
                     case _ => fail()
                   }
                 case _ => fail()

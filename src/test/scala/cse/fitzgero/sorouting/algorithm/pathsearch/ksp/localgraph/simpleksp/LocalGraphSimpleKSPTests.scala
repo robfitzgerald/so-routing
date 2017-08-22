@@ -35,27 +35,23 @@ class LocalGraphSimpleKSPTests extends SORoutingUnitTestTemplate {
         }
       }
       "called with a large road network and k is very small compared to the possible number of alternative paths" should {
-        "find ten paths" in {
+        "find ten paths in descending cost order" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
-          val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254874068L), 10)
-          // should result in 10 distinct paths
+          val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254224738L), 10)
+
           result.distinct.size should equal (10)
-          // can we test the values of the path somehow?
-//          result.foreach(solution => {
-//            solution.path.head should equal ()
-//          })
-          result.foreach(odPath => println(s"${odPath.cost.sum} ${odPath.path}"))
+          result.iterator.sliding(2).foreach(pair => pair(0).cost.sum should be <= pair(1).cost.sum)
         }
       }
       "called with a large road network, setting a PathFoundBounds to 20" should {
         "find ten paths" in {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
-          val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254874068L), 10, PathsFoundBounds(20))
-          // should result in 10 distinct paths
+          val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254224738L), 10, PathsFoundBounds(20))
+
           result.distinct.size should equal (10)
-          result.foreach(odPath => println(s"${odPath.cost.sum} ${odPath.path}"))
+          result.iterator.sliding(2).foreach(pair => pair(0).cost.sum should be <= pair(1).cost.sum)
         }
       }
     }

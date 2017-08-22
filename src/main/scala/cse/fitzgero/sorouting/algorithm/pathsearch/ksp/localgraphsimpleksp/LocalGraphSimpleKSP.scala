@@ -80,7 +80,11 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
         val alternativePath: List[EdgeId] = walkBack.path.tail.reverse ::: alternatePathSpur.path
         val alternativePathCosts: List[Double] = walkBack.cost.tail.reverse ::: alternatePathSpur.cost
         val alterativeODPath: LocalGraphODPath = LocalGraphODPath(od.personId, od.src, od.dst, alternativePath, alternativePathCosts)
-        solution.enqueue(alterativeODPath)
+
+        // only add this path if we did not scoop up an infinite-cost edge in the process
+        if (alterativeODPath.cost.sum != Double.PositiveInfinity) {
+          solution.enqueue(alterativeODPath)
+        }
 
         // take a step back and repeat
         val remainingPathData: ReversePathData = ReversePathData(walkBack.path.tail, walkBack.cost.tail)
@@ -90,7 +94,7 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
     }
 
     val walkBackResult: ReversePathData = ReversePathData(trueShortestPath.path.reverse, trueShortestPath.cost.reverse)
-    _kShortestPaths(walkBackResult, graph).filter(_.cost.sum < Double.PositiveInfinity)
+    _kShortestPaths(walkBackResult, graph) // .filter(_.cost.sum < Double.PositiveInfinity)
   }
 }
 

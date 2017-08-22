@@ -8,17 +8,17 @@ class TerminationCriteriaTests extends SORoutingUnitTestTemplate {
   "TerminationCriteria" when {
     val startTime: Long = Instant.now().toEpochMilli
     val tenIterations: Int = 10
-    val fiftyPercentRelGap: Double = 0.5D
-    val testData = TerminationData(startTime, tenIterations, fiftyPercentRelGap)
+    val fivePercentRelGap: Double = 0.05D
+    val testData = TerminationData(startTime, tenIterations, fivePercentRelGap)
     "RelativeGapTerminationCriteria" when {
       "called when within a relative gap threshold" should {
         "evaluate true" in {
-          RelativeGapTerminationCriteria(0.6).eval(testData) should equal (true)
+          RelativeGapTerminationCriteria(0.06).eval(testData) should equal (true)
         }
       }
       "called when not within a relative gap threshold" should {
         "evaluate false" in {
-          RelativeGapTerminationCriteria(0.5).eval(testData) should equal (false)
+          RelativeGapTerminationCriteria(0.05).eval(testData) should equal (false)
         }
       }
     }
@@ -38,7 +38,7 @@ class TerminationCriteriaTests extends SORoutingUnitTestTemplate {
       "called when enough time has passed to stop" should {
         "evaluate true" in {
           val startedInPast = startTime - 60000L
-          val testData = TerminationData(startedInPast, tenIterations, fiftyPercentRelGap)
+          val testData = TerminationData(startedInPast, tenIterations, fivePercentRelGap)
           RunningTimeTerminationCriteria(1000L).eval(testData) should equal (true)
         }
       }
@@ -52,17 +52,17 @@ class TerminationCriteriaTests extends SORoutingUnitTestTemplate {
       "called when both thresholds have been passed and aggregated via the provided operation" should {
         "evaluate true" in {
           CombinedTerminationCriteria(
-            RelativeGapTerminationCriteria(0.6),  // passes
+            RelativeGapTerminationCriteria(0.06),  // passes
             And,
             IterationTerminationCriteria(10)
           ).eval(testData) should equal (true)
           CombinedTerminationCriteria(
-            RelativeGapTerminationCriteria(0.5),
+            RelativeGapTerminationCriteria(0.05),
             Or,
             IterationTerminationCriteria(10)      // passes
           ).eval(testData) should equal (true)
           CombinedTerminationCriteria(
-            RelativeGapTerminationCriteria(0.6),  // passes
+            RelativeGapTerminationCriteria(0.06),  // passes
             Or,
             IterationTerminationCriteria(11)
           ).eval(testData) should equal (true)
@@ -71,7 +71,7 @@ class TerminationCriteriaTests extends SORoutingUnitTestTemplate {
       "called when no threshold has been passed" should {
         "evaluate false" in {
           CombinedTerminationCriteria(
-            RelativeGapTerminationCriteria(0.4),
+            RelativeGapTerminationCriteria(0.04),
             And,
             IterationTerminationCriteria(11)
           ).eval(testData) should equal (false)
