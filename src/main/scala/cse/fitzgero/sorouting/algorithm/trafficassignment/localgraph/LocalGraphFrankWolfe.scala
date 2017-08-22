@@ -10,10 +10,10 @@ import cse.fitzgero.sorouting.roadnetwork.edge.MacroscopicEdgeProperty
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, _}
 
 object LocalGraphFrankWolfe
-  extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPair] {
+  extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPairByVertex] {
 
-  val SSSP: LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
-    LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+  val SSSP: LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
+    LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
 
   /**
     * solve a traffic assignment for the given network state and set of origin/destination pairs
@@ -24,7 +24,7 @@ object LocalGraphFrankWolfe
     */
   override def solve (
     graph: LocalGraphMATSim,
-    odPairs: GenSeq[LocalGraphODPair],
+    odPairs: GenSeq[LocalGraphODPairByVertex],
     terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
 
     val startTime = Instant.now().toEpochMilli
@@ -65,7 +65,7 @@ object LocalGraphFrankWolfe
       .edgeAttrs
       .map(_.copy(flowUpdate = 0D))
       .toSeq
-    g.replaceEdgeList(newEdges)
+    g.replaceEdgeAttributeList(newEdges)
   }
 
   /**
@@ -74,7 +74,7 @@ object LocalGraphFrankWolfe
     * @param odPairs the set of origin/destination pairs to find paths between
     * @return the road network updated with the flows associated with this set of shortest paths
     */
-  def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPair]): LocalGraphMATSim = {
+  def generateOracleGraph(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPairByVertex]): LocalGraphMATSim = {
     val edgesToUpdate: GenSeq[EdgeMATSim] =
       odPairs
       .flatMap(od => {
@@ -87,7 +87,7 @@ object LocalGraphFrankWolfe
         g.edgeAttrOf(edgeIdGrouped._1).get.copy(flowUpdate = edgeIdGrouped._2.size)
       })
       .toSeq
-    initializeFlows(g).integrateEdgeList(edgesToUpdate)
+    initializeFlows(g).integrateEdgeAttributeList(edgesToUpdate)
   }
 
   /**
@@ -105,7 +105,7 @@ object LocalGraphFrankWolfe
       val flowUpdate = calculateThisFlow(flowPrevious, flowOracle, phi)
       thisAttr.copy(flowUpdate = flowUpdate)
     }).toSeq
-    previousGraph.replaceEdgeList(edgesWithUpdatedFlows)
+    previousGraph.replaceEdgeAttributeList(edgesWithUpdatedFlows)
   }
 
   /**

@@ -3,12 +3,13 @@ package cse.fitzgero.sorouting.algorithm.routing
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.KSPBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPair
 import cse.fitzgero.sorouting.algorithm.trafficassignment.TerminationCriteria
+import cse.fitzgero.sorouting.matsimrunner.population.Population
 import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
 
 import scala.concurrent.Future
 
-trait Routing [G <: RoadNetwork, O <: ODPair[_]] {
-  def route(g: G, odPairs: Seq[O], config: RoutingConfig): Future[RoutingResult]
+trait Routing [G <: RoadNetwork, O <: Population] {
+  def route(g: G, odPairs: O, config: RoutingConfig): Future[RoutingResult]
 }
 
 sealed trait RoutingConfig {

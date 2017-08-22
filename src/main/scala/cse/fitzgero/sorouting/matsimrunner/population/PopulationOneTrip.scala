@@ -1,11 +1,11 @@
 package cse.fitzgero.sorouting.matsimrunner.population
 
 import java.time.LocalTime
+
 import scala.xml.XML
 import scala.xml.dtd.{DocType, SystemID}
-
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPair, LocalGraphODPath}
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
 import cse.fitzgero.sorouting.util.convenience._
 
 
@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.util.convenience._
 // think about role of inheritance or collection-oriented functional style
 
 
-case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.currentTimeMillis) extends Population with ConvertsToXml {
   // random values
   implicit val sampling = PopulationOneTrip.RandomSampling
   sampling.setSeed(seed)
@@ -66,16 +66,22 @@ case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.c
   }
 
   // export ops
-  def exportTimeGroupAsODPairs(lowerBound: LocalTime, upperBound: LocalTime): Seq[LocalGraphODPair] =
-    persons.filter(_.activityInTimeGroup(lowerBound, upperBound)).map(_.toLocalGraphODPair).toSeq
+  def exportTimeGroupAsODPairsByVertex(lowerBound: LocalTime, upperBound: LocalTime): Seq[LocalGraphODPairByVertex] =
+    persons.filter(_.activityInTimeGroup(lowerBound, upperBound)).map(_.toLocalGraphODPairByVertex).toSeq
+
+  def exportTimeGroupAsODPairsByEdge(lowerBound: LocalTime, upperBound: LocalTime): Seq[LocalGraphODPairByEdge] =
+    persons.filter(_.activityInTimeGroup(lowerBound, upperBound)).map(_.toLocalGraphODPairByEdge).toSeq
 
   def exportTimeGroup(lowerBound: LocalTime, upperBound: LocalTime): PopulationOneTrip =
     PopulationOneTrip(persons.filter(_.activityInTimeGroup(lowerBound, upperBound)))
 
-  def exportAsODPairs: Seq[LocalGraphODPair] =
-    persons.map(_.toLocalGraphODPair).toSeq
+  def exportAsODPairsByVertex: Seq[LocalGraphODPairByVertex] =
+    persons.map(_.toLocalGraphODPairByVertex).toSeq
 
-  def toODPairs: Set[LocalGraphODPair] = persons.map(_.toLocalGraphODPair)
+  def exportAsODPairsByEdge: Seq[LocalGraphODPairByEdge] =
+    persons.map(_.toLocalGraphODPairByEdge).toSeq
+
+  def toODPairs: Set[LocalGraphODPairByVertex] = persons.map(_.toLocalGraphODPairByVertex)
 
 
 }

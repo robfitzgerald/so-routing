@@ -24,7 +24,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     * @return a collection of tuples (Origin Vertex Id, Destination Vertex Id, Shortest Path as Edge Ids)
     */
   override def shortestPaths (graph: GraphxRoadNetwork, odPairs: ODPairs): ODPaths = {
-    val destinations: Seq[VertexId] = odPairs.map(_.dstVertex)
+    val destinations: Seq[VertexId] = odPairs.map(_.dst)
     val shortestPathsGraph: ShortestPathsGraph =
       initializeShortestPathsGraph(graph, odPairs)
         .pregel(initialShorestPathsMessage(odPairs))(
@@ -34,7 +34,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
         )
     val relevantSubset: Map[VertexId, SimpleMSSG_PregelVertex] = shortestPathsGraph.vertices.filter(destinations contains _._1).collect().toMap
     odPairs.map(tuple => {
-      SimpleMSSP_ODPath(tuple.personId, tuple.srcVertex, tuple.dstVertex, relevantSubset(tuple.dstVertex)(tuple.srcVertex).path)
+      SimpleMSSP_ODPath(tuple.personId, tuple.src, tuple.dst, relevantSubset(tuple.dst)(tuple.src).path)
     })
   }
 
@@ -60,7 +60,7 @@ object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
     */
   private def initialShorestPathsMessage(odPairs: ODPairs): SimpleMSSG_PregelVertex =
     odPairs.foldLeft(Map.empty[VertexId, SimpleMSSP_PregelMsg])((map, tuple) => {
-      map + (tuple.srcVertex -> SimpleMSSP_PregelMsg())
+      map + (tuple.src -> SimpleMSSP_PregelMsg())
     }).withDefaultValue(SimpleMSSP_PregelMsg())
 
 

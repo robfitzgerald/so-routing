@@ -4,7 +4,7 @@ import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.SimpleMSSP_ODPair
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPairByVertex
 
 class PersonOneTripTests extends SORoutingUnitTestTemplate {
   "PersonOneTrip" when {
@@ -55,9 +55,9 @@ class PersonOneTripTests extends SORoutingUnitTestTemplate {
     }
     "toLocalGraphODPair" should {
       "construct a valid OD Pair" in {
-        val result = personOneTrip.toLocalGraphODPair
+        val result = personOneTrip.toLocalGraphODPairByVertex
         result should equal (
-          LocalGraphODPair(
+          LocalGraphODPairByVertex(
             personOneTrip.id.toString,
             a1.vertex,
             a2.vertex

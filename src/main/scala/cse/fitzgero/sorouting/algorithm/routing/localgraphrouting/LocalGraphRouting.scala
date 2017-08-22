@@ -9,25 +9,26 @@ import scala.collection.{GenIterable, GenMap, GenSeq}
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{LocalGraphKSPSearchTree, LocalGraphSimpleKSP}
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{LocalGraphKSPSearchTree, LocalGraphMATSimKSP, LocalGraphSimpleKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.routing._
 import cse.fitzgero.sorouting.algorithm.trafficassignment.{NoTrafficAssignmentSolution, TerminationCriteria, TrafficAssignmentResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.{LocalGraphFWSolverResult, LocalGraphFrankWolfe}
+import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 
 
-object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
+object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
 
 
-  override def route(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPair], config: RoutingConfig): Future[RoutingResult] = {
+  override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {
     val startTime = Instant.now().toEpochMilli
 
-    val kShortestAsync: Future[GenSeq[KSPSearchRoot[VertexId, EdgeId]]] = findKShortest(g, odPairs, config).map(_.flatMap(LocalGraphKSPSearchTree(_) match {
+    val kShortestAsync: Future[GenSeq[KSPSearchRoot[VertexId, EdgeId]]] = findKShortest(g, odPairs.exportAsODPairsByEdge, config).map(_.flatMap(LocalGraphKSPSearchTree(_) match {
       case KSPEmptySearchTree => None
       case x => Some(x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]])
     }))
-    val trafficAssignmentOracleFlowAsync: Future[TrafficAssignmentResult] = trafficAssignmentOracleFlow(g, odPairs, config)
+    val trafficAssignmentOracleFlowAsync: Future[TrafficAssignmentResult] = trafficAssignmentOracleFlow(g, odPairs.exportAsODPairsByVertex, config)
 
     val promise = Promise[RoutingResult]()
 
@@ -105,10 +106,10 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
 //   find the best child based on a lookup of the edge in the graph
 //   add that edge to the head of a list and recurse by passing that child
 
-  val KSP: LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] = LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+  val KSP: LocalGraphMATSimKSP = LocalGraphMATSimKSP()
 
 
-  def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPair], config: RoutingConfig): Future[GenSeq[GenSeq[LocalGraphODPath]]] = {
+  def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPairByEdge], config: RoutingConfig): Future[GenSeq[GenSeq[LocalGraphODPath]]] = {
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
         // TODO: use procs value (modify ExecutionContext?)
@@ -123,7 +124,7 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, LocalGraphODPair] {
   }
 
 
-  def trafficAssignmentOracleFlow(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPair], config: RoutingConfig): Future[TrafficAssignmentResult] =
+  def trafficAssignmentOracleFlow(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPairByVertex], config: RoutingConfig): Future[TrafficAssignmentResult] =
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
         // TODO: use procs value (modify ExecutionContext?)

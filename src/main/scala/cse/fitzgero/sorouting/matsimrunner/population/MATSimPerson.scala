@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.SimpleMSSP_ODPair
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex}
 
 import scala.xml.Elem
 
@@ -46,14 +46,25 @@ abstract class MATSimPerson[A <: MATSimActivity, L <: MATSimLeg] extends Convert
     )
 
   /**
-    * export this trip leg as a route request for the LocalGraph family of search algorithms
+    * export this trip leg as a route request for the vertex-oriented LocalGraph family of search algorithms
     * @return
     */
-  def toLocalGraphODPair: LocalGraphODPair =
-    LocalGraphODPair(
+  def toLocalGraphODPairByVertex: LocalGraphODPairByVertex =
+    LocalGraphODPairByVertex(
       id.toString,
       leg.srcVertex,
       leg.dstVertex
+    )
+
+  /**
+    * export this trip leg as a route request for the edge-oriented LocalGraph family of search algorithms
+    * @return
+    */
+  def toLocalGraphODPairByEdge: LocalGraphODPairByEdge =
+    LocalGraphODPairByEdge(
+      id.toString,
+      leg.srcLink,
+      leg.dstLink
     )
 
 

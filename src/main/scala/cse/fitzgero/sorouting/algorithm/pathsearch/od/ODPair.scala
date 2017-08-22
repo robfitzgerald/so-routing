@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.od
 
-abstract class ODPair [V] {
+abstract class ODPair [I] {
   def personId: String
-  def srcVertex: V
-  def dstVertex: V
+  def src: I
+  def dst: I
 }

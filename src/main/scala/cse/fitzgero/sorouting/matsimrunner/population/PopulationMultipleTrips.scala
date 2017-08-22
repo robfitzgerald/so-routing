@@ -8,7 +8,7 @@ import scala.xml.dtd.{DocType, SystemID}
 import scala.xml.{Elem, XML}
 
 
-case class PopulationMultipleTrips (persons: Set[PersonMultipleTrips], seed: Long = System.currentTimeMillis) extends ConvertsToXml {
+case class PopulationMultipleTrips (persons: Set[PersonMultipleTrips], seed: Long = System.currentTimeMillis) extends Population with ConvertsToXml {
   // random values
   implicit val sampling = PopulationMultipleTrips.RandomSampling
   sampling.setSeed(seed)

@@ -5,9 +5,9 @@ import java.time.Instant
 import cse.fitzgero.sorouting.algorithm.pathsearch.KSP
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
-import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.LocalGraphSimpleSSSP
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeProperty
-import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.roadnetwork.localgraph.{VertexId, _}
 import cse.fitzgero.sorouting.roadnetwork.vertex.VertexProperty
 
 import scala.annotation.tailrec
@@ -22,9 +22,10 @@ import scala.collection.{GenMap, GenSeq}
   * @tparam V vertex type
   * @tparam E edge type
   */
-class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends KSP[G, LocalGraphODPair, LocalGraphODPath] {
+class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends KSP[G, LocalGraphODPairByVertex, LocalGraphODPath] {
 
-  val sssp: LocalGraphSimpleSSSP[G,V,E] = LocalGraphSimpleSSSP[G,V,E]()
+  val sssp: LocalGraphVertexOrientedSSSP[G,V,E] = LocalGraphVertexOrientedSSSP[G,V,E]()
+//  type O <: ODPair[VertexId]
 
   implicit val simpleKSPOrdering: Ordering[LocalGraphODPath] = Ordering.by {
     (odPath: LocalGraphODPath) =>
@@ -33,12 +34,20 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
 
   case class ReversePathData(path: List[EdgeId], cost: List[Double])
 
-  override def kShortestPaths(graph: G, od: LocalGraphODPair, k: Int = 1, boundsTest: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
+  override def kShortestPaths(graph: G, od: LocalGraphODPairByVertex, k: Int = 1, boundsTest: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
 
     val startTime = Instant.now().toEpochMilli
 
     // find the true shortest path
-    val trueShortestPath: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex))
+    val trueShortestPath: LocalGraphODPath = sssp.shortestPath(graph, LocalGraphODPairByVertex(od.personId, od.src, od.dst))
+
+//    val trueShortestPath: LocalGraphODPath = od match {
+//      case LocalGraphODPairByVertex(personId, src, dst) =>
+//        LocalGraphVertexOrientedSSSP().shortestPath(graph, LocalGraphODPairByVertex(od.personId, src, dst))
+//      case LocalGraphODPairByEdge(personId, src, dst) =>
+//        LocalGraphMATSimSSSP().shortestPath(graph.asInstanceOf[LocalGraphMATSim], LocalGraphODPairByEdge(personId, src, dst))
+//    }
+
     // a way to lookup source vertex ids from an edge id
     val srcVerticesLookup: GenMap[EdgeId, VertexId] = graph.srcVerticesMap
     // our solution, a ranked list of paths
@@ -61,16 +70,16 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
         val thisEdge: EdgeId = walkBack.path.head
 
         // set this edge to infinity on a copy of the graph
-        val blockedGraph: G = previousGraph.updateEdge(thisEdge, previousGraph.edgeAttrOf(thisEdge).get.copy(flowUpdate = Double.MaxValue).asInstanceOf[E]).asInstanceOf[G]
+        val blockedGraph: G = previousGraph.updateEdgeAttribute(thisEdge, previousGraph.edgeAttrOf(thisEdge).get.copy(flowUpdate = Double.MaxValue).asInstanceOf[E]).asInstanceOf[G]
         val spurSourceVertex: VertexId = srcVerticesLookup(thisEdge)
 
         // find source vertex of this edge, run a new shortest paths search from there to end
-        val alternatePathSpur: LocalGraphODPath = sssp.shortestPath(blockedGraph, LocalGraphODPair(od.personId, spurSourceVertex, od.dstVertex))
+        val alternatePathSpur: LocalGraphODPath = sssp.shortestPath(blockedGraph, LocalGraphODPairByVertex(od.personId, spurSourceVertex, od.dst))
 
         // combine spur with prefix (trueSPRev.tail.reverse) and add to solution
         val alternativePath: List[EdgeId] = walkBack.path.tail.reverse ::: alternatePathSpur.path
         val alternativePathCosts: List[Double] = walkBack.cost.tail.reverse ::: alternatePathSpur.cost
-        val alterativeODPath: LocalGraphODPath = LocalGraphODPath(od.personId, od.srcVertex, od.dstVertex, alternativePath, alternativePathCosts)
+        val alterativeODPath: LocalGraphODPath = LocalGraphODPath(od.personId, od.src, od.dst, alternativePath, alternativePathCosts)
         solution.enqueue(alterativeODPath)
 
         // take a step back and repeat
@@ -81,7 +90,7 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
     }
 
     val walkBackResult: ReversePathData = ReversePathData(trueShortestPath.path.reverse, trueShortestPath.cost.reverse)
-    _kShortestPaths(walkBackResult, graph)
+    _kShortestPaths(walkBackResult, graph).filter(_.cost.sum < Double.PositiveInfinity)
   }
 }
 

@@ -32,7 +32,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 
   // Directory information for this experiment
   private val baseDir: String = if (conf.workingDirectory.head == '/') conf.workingDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.workingDirectory}"
-  private val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
+  val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
   private val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
   private val resultsDirectory: String = s"$thisExperimentDirectory/results"
   private val fullUEResultsDirectory: String = s"$resultsDirectory/$FullUEExp"

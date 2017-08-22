@@ -5,7 +5,6 @@ import java.time.LocalTime
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.SimpleMSSP_ODPath
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
-import cse.fitzgero.sorouting.roadnetwork.graphx.edge.EdgeIdType
 
 import scala.xml.XML
 
@@ -77,7 +76,7 @@ class PopulationOneTripTests extends SORoutingUnitTestTemplate {
             ).map(timeNumber => LocalTime.ofSecondOfDay(timeNumber))
 
           val result = allTimesInRange.sliding(2).flatMap(bounds => {
-            pop.exportTimeGroupAsODPairs(bounds(0), bounds(1))
+            pop.exportTimeGroupAsODPairsByVertex(bounds(0), bounds(1))
           }).toList
 
           result.size should equal (popSize)

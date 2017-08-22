@@ -21,7 +21,7 @@ package object simplemssp {
   type SimpleMSSG_PregelVertex = Map[VertexId, SimpleMSSP_PregelMsg]
   type ShortestPathsGraph = Graph[SimpleMSSG_PregelVertex, GraphXEdge]
 
-  case class SimpleMSSP_ODPair(personId: PersonIDType, srcVertex: VertexId, dstVertex: VertexId) extends GraphXODPair
+  case class SimpleMSSP_ODPair(personId: PersonIDType, src: VertexId, dst: VertexId) extends GraphXODPair
   type ODPairs = Seq[SimpleMSSP_ODPair]
   case class SimpleMSSP_ODPath(personId: PersonIDType, srcVertex: VertexId, dstVertex: VertexId, path: Path, cost: List[Double] = List()) extends GraphXODPath
   type ODPaths = Seq[SimpleMSSP_ODPath]

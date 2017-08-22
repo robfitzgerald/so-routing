@@ -7,8 +7,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPair
-import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.LocalGraphSimpleSSSP
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPairByVertex
+import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.{LocalGraphMATSimSSSP, LocalGraphVertexOrientedSSSP}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationTerminationCriteria
 import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerConfig, MATSimSingleSnapshotRunnerModule}
@@ -17,18 +17,24 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, LocalGraphMATSimFactory, VertexMATSim}
 import cse.fitzgero.sorouting.util.{SORoutingApplicationConfig, SORoutingFilesHelper}
 
+import scala.xml.XML
+
 
 object LocalGraphRoutingModule {
 
-  val sssp = LocalGraphSimpleSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+  val sssp = LocalGraphMATSimSSSP()
   case class TimeGroup (startRange: Int, endRange: Int)
 
   val RoutingAlgorithmTimeout: Duration = 120 seconds
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
+  val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
+
   def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): PopulationOneTrip = {
 
     val (populationSO, populationPartial) = population.subsetPartition(conf.routePercentage)
+
+    XML.save(s"${fileHelper.thisExperimentDirectory}/soPop.xml", populationSO.toXml)
 
     // assign shortest path search to all UE drivers
     val graphWithNoFlows: LocalGraphMATSim =
@@ -37,7 +43,12 @@ object LocalGraphRoutingModule {
         case Success(g) => g
         case Failure(e) => throw new Error(s"failed to load network file ${fileHelper.thisNetworkFilePath}")
       }
-    val populationDijkstrasRoutes = populationPartial.exportAsODPairs.map(sssp.shortestPath(graphWithNoFlows, _))
+    val populationDijkstrasRoutes =
+      if (SomeParallelProcessesSetting == 1)  // TODO again, parallel config here.
+        populationPartial.exportAsODPairsByEdge.map(sssp.shortestPath(graphWithNoFlows, _))
+      else
+        populationPartial.exportAsODPairsByEdge.par.map(sssp.shortestPath(graphWithNoFlows, _))
+
     val populationUE = populationDijkstrasRoutes.foldLeft(populationPartial)(_.updatePerson(_))
 
 
@@ -82,11 +93,9 @@ object LocalGraphRoutingModule {
         }
 
       val groupToRoute: PopulationOneTrip = populationSO.exportTimeGroup(timeGroupStart, timeGroupEnd)
-      val odPairs: Seq[LocalGraphODPair] = groupToRoute.exportAsODPairs
 
-      println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${odPairs.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
+      println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
 
-      val SomeParallelProcessesSetting: Int = 1 // TODO: more clearly handle parallelism at config level
       val routingConfig =
         if (SomeParallelProcessesSetting == 1)
           LocalRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
@@ -94,7 +103,7 @@ object LocalGraphRoutingModule {
           ParallelRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
 
 
-      val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, odPairs, routingConfig)
+      val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRoute, routingConfig)
 
       val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
       routingResult match {

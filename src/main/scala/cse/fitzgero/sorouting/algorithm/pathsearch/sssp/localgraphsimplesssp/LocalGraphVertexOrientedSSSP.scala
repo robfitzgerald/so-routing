@@ -9,13 +9,13 @@ import cse.fitzgero.sorouting.roadnetwork.vertex._
 import scala.annotation.tailrec
 
 
-class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, LocalGraphODPair, LocalGraphODPath] {
-  override def shortestPath (graph: G, od: LocalGraphODPair): LocalGraphODPath =
+class LocalGraphVertexOrientedSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, LocalGraphODPairByVertex, LocalGraphODPath] {
+  override def shortestPath (graph: G, od: LocalGraphODPairByVertex): LocalGraphODPath =
     djikstrasAlgorithm(graph, od)
 
-  def djikstrasAlgorithm(graph: G, od: LocalGraphODPair): LocalGraphODPath = {
-    val origin = od.srcVertex
-    val goal = od.dstVertex
+  def djikstrasAlgorithm(graph: G, od: LocalGraphODPairByVertex): LocalGraphODPath = {
+    val origin = od.src
+    val goal = od.dst
     val DistanceLowerBound = 0D
     val NoPathFound = LocalGraphODPath(od.personId, origin, goal, List.empty[EdgeId], List.empty[Double])
     val OriginSearchData = SimpleSSSP_SearchNode(Origin, DistanceLowerBound)
@@ -28,7 +28,7 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
     }
     val startFrontier: collection.mutable.PriorityQueue[Triplet] = collection.mutable.PriorityQueue()(tripletOrdering.reverse)
     graph
-      .neighborTriplets(od.srcVertex)
+      .neighborTriplets(od.src)
       .foreach(t => startFrontier.enqueue(t))
 
     @tailrec
@@ -88,6 +88,6 @@ class LocalGraphSimpleSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: E
 }
 
 
-object LocalGraphSimpleSSSP {
-  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): LocalGraphSimpleSSSP[G, V, E] = new LocalGraphSimpleSSSP[G, V, E]()
+object LocalGraphVertexOrientedSSSP {
+  def apply[G <: LocalGraph[V, E], V <: VertexProperty[_], E <: EdgeProperty](): LocalGraphVertexOrientedSSSP[G, V, E] = new LocalGraphVertexOrientedSSSP[G, V, E]()
 }

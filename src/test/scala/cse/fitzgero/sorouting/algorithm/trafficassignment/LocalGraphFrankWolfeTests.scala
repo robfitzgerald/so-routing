@@ -29,7 +29,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           val rand = new scala.util.Random
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(networkFilePath).get
           val edgesWithRandomFlows = graph.edgeAttrs.map(_.copy(flowUpdate = rand.nextDouble() * 10D)).toSeq
-          val graphWithRandomFlows = graph.replaceEdgeList(edgesWithRandomFlows)
+          val graphWithRandomFlows = graph.replaceEdgeAttributeList(edgesWithRandomFlows)
           val result = LocalGraphFrankWolfe.initializeFlows(graphWithRandomFlows)
           graphWithRandomFlows.edgeAttrs.map(_.assignedFlow).sum should be > 0D
           result.edgeAttrs.map(_.assignedFlow).sum should equal (0D)
@@ -40,9 +40,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on a triangle graph where no od pair has any alternate paths" should {
         "result in an expected assignment of flow" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(networkFilePath).get
-          val odPairs: Seq[LocalGraphODPair] = Seq(
-            LocalGraphODPair("", 1, 3),
-            LocalGraphODPair("", 2, 1)
+          val odPairs: Seq[LocalGraphODPairByVertex] = Seq(
+            LocalGraphODPairByVertex("", 1, 3),
+            LocalGraphODPairByVertex("", 2, 1)
           )
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
@@ -54,9 +54,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on the MATSim equil network with 100 od pairs with the same o/d" should {
         "result in an expected assignment of flow" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(equilNetwork).get
-          val odPairs: Seq[LocalGraphODPair] =
+          val odPairs: Seq[LocalGraphODPairByVertex] =
             (0 until 100)
-            .map(n => LocalGraphODPair("", 1, 15))
+            .map(n => LocalGraphODPairByVertex("", 1, 15))
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
           // correct shortest path:
@@ -73,10 +73,10 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "run on the MATSim equil network with 5000 od pairs in parallel with the same o/d" should {
         "run faster than sequential" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(equilNetwork).get
-          val odPairsSeq: Seq[LocalGraphODPair] =
+          val odPairsSeq: Seq[LocalGraphODPairByVertex] =
             (0 until 5000)
-              .map(n => LocalGraphODPair("", 1, 15))
-          val odPairsPar: ParSeq[LocalGraphODPair] = odPairsSeq.par
+              .map(n => LocalGraphODPairByVertex("", 1, 15))
+          val odPairsPar: ParSeq[LocalGraphODPairByVertex] = odPairsSeq.par
           val startSeq = System.currentTimeMillis
           val resultSeq = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsSeq)
           val seqDur = System.currentTimeMillis - startSeq
@@ -89,9 +89,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       "on the MATSim equil network with 100 od pairs and with snapshot flows" should {
         "find an alternate route than the solution with no snapshot flows" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
-          val odPairs: Seq[LocalGraphODPair] =
+          val odPairs: Seq[LocalGraphODPairByVertex] =
             (0 until 100)
-              .map(n => LocalGraphODPair("", 1, 15))
+              .map(n => LocalGraphODPairByVertex("", 1, 15))
           // has a traffic jam on link [6]
           val result = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
           val inspectResult = result.edgeAttrs.map(e => e.id -> e).toMap
@@ -109,9 +109,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
     "calculateCurrentFlows" when {
       "3 node network" when {
         val previousGraph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(networkFilePath).get
-        val odPairs: Seq[LocalGraphODPair] = Seq(
-          LocalGraphODPair("", 1, 3),
-          LocalGraphODPair("", 2, 1)
+        val odPairs: Seq[LocalGraphODPairByVertex] = Seq(
+          LocalGraphODPairByVertex("", 1, 3),
+          LocalGraphODPairByVertex("", 2, 1)
         )
         val oracleGraph = LocalGraphFrankWolfe.generateOracleGraph(previousGraph, odPairs)
         "passed a simple graph and a simple oracle and 100% phi value" should {
@@ -144,9 +144,9 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
       }
       "equil network with snapshot" when {
         val previousGraph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
-        val odPairs: Vector[LocalGraphODPair] = Vector(
-          LocalGraphODPair("", 1, 15),
-          LocalGraphODPair("", 5, 2)
+        val odPairs: Vector[LocalGraphODPairByVertex] = Vector(
+          LocalGraphODPairByVertex("", 1, 15),
+          LocalGraphODPairByVertex("", 5, 2)
         )
         val oracleGraph = LocalGraphFrankWolfe.generateOracleGraph(previousGraph, odPairs)
         "passed the equil network with snapshot and an oracle and a 100% phi value" should {
@@ -165,7 +165,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow" in {
           val rand = new scala.util.Random
 //          def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair("", 1, 15)).par
+          val odPairs: GenSeq[LocalGraphODPairByVertex] = (1 to 500).map(n => LocalGraphODPairByVertex("", 1, 15)).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -182,7 +182,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow" in {
           val rand = new scala.util.Random
           def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair("", randomNodeId(n), randomNodeId(n))).par
+          val odPairs: GenSeq[LocalGraphODPairByVertex] = (1 to 500).map(n => LocalGraphODPairByVertex("", randomNodeId(n), randomNodeId(n))).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -201,7 +201,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
         "estimate a minimal cost network flow given a relative gap termination criteria" in {
           val rand = new scala.util.Random
           def randomNodeId(n: Int): Long = math.min(math.max(1L, (rand.nextDouble * 15.0).toLong), 15L)
-          val odPairs: GenSeq[LocalGraphODPair] = (1 to 500).map(n => LocalGraphODPair("", randomNodeId(n), randomNodeId(n))).par
+          val odPairs: GenSeq[LocalGraphODPairByVertex] = (1 to 500).map(n => LocalGraphODPairByVertex("", randomNodeId(n), randomNodeId(n))).par
           println(odPairs.distinct)
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
@@ -224,7 +224,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           PopulationMultipleTripsFactory.setSeed(1)
           val population: PopulationMultipleTrips = PopulationMultipleTripsFactory.generateSimpleRandomPopulation(ryeNetworkXML, 10)
           val odPairsMSSP = population.exportTimeGroupAsODPairs(LocalTime.parse("00:00:00"), LocalTime.parse("23:59:59"))
-          val odPairs = odPairsMSSP.map(od => {LocalGraphODPair(od.personId, od.srcVertex, od.dstVertex)}).par
+          val odPairs = odPairsMSSP.map(od => {LocalGraphODPairByVertex(od.personId, od.src, od.dst)}).par
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(ryeNetworkFilePath).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
@@ -249,14 +249,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 11))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 11))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should be < 0.5
@@ -270,14 +270,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 18))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 18))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should be > 0.5
@@ -291,14 +291,14 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 10))
               })
           val thatGraph =
             graph
               .edges
               .map(id => (id, graph.edgeAttrOf(id).get))
               .foldLeft(graph)((newGraph, edgeData) => {
-                newGraph.updateEdge(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 5000))
+                newGraph.updateEdgeAttribute(edgeData._1, edgeData._2.copy(flowUpdate = edgeData._2.assignedFlow + 5000))
               })
           val result = LocalGraphFrankWolfe.relativeGap(thisGraph, thatGraph)
           result should equal (1.0D)

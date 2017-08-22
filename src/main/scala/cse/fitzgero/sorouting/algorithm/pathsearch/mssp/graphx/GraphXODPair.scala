@@ -4,6 +4,6 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPair
 import org.apache.spark.graphx.VertexId
 
 abstract class GraphXODPair extends ODPair[VertexId] with Serializable {
-  override def srcVertex: VertexId
-  override def dstVertex: VertexId
+  override def src: VertexId
+  override def dst: VertexId
 }
