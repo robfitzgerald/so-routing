@@ -10,10 +10,10 @@ class SORoutingFilesHelperTests extends FileWriteSideEffectTestTemplate("SORouti
   val testRoot: String = testRootPath
   "SORoutingFilesHelper" when {
     trait Config {
-      def goodConfig: SORoutingApplicationConfig = makeConfig("config.xml")
-      def badConfig: SORoutingApplicationConfig = makeConfig("fileDoesNotExist")
+      def goodConfig: SORoutingApplicationConfig1 = makeConfig("config.xml")
+      def badConfig: SORoutingApplicationConfig1 = makeConfig("fileDoesNotExist")
       private def makeConfig(configFile: String) =
-        SORoutingApplicationConfig(
+        SORoutingApplicationConfig1(
           s"src/test/resources/SORoutingFilesHelperTests/$configFile",
           s"src/test/resources/SORoutingFilesHelperTests/network.xml",
           testRootPath,

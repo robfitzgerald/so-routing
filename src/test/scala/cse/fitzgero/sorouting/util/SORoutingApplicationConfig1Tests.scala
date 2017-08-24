@@ -4,7 +4,7 @@ import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 
-class SORoutingApplicationConfigTests extends SORoutingUnitTestTemplate {
+class SORoutingApplicationConfig1Tests extends SORoutingUnitTestTemplate {
   "SORoutingParseArgs" when {
     "apply" when {
       "passed all the flags" should {
@@ -21,9 +21,9 @@ class SORoutingApplicationConfigTests extends SORoutingUnitTestTemplate {
               "-start", "00:00:00",
               "-end", "23:59:00"
             )
-          val result: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
+          val result: SORoutingApplicationConfig1 = SORoutingApplicationConfigParseArgs(args)
           result should equal (
-            SORoutingApplicationConfig
+            SORoutingApplicationConfig1
             (
               "file.xml",
               "network.xml",

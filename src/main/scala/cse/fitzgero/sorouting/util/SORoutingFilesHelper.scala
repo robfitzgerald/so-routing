@@ -15,7 +15,7 @@ import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
   * Produces a directory layout (See bottom of SORoutingFileHelper.scala) and provides utilities for fs interaction within the experiment
   * @param conf configuration of this experiment
   */
-class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
+class SORoutingFilesHelper(val conf: SORoutingApplicationConfig1) {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -206,7 +206,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 }
 
 object SORoutingFilesHelper {
-  def apply(config: SORoutingApplicationConfig): SORoutingFilesHelper =
+  def apply(config: SORoutingApplicationConfig1): SORoutingFilesHelper =
     new SORoutingFilesHelper(config)
 }
 

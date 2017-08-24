@@ -7,7 +7,7 @@ import cse.fitzgero.sorouting.app.SOAppConfig
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
-case class SORoutingApplicationConfig (
+case class SORoutingApplicationConfig1 (
   matsimConfigFile: String,
   matsimNetworkFile: String,
   workingDirectory: String,
@@ -67,9 +67,9 @@ object SORoutingApplicationConfigParseArgs {
     }
   }
 
-  def apply(args: Array[String]): SORoutingApplicationConfig = {
+  def apply(args: Array[String]): SORoutingApplicationConfig1 = {
     val checkFor = test(args)_
-    SORoutingApplicationConfig(
+    SORoutingApplicationConfig1(
       checkFor(confFile),
       checkFor(networkFile),
       checkFor(workDir),

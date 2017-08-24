@@ -15,7 +15,7 @@ import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerCo
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, LocalGraphMATSimFactory, VertexMATSim}
-import cse.fitzgero.sorouting.util.{SORoutingApplicationConfig, SORoutingFilesHelper}
+import cse.fitzgero.sorouting.util.{SORoutingApplicationConfig1, SORoutingFilesHelper}
 
 import scala.xml.XML
 
@@ -30,7 +30,7 @@ object LocalGraphRoutingModule {
 
   val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
 
-  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): PopulationOneTrip = {
+  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig1, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): PopulationOneTrip = {
 
     val (populationSO, populationPartial) = population.subsetPartition(conf.routePercentage)
 

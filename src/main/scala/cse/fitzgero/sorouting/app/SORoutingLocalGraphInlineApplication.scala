@@ -21,7 +21,7 @@ object SORoutingLocalGraphInlineApplication extends App {
 //  Logger.getRootLogger.setLevel(Level.WARN)
 //  val log = Logger.getLogger(this.getClass)
 
-  val conf: SORoutingApplicationConfig = SORoutingApplicationConfigParseArgs(args)
+  val conf: SORoutingApplicationConfig1 = SORoutingApplicationConfigParseArgs(args)
   val SomeParallelProcessesSetting = 2
 
   println(conf)
