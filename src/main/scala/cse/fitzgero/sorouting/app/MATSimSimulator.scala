@@ -6,6 +6,7 @@ import org.matsim.core.controler.{ControlerListenerManagerImpl, Injector}
 import org.matsim.core.network.NetworkImpl
 import org.matsim.core.mobsim.qsim.MobsimListenerManager
 import org.matsim.core.events.EventsManagerImpl
+import org.matsim.core.scoring.functions.CharyparNagelActivityScoring
 import org.matsim.core.utils.io.MatsimXmlParser
 import org.matsim.core.utils.misc.Counter
 import org.matsim.run.Controler
@@ -19,6 +20,7 @@ trait MATSimSimulator {
 
     // this deactivates INFO logging globally :-(
     Logger.getRootLogger.setLevel(Level.WARN)
+    Logger.getLogger(classOf[CharyparNagelActivityScoring]).setLevel(Level.ERROR)
 
     // TODO: figure out how to shut off all MATSim logging without shutting off log4j
 

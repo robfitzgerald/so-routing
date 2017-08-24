@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.matsimrunner.snapshot
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
+import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata.{EmptyLink, NonEmptyLink}
 import org.matsim.api.core.v01.Id
 
 import scala.xml.Elem

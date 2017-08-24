@@ -1,9 +1,9 @@
-package cse.fitzgero.sorouting.matsimrunner.snapshot
+package cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import org.matsim.api.core.v01.Id
 
-class LinkDataTests extends SORoutingUnitTestTemplate {
+class SimpleLinkDataTests extends SORoutingUnitTestTemplate {
   "EmptyLink" when {
     "add" should {
       "result in a NonEmptyLink" in {
