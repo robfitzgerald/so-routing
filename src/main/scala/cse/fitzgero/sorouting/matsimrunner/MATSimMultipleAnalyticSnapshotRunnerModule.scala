@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import java.time.LocalTime
 
+import cse.fitzgero.sorouting.app.MATSimSimulator
+
 import scala.collection.JavaConverters._
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
@@ -10,7 +12,7 @@ import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.matsimrunner.network._
-import cse.fitzgero.sorouting.roadnetwork.costfunction.CostFunction
+import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFunctionFactory}
 
 // should collect more interesting information about events.
 // for each snapshot,
@@ -24,7 +26,7 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.CostFunction
 // aggregated to an overall population analysis
 
 
-class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunction: CostFunction) {
+class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
   println(matsimConfig.toString)
@@ -39,8 +41,7 @@ class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, netw
 
 
   def run(): String = {
-    val networkLinks: Iterable[Id[Link]] = scenario.getNetwork.getLinks.asScala.keys
-    var currentNetworkState: NetworkAnalyticStateCollector = NetworkAnalyticStateCollector(networkLinks, costFunction)
+    var currentNetworkState: NetworkAnalyticStateCollector = NetworkAnalyticStateCollector(networkData, costFunctionFactory, matsimConfig.window)
     var currentIteration: Int = 1
     var timeTracker: TimeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
 
@@ -61,10 +62,10 @@ class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, netw
                   val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
                   NetworkAnalyticStateCollector.toXMLFile(writerData, currentNetworkState)
                   timeTracker = timeTracker.advance
-                  println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker advanced due to event inaction. group is now ${timeTracker.currentTimeString}")
+//                  println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker advanced due to event inaction. group is now ${timeTracker.currentTimeString}")
                 }
 
-                println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker group is now ${timeTracker.currentTimeString}")
+//                println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker group is now ${timeTracker.currentTimeString}")
                 currentNetworkState = currentNetworkState.update(e)
               }
             }
@@ -76,7 +77,7 @@ class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, netw
 
             // start next iteration
             timeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
-            currentNetworkState = NetworkAnalyticStateCollector(networkLinks, costFunction)
+            currentNetworkState = NetworkAnalyticStateCollector(networkData, costFunctionFactory, matsimConfig.window)
             currentIteration = i
         }))
       }
@@ -85,6 +86,7 @@ class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, netw
 
 
     //start the simulation
+    suppressMATSimInfoLogging()
     controler.run()
 
     // handle writing final snapshot
@@ -98,6 +100,6 @@ class MATSimAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, netw
   run()
 }
 
-object MATSimMultipleSnapshotRunnerModule {
-  def apply(conf: MATSimRunnerConfig, networkData: Network, costFunction: CostFunction): MATSimAnalyticSnapshotRunnerModule = new MATSimAnalyticSnapshotRunnerModule(conf, networkData, costFunction)
+object MATSimMultipleAnalyticSnapshotRunnerModule {
+  def apply(conf: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory): MATSimMultipleAnalyticSnapshotRunnerModule = new MATSimMultipleAnalyticSnapshotRunnerModule(conf, networkData, costFunctionFactory)
 }

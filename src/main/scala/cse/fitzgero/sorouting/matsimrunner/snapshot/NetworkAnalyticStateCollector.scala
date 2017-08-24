@@ -2,8 +2,9 @@ package cse.fitzgero.sorouting.matsimrunner.snapshot
 
 import java.io.{File, PrintWriter}
 
+import cse.fitzgero.sorouting.matsimrunner.network.Network
 import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata._
-import cse.fitzgero.sorouting.roadnetwork.costfunction.CostFunction
+import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network.Link
 
@@ -16,18 +17,17 @@ import scala.xml.{Elem, PrettyPrinter}
   * @param networkState a map of link ids which each point to a set of vehicle ids. private constructor parameter. use the object NetworkAnalyticStateCollector() as a factory for new instantiations
   */
 class NetworkAnalyticStateCollector private
-( val cost: CostFunction,
-  val networkState: Map[Id[Link], AnalyticLink] = Map.empty[Id[Link], AnalyticLink],
+( val networkState: Map[String, AnalyticLink] = Map.empty[String, AnalyticLink],
   val name: String = "untitled"
   ) {
 
   def update(e: SnapshotEventData): NetworkAnalyticStateCollector = e match {
     case LinkEnterData(t, link, veh) =>
-      val thisLink: AnalyticLink = networkState.getOrElse(link, AnalyticLink(cost))
-      new NetworkAnalyticStateCollector(cost, networkState.updated(link, thisLink.add(AnalyticLinkDataUpdate(veh, t))), name)
+      val thisLink: AnalyticLink = networkState.getOrElse(link.toString, AnalyticLink(TestCostFunction()))
+      new NetworkAnalyticStateCollector(networkState.updated(link.toString, thisLink.add(AnalyticLinkDataUpdate(veh.toString, t))), name)
     case LinkLeaveData(t, link, veh) =>
-      val thisLink: AnalyticLink = networkState.getOrElse(link, AnalyticLink(cost))
-      new NetworkAnalyticStateCollector(cost, networkState.updated(link, thisLink.remove(AnalyticLinkDataUpdate(veh, t))), name)
+      val thisLink: AnalyticLink = networkState.getOrElse(link.toString, AnalyticLink(TestCostFunction()))
+      new NetworkAnalyticStateCollector(networkState.updated(link.toString, thisLink.remove(AnalyticLinkDataUpdate(veh.toString, t))), name)
     case other => throw new IllegalArgumentException(s"passed a ${other.getClass}, but update() only handles LinkEnterData and LinkLeaveData")
   }
 
@@ -41,7 +41,7 @@ class NetworkAnalyticStateCollector private
 
   def toXml: Elem =
   <network name={name}>
-    <global avgtraveltime={networkAverageTravelTime}></global>
+    <global avgtraveltime={networkAverageTravelTime.toString}></global>
     <links>
       {networkState.map(link => {
         <link id={link._1.toString}>
@@ -52,15 +52,30 @@ class NetworkAnalyticStateCollector private
     </links>
   </network>
 
-  def getLink(link: Id[Link]): AnalyticLink = networkState.getOrElse(link, AnalyticLink(cost))
+  def getLink(link: Id[Link]): AnalyticLink = networkState.getOrElse(link.toString, AnalyticLink(TestCostFunction()))
 }
 
 object NetworkAnalyticStateCollector {
-  def apply(links: Iterable[Id[Link]], cost: CostFunction): NetworkAnalyticStateCollector = {
+//  def apply(links: Iterable[Id[Link]]): NetworkAnalyticStateCollector = {
+//    new NetworkAnalyticStateCollector(
+//      links.aggregate(Map.empty[String, AnalyticLink])(
+//        (acc, linkId) => acc.updated(linkId.toString, AnalyticLink(TestCostFunction())),
+//        (a, b) => a ++ b
+//      )
+//    )
+//  }
+
+  def apply(network: Network, CostFunctionFactory: CostFunctionFactory, algorithmFlowRate: String): NetworkAnalyticStateCollector = {
     new NetworkAnalyticStateCollector(
-      cost,
-      links.aggregate(Map.empty[Id[Link], AnalyticLink])(
-        (acc, linkId) => acc.updated(linkId, AnalyticLink(cost)),
+      network.links.aggregate(Map.empty[String, AnalyticLink])(
+        (acc, link) => {
+          val costFunction = CostFunctionFactory(CostFunctionAttributes(
+            capacity = link._2.capacity,
+            freespeed = link._2.freespeed,
+            algorithmFlowRate = algorithmFlowRate.toDouble
+          ))
+          acc.updated(link._1, AnalyticLink(costFunction))
+        },
         (a, b) => a ++ b
       )
     )

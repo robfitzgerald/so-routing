@@ -11,7 +11,7 @@ class AnalyticLinkTests extends SORoutingUnitTestTemplate {
     "add" should {
       "update the link" in {
         val link = AnalyticLink(TestCostFunction())
-        val veh = Id.createVehicleId(1)
+        val veh = Id.createVehicleId(1).toString
         val t = 100
         val data = AnalyticLinkDataUpdate(veh, t)
 
@@ -31,7 +31,7 @@ class AnalyticLinkTests extends SORoutingUnitTestTemplate {
     "remove" should {
       "update the link" in {
         val link = AnalyticLink(TestCostFunction())
-        val veh = Id.createVehicleId(1)
+        val veh = Id.createVehicleId(1).toString
         val t = 100
         val data = AnalyticLinkDataUpdate(veh, t)
         val dataUpdate = AnalyticLinkDataUpdate(veh, t + 150)
@@ -66,7 +66,7 @@ class AnalyticLinkTests extends SORoutingUnitTestTemplate {
         val result = (1 to count).par.flatMap(n => {
           val s = randomStartTime()
           val e = randomEndTime(s)
-          val veh = Id.createVehicleId(n)
+          val veh = Id.createVehicleId(n).toString
           List(("add", AnalyticLinkDataUpdate(veh, s)), ("remove", AnalyticLinkDataUpdate(veh, e)))
         }).toIndexedSeq.sortBy(_._2.t).foldLeft(link)((linkUpdate, event) => event._1 match {
           case "add" => linkUpdate.add(event._2)

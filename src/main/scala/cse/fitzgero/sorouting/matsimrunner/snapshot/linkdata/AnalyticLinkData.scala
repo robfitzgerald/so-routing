@@ -1,19 +1,19 @@
 package cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction.CostFunction
-import org.matsim.api.core.v01.Id
-import org.matsim.vehicles.Vehicle
+//import org.matsim.api.core.v01.Id
+//import org.matsim.vehicles.Vehicle
 
-case class AnalyticLinkDataUpdate(veh: Id[Vehicle], t: Int)
+case class AnalyticLinkDataUpdate(veh: String, t: Int)
 
 abstract class AnalyticLinkData extends LinkData[AnalyticLinkDataUpdate] {
-  def vehicles: Map[Id[Vehicle], Int]
+  def vehicles: Map[String, Int]
   def congestion: List[(Int, Int, Double)]
   def travelTime: List[Int]
   def cost: CostFunction
   val hasAnalytics: Boolean = travelTime.nonEmpty
 
-  def updateCongestion(vehiclesUpdate: Map[Id[Vehicle], Int], data: AnalyticLinkDataUpdate): List[(Int, Int, Double)] =
+  def updateCongestion(vehiclesUpdate: Map[String, Int], data: AnalyticLinkDataUpdate): List[(Int, Int, Double)] =
     congestion :+ (data.t, vehiclesUpdate.size, cost.costFlow(vehiclesUpdate.size))
 
   def updateTravelTime(data: AnalyticLinkDataUpdate): List[Int] =
@@ -38,7 +38,7 @@ trait AnalyticMethods extends AnalyticLinkData {
   def travelTimeXml: xml.Elem = <travel-time count={count.toString} min={min.toString} mean={mean.toString} max={max.toString} stddev={stdDev.toString}></travel-time>
 }
 
-case class AnalyticLink(cost: CostFunction, vehicles: Map[Id[Vehicle], Int] = Map(), congestion: List[(Int, Int, Double)] = List(), travelTime: List[Int] = List()) extends AnalyticLinkData with AnalyticMethods {
+case class AnalyticLink(cost: CostFunction, vehicles: Map[String, Int] = Map(), congestion: List[(Int, Int, Double)] = List(), travelTime: List[Int] = List()) extends AnalyticLinkData with AnalyticMethods {
 
   override def add(data: AnalyticLinkDataUpdate): AnalyticLink = {
       val vehicleUpdate = vehicles.updated(data.veh, data.t)
@@ -54,9 +54,4 @@ case class AnalyticLink(cost: CostFunction, vehicles: Map[Id[Vehicle], Int] = Ma
   }
 
   def flow: Int = vehicles.size
-
-//  def toXml: xml.Elem =
-//    <report>
-//      {travelTimeXml}
-//    </report>
 }

@@ -1,21 +1,20 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import java.time.LocalTime
 
-import cse.fitzgero.sorouting.app.MATSimSimulator
-import cse.fitzgero.sorouting.matsimrunner.snapshot._
-import org.apache.log4j.{Level, Logger}
+import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
+
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
 
-import scala.collection.JavaConverters._
-import scala.util.{Failure, Success}
+import cse.fitzgero.sorouting.app.MATSimSimulator
+import cse.fitzgero.sorouting.matsimrunner.snapshot._
+
 
 class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
-  // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
 //  println(matsimConfig.toString)
 
@@ -44,21 +43,14 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
             if (timeTracker.belongsToThisTimeGroup(e))
               currentNetworkState = currentNetworkState.update(e)
           case NewIteration(i) =>
-//
-//            // start next iteration! - throw away any info
-//            timeTracker = TimeTracker(matsimConfig.window, matsimConfig.startTime, matsimConfig.endTime)
-//            currentNetworkState = NetworkStateCollector(networkLinks)
             currentIteration = i
         }))
       }
     })
 
-
     //start the simulation
     suppressMATSimInfoLogging()
     controler.run()
-
-//    currentNetworkState.networkState.foreach(println)
 
     // write snapshot and return filename
     NetworkStateCollector.toXMLFile(snapshotOutputDirectory, currentNetworkState) match {
