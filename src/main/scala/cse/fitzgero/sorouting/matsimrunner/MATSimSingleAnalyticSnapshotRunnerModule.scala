@@ -30,7 +30,7 @@ import scala.util.{Failure, Success}
 
 class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator {
 
-//  println(matsimConfig.toString)
+  //  println(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
@@ -53,7 +53,7 @@ class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
           case LinkEventData(e) =>
             if (timeTracker.belongsToThisTimeGroup(e))
-              currentNetworkState = currentNetworkState.update(e)
+            currentNetworkState = currentNetworkState.update(e)
           case NewIteration(i) =>
             currentIteration = i
         }))
@@ -61,7 +61,6 @@ class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig
     })
 
     //start the simulation
-    suppressMATSimInfoLogging()
     controler.run()
 
     // write snapshot and return filename

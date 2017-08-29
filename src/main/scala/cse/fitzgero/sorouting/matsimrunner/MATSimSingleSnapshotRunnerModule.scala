@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.matsimrunner.snapshot._
 
 class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
 
-//  println(matsimConfig.toString)
+  //  println(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
@@ -41,7 +41,7 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
         this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
           case LinkEventData(e) =>
             if (timeTracker.belongsToThisTimeGroup(e))
-              currentNetworkState = currentNetworkState.update(e)
+            currentNetworkState = currentNetworkState.update(e)
           case NewIteration(i) =>
             currentIteration = i
         }))
@@ -49,7 +49,6 @@ class MATSimSingleSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig) extend
     })
 
     //start the simulation
-    suppressMATSimInfoLogging()
     controler.run()
 
     // write snapshot and return filename

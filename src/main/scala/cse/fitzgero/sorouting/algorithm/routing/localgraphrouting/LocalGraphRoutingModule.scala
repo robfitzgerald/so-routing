@@ -19,6 +19,7 @@ import cse.fitzgero.sorouting.util.{SORoutingApplicationConfig1, SORoutingFilesH
 
 import scala.xml.XML
 
+case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, vehiclesRouted: List[Int] = List.empty[Int], runTime: List[Long] = List.empty[Long])
 
 object LocalGraphRoutingModule {
 
@@ -30,7 +31,7 @@ object LocalGraphRoutingModule {
 
   val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
 
-  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig1, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): PopulationOneTrip = {
+  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig1, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
 
     val (populationSO, populationPartial) = population.subsetPartition(conf.routePercentage)
 
@@ -59,59 +60,68 @@ object LocalGraphRoutingModule {
 
 
     // run SO algorithm for each time window, updating the population data with their routes while stepping through time windows
-    timeGroups.foldLeft(populationUE)((populationWithUpdates, timeGroupSecs) => {
+    timeGroups.foldLeft(LocalGraphRoutingModuleResult(populationUE))((acc, timeGroupSecs) => {
       val (timeGroupStart, timeGroupEnd) =
         (LocalTime.ofSecondOfDay(timeGroupSecs.startRange),
           LocalTime.ofSecondOfDay(timeGroupSecs.endRange))
 
-      val snapshotPopulation: PopulationOneTrip = populationWithUpdates.exportTimeGroup(LocalTime.MIN, timeGroupEnd)
-
-      val snapshotDirectory: String = fileHelper.scaffoldSnapshot(snapshotPopulation, timeGroupStart, timeGroupEnd)
-
-      // ----------------------------------------------------------------------------------------
-      // 1. run MATSim snapshot for the populations associated with all previous time groups
-      val matsimSnapshotRun = MATSimSingleSnapshotRunnerModule(MATSimRunnerConfig(
-        s"$snapshotDirectory/config-snapshot.xml",
-        s"$snapshotDirectory/matsim-output",
-        conf.algorithmTimeWindow,
-        conf.startTime,
-        timeGroupEnd.format(HHmmssFormat),
-        ArgsNotMissingValues
-      ))
-
-      val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
-      val snapshotFilePath: String = matsimSnapshotRun.filePath
-
-      // ----------------------------------------------------------------------------------------
-      // 2. run routing algorithm for the SO routed population for current time group, using snapshot
-
-      val graph: LocalGraphMATSim =
-        LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.algorithmTimeWindow.toDouble)
-          .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
-          case Success(g) => g
-          case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
-        }
-
+      val snapshotPopulation: PopulationOneTrip = acc.population.exportTimeGroup(LocalTime.MIN, timeGroupEnd)
       val groupToRoute: PopulationOneTrip = populationSO.exportTimeGroup(timeGroupStart, timeGroupEnd)
 
-      println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
+      if (groupToRoute.persons.isEmpty)
+        acc
+      else {
+        val snapshotDirectory: String = fileHelper.scaffoldSnapshot(snapshotPopulation, timeGroupStart, timeGroupEnd)
 
-      val routingConfig =
-        if (SomeParallelProcessesSetting == 1)
-          LocalRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
-        else
-          ParallelRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
+        // ----------------------------------------------------------------------------------------
+        // 1. run MATSim snapshot for the populations associated with all previous time groups
+        val matsimSnapshotRun = MATSimSingleSnapshotRunnerModule(MATSimRunnerConfig(
+          s"$snapshotDirectory/config-snapshot.xml",
+          s"$snapshotDirectory/matsim-output",
+          conf.algorithmTimeWindow,
+          conf.startTime,
+          timeGroupEnd.format(HHmmssFormat),
+          ArgsNotMissingValues
+        ))
+
+        val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
+        val snapshotFilePath: String = matsimSnapshotRun.filePath
+
+        // ----------------------------------------------------------------------------------------
+        // 2. run routing algorithm for the SO routed population for current time group, using snapshot
+
+        val graph: LocalGraphMATSim =
+          LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.algorithmTimeWindow.toDouble)
+            .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
+            case Success(g) => g.par
+            case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
+          }
+
+        fileHelper.removeSnapshotFiles(timeGroupStart)
+
+//        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
+
+        val routingConfig =
+          if (SomeParallelProcessesSetting == 1)
+            LocalRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
+          else
+            ParallelRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
 
 
-      val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRoute, routingConfig)
+        val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRoute, routingConfig)
 
-      val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
-      routingResult match {
-        case LocalGraphRoutingResult(routes, runTime) =>
-          val withUpdatedRoutes = routes.foldLeft(groupToRoute)(_.updatePerson(_))
-          populationWithUpdates.reintegrateSubset(withUpdatedRoutes)
-        case _ =>
-          populationWithUpdates
+        val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
+        routingResult match {
+          case LocalGraphRoutingResult(routes, runTime) =>
+            val withUpdatedRoutes = routes.foldLeft(groupToRoute)(_.updatePerson(_))
+            acc.copy(
+              population = acc.population.reintegrateSubset(withUpdatedRoutes),
+              vehiclesRouted = acc.vehiclesRouted :+ routes.size,
+              runTime = acc.runTime :+ runTime
+            )
+          case _ =>
+            acc
+        }
       }
     })
   }

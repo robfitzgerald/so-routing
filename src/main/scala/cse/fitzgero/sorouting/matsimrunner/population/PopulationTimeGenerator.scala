@@ -29,7 +29,7 @@ class PopulationRandomTimeGenerator2 (acts: Seq[ActivityConfig2]) extends Popula
   def next(): GeneratedTimeValues =
     actsWithDeviations.map(activity => {
       (activity._1, activity._2.nextTime())
-    }).toMap
+    }).sortBy(_._2).toMap
 }
 
 object PopulationRandomTimeGenerator2 {

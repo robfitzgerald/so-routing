@@ -33,4 +33,6 @@ trait MATSimSimulator {
 //    //    Logger.getLogger(classOf[MobsimListenerManager]).setLevel(Level.WARN)
 //    Logger.getLogger(classOf[MatsimXmlParser]).setLevel(Level.WARN)
   }
+
+  suppressMATSimInfoLogging()
 }
