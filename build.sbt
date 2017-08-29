@@ -21,3 +21,7 @@ libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.2.0"
 resolvers += Resolver.bintrayRepo("matsim", "matsim")
 resolvers += "Osgeo Repo" at "http://download.osgeo.org/webdav/geotools/"
 libraryDependencies += "org.matsim" % "matsim" % "0.9.0"
+
+
+// ~~~ Scallop
+libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"

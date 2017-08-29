@@ -3,22 +3,31 @@ package cse.fitzgero.sorouting.util.standalone
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
 
+import scala.util.{Failure, Success, Try}
+
 import cse.fitzgero.sorouting.app.PrintToResultFile
 
-import scala.util.{Failure, Success, Try}
 
 object TaskScriptGenerator extends App {
 
+  val (conf, experiments) = TaskScriptGeneratorParseArgs.parse(args)
+
+//  val (name, timeWindow, soRouted, popFactor) = {
+//    if (args.nonEmpty) {
+//
+//    } else println("usage")
+//  }
+
   /////// EXPERIMENT NAME
-  val name = if (args.nonEmpty) args(0) else "test"
+//  val name = if (args.nonEmpty) args(0) else "test"
 
   /////// ALGORITHM TIME WINDOW
   // how many seconds long is a batch?
-  val timeWindow = 4 to 10 by 3
+//  val timeWindow = 4 to 10 by 3
 
   /////// ROUTED POPULATION PERCENTAGE
   // something small to the entire population
-  val soRouted = 5 to 100 by 47
+//  val soRouted = 5 to 100 by 47
 
   /////// POPULATION SIZE
   // Rural Density: less than 1000/sq mi | 625 /km^2
@@ -41,15 +50,15 @@ object TaskScriptGenerator extends App {
   // approx. 17 times Rye density
 
   // range the population from the current Rye population to the density of NYC
-  val RyePopulation = 157
-  val NYCPopulationDensityInRye = RyePopulation * 17
-  val popSize = Iterator.iterate(RyePopulation)(_ * 4).takeWhile(_ < NYCPopulationDensityInRye).toList
-
-  val experiments = for {
-    win <- timeWindow
-    route <- soRouted
-    pop <- popSize
-  } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf data/rye/config.xml -network data/rye/network.xml -wdir result/$name -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00""""
+//  val RyePopulation = 157
+//  val NYCPopulationDensityInRye = RyePopulation * 17
+//  val popSize = Iterator.iterate(RyePopulation)(_ * popFactor).takeWhile(_ < NYCPopulationDensityInRye).toList
+//
+//  val experiments = for {
+//    win <- timeWindow
+//    route <- soRouted
+//    pop <- popSize
+//  } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf data/rye/config.xml -network data/rye/network.xml -wdir result/$name -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00""""
 
   //  val experiments = for {
 //    win <- timeWindow
@@ -57,9 +66,9 @@ object TaskScriptGenerator extends App {
 //    pop <- popSize
 //  } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf data/rye/config.xml -network data/rye/network.xml -wdir result/rye-${pop}pp-${win}sec-${route}perc -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00""""
 
-  val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/$name")).toString
+  val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/${conf.name()}")).toString
   println(s"experiment directory created at $createExperimentDirectory")
-  val header = s"""echo "${PrintToResultFile.resultFileHeader}" > result/$name/result.csv"""
+  val header = s"""echo "${PrintToResultFile.resultFileHeader}" > result/${conf.name()}/result.csv"""
 
   val experimentsWithHeader = (header +: experiments).mkString("\n")
 
