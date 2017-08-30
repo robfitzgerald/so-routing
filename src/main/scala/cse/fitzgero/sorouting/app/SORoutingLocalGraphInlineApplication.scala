@@ -2,17 +2,15 @@ package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.LocalGraphMATSimSSSP
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting.{LocalGraphRoutingModule, LocalGraphRoutingModuleResult}
 import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
+import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
-import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
 import cse.fitzgero.sorouting.util._
 import cse.fitzgero.sorouting.util.convenience._
 
-import scala.util.{Failure, Success}
 
 
 
@@ -80,36 +78,10 @@ object SORoutingLocalGraphInlineApplication extends App {
 //  val populationFull = PopulationOneTrip(commuterPopulation.persons ++ otherPopulation.persons)
 
 
-  val uePopSize: Int =
-  {
-    val (populationSO, populationPartial) = populationFull.subsetPartition(conf.routePercentage)
-
-    val populationFullUE = {
-      val sssp = LocalGraphMATSimSSSP()
-      // assign shortest path search to all UE drivers
-      val graphWithNoFlows: LocalGraphMATSim =
-        LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.algorithmTimeWindow.toDouble)
-          .fromFile(fileHelper.thisNetworkFilePath) match {
-          case Success(g) => g.par
-          case Failure(e) => throw new Error(s"failed to load network file ${fileHelper.thisNetworkFilePath}")
-        }
-      val populationDijkstrasRoutes =
-        if (SomeParallelProcessesSetting == 1)  // TODO again, parallel config here.
-          populationPartial.exportAsODPairsByEdge.map(sssp.shortestPath(graphWithNoFlows, _))
-        else
-          populationPartial.exportAsODPairsByEdge.par.map(sssp.shortestPath(graphWithNoFlows, _))
-
-      populationDijkstrasRoutes.foldLeft(populationPartial)(_.updatePerson(_))
-    }
-
-    fileHelper.savePopulation(populationFullUE, FullUEExp, FullUEPopulation)
-    populationFullUE.persons.size // number of UE routes (one per activity)
-  }
-
-
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
+  val overallNumberOfTrips: Int = GenerateSelfishPopulationFile(populationFull, conf, fileHelper)
   MATSimSingleAnalyticSnapshotRunnerModule(
     MATSimRunnerConfig(
       fileHelper.finalConfigFilePath(FullUEExp),
@@ -123,16 +95,11 @@ object SORoutingLocalGraphInlineApplication extends App {
     BPRCostFunction
   )
 
-
-
   //----------------------------------------------------------------------------------------------
   //  3. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
-
   val routingResult: LocalGraphRoutingModuleResult = LocalGraphRoutingModule.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
   fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
-  val soPopSize = routingResult.vehiclesRouted.size
-
 
   //----------------------------------------------------------------------------------------------
   //  4. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
@@ -151,18 +118,13 @@ object SORoutingLocalGraphInlineApplication extends App {
   )
 
   //----------------------------------------------------------------------------------------------
-  //  5. Analyze Results (what kinds of analysis?)
+  //  5. Analyze Results
   //----------------------------------------------------------------------------------------------
-  // TODO: determine how to measure results
-
-  // 1. compile travel times
-  // 2. add data on routing times
-  // 3. save, and print to screen
-
   fileHelper.appendToReportFile(PrintToResultFile(
     conf.populationSize,
-    uePopSize,
-    soPopSize,
+    overallNumberOfTrips,
+    routingResult.routeCountUE,
+    routingResult.routeCountSO,
     (conf.routePercentage * 100).toInt,
     conf.algorithmTimeWindow.toInt,
     routingResult.runTime,

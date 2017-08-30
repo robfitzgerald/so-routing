@@ -5,16 +5,18 @@ import java.time.LocalTime
 import cse.fitzgero.sorouting.app.MATSimSimulator
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
+
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
+
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.matsimrunner.network._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFunctionFactory}
 
-import scala.util.{Failure, Success}
 
 // should collect more interesting information about events.
 // for each snapshot,
@@ -44,7 +46,7 @@ class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig
   def run(): String = {
     var currentNetworkState: NetworkAnalyticStateCollector = NetworkAnalyticStateCollector(networkData, costFunctionFactory, matsimConfig.window)
     var currentIteration: Int = 1
-    var timeTracker: TimeTracker = TimeTracker(matsimConfig.startTime, matsimConfig.endTime)
+    val timeTracker: TimeTracker = TimeTracker(matsimConfig.startTime, matsimConfig.endTime)
 
 
     // TODO: update analytics in the event handler calls

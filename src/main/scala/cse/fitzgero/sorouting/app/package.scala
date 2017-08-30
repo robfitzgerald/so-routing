@@ -5,6 +5,7 @@ package object app {
 
   case class PrintToResultFile (
     populationSize: Int,
+    totRouteRequests: Int,
     ueRouteRequests: Int,
     soRouteRequests: Int,
     routePercent: Int,
@@ -36,11 +37,11 @@ package object app {
       // avgTripUESO: MATSim-reported average travel time, drivers assigned via Dijkstra's and some % of the population routed via our SO routing algorithm
       // netAvgTripUE: for each link, the average time it took for a car to pass through it, averaged across the network, for the selfish drivers
       // netTripUESO: network avg travel time (as above), but for the mixed population
-      f"$populationSize,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$routeStats,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f"
+      f"$populationSize,$totRouteRequests,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$routeStats,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f"
     }
   }
 
   object PrintToResultFile {
-    def resultFileHeader: String = "populationSize,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,totalAlgRuntime,minBatchRuntime,meanBatchRuntime,maxBatchRuntime,stdDevBatchRuntime,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO"
+    def resultFileHeader: String = "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,totalAlgRuntime,minBatchRuntime,meanBatchRuntime,maxBatchRuntime,stdDevBatchRuntime,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO"
   }
 }

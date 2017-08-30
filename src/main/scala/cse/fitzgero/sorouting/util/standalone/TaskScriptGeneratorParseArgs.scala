@@ -30,7 +30,7 @@ object TaskScriptGeneratorParseArgs {
       win <- makeRange(conf.win)
       route <- makeRange(conf.route)
       pop <- makeRangeByFactor(conf.pop)
-    } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf ${conf.config} -network ${conf.network} -wdir result/${conf.name} -procs ${conf.procs} -win $win -pop $pop -route $route -start ${conf.start} -end ${conf.end}""""
+    } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf ${conf.config()} -network ${conf.network()} -wdir result/${conf.name()} -procs ${conf.procs()} -win $win -pop $pop -route $route -start ${conf.start()} -end ${conf.end()}""""
     (conf, scripts)
   }
 
@@ -46,11 +46,11 @@ object TaskScriptGeneratorParseArgs {
 
   private def makeRangeByFactor(args: Map[String, Double]): Iterator[Int] = {
     val vec = args.values.toVector
-    if (vec.size == 1) Iterator.continually(vec(0).toInt)
-    else if (vec.size == 2) Iterator.iterate(vec(0).toInt)(n => n * 2).takeWhile(_ < vec(1))
-    else if (vec.size == 3) Iterator.iterate(vec(0).toInt)(n => (n * vec(2)).toInt).takeWhile(_ < vec(1))
+    if (vec.size == 1) Iterator.single(vec(0).toInt)
+    else if (vec.size == 2 && vec(0) <= vec(1)) Iterator.iterate(vec(0).toInt)(n => n * 2).takeWhile(_ < vec(1))
+    else if (vec.size == 3 && vec(0) <= vec(1)) Iterator.iterate(vec(0).toInt)(n => (n * vec(2)).toInt).takeWhile(_ < vec(1))
     else {
-      Iterator.continually(0)
+      Iterator.single(0)
     }
   }
 }

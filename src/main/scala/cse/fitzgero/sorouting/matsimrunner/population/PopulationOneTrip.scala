@@ -83,6 +83,7 @@ case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.c
 
   def toODPairs: Set[LocalGraphODPairByVertex] = persons.map(_.toLocalGraphODPairByVertex)
 
+  def size: Int = persons.size
 
 }
 
