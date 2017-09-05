@@ -48,22 +48,6 @@ object TaskScriptGenerator extends App {
   // population density 28,210/sq mi | 10890 km^2
   // approx. 17 times Rye density
 
-  // range the population from the current Rye population to the density of NYC
-//  val RyePopulation = 157
-//  val NYCPopulationDensityInRye = RyePopulation * 17
-//  val popSize = Iterator.iterate(RyePopulation)(_ * popFactor).takeWhile(_ < NYCPopulationDensityInRye).toList
-//
-//  val experiments = for {
-//    win <- timeWindow
-//    route <- soRouted
-//    pop <- popSize
-//  } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf data/rye/config.xml -network data/rye/network.xml -wdir result/$name -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00""""
-
-  //  val experiments = for {
-//    win <- timeWindow
-//    route <- soRouted
-//    pop <- popSize
-//  } yield s"""sbt "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication -conf data/rye/config.xml -network data/rye/network.xml -wdir result/rye-${pop}pp-${win}sec-${route}perc -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00""""
 
   val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/${conf.name()}")).toString
   println(s"experiment directory created at $createExperimentDirectory")

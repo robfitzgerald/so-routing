@@ -85,12 +85,21 @@ object SORoutingApplicationConfig {
     * @param args the command line arguments for this application
     */
   class Conf(args: Seq[String]) extends ScallopConf(args) {
+
+    // REQUIRED
     val config = opt[String](descr = "MATSim config.xml file")
     val network = opt[String](descr = "MATSim network.xml file")
     val dest = opt[String](descr = "directory to write results")
-    val win = opt[Int](descr = "algorithm batch window duration, in seconds")
-    val pop = opt[Int](descr = "population size (in number of people, which may differ from the total number of trips)")
-    val route = opt[Double](descr = "% of population to route using our routing algorithm, in range [0.0, 1.0)")
+    val win = opt[Int](validate = {_ > 0}, descr = "algorithm batch window duration, in seconds")
+    val pop = opt[Int](validate = {_ > 0}, descr = "population size (in number of people, which may differ from the total number of trips)")
+    val route = opt[Double](validate = (r) => {0.0D <= r && r <= 1.0D}, descr = "% of population to route using our routing algorithm, in range [0.0, 1.0]")
+
+    // OPTIONAL
+    val k = opt[Int](required = false, descr = "number of alternate shortest paths to discover per driver")
+    val ksptype = opt[String](required = false, descr = "limit the k-shortest paths by {pathsfound|time}")
+    val kspvalue = opt[String](required = false, descr = "value noting the upper limit on paths found or the duration (in seconds)")
+    val fwtype = opt[String](required = false, descr = "limit the frank-wolfe estimation by {iteration|time|relgap}")
+    val fwvalue = opt[String](required = false, descr = "value noting the upper limit in terms of # iterations, time (in seconds), or error")
 
     verify()
   }
@@ -101,11 +110,37 @@ object SORoutingApplicationConfig {
     * @param conf a Scallop Config class that identifies application parameters for SoRouting
     */
   def setSystemPropertiesFromConf(conf: Conf): Unit = {
+
+    // REQUIRED
     System.setProperty("soRouting.application.configFile", conf.config())
     System.setProperty("soRouting.application.networkFile", conf.network())
     System.setProperty("soRouting.application.outputDirectory", conf.dest())
     System.setProperty("soRouting.algorithm.timeWindow", conf.win().toString)
     System.setProperty("soRouting.population.size", conf.pop().toString)
     System.setProperty("soRouting.population.routePercentage", conf.route().toString)
+
+    // OPTIONAL
+    conf.k.toOption match {
+      case Some(k) => System.setProperty("soRouting.algorithm.k", k.toString)
+      case None =>
+    }
+    conf.ksptype.toOption match {
+      case Some(t) => conf.kspvalue.toOption match {
+        case Some(v) =>
+          System.setProperty("soRouting.algorithm.kspBoundsType", t)
+          System.setProperty("soRouting.algorithm.kspBoundsValue", v)
+        case None =>
+      }
+      case None =>
+    }
+    conf.fwtype.toOption match {
+      case Some(t) => conf.fwvalue.toOption match {
+        case Some(v) =>
+          System.setProperty("soRouting.algorithm.fwBoundsType", t)
+          System.setProperty("soRouting.algorithm.fwBoundsValue", v)
+        case None =>
+      }
+      case None =>
+    }
   }
 }
