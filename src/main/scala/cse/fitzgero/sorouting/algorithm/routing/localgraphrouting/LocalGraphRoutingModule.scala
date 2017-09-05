@@ -10,12 +10,12 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPairByVertex
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.{LocalGraphMATSimSSSP, LocalGraphVertexOrientedSSSP}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationTerminationCriteria
+import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationFWBounds
 import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerConfig, MATSimSingleSnapshotRunnerModule}
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, LocalGraphMATSimFactory, VertexMATSim}
-import cse.fitzgero.sorouting.util.{SORoutingApplicationConfig1, SORoutingFilesHelper}
+import cse.fitzgero.sorouting.util._
 
 import scala.xml.XML
 
@@ -30,9 +30,9 @@ object LocalGraphRoutingModule {
 
   val sssp = LocalGraphMATSimSSSP()
 
-  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig1, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
+  def routeAllRequestedTimeGroups(conf: SORoutingConfig3, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
 
-    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
+//    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
 
     val (populationSO, populationPartial) = population.subsetPartition(conf.routePercentage)
 
@@ -40,21 +40,21 @@ object LocalGraphRoutingModule {
 
     // assign shortest path search to all UE drivers
     val graphWithNoFlows: LocalGraphMATSim =
-      LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.algorithmTimeWindow.toDouble)
+      LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
         .fromFile(fileHelper.thisNetworkFilePath) match {
         case Success(g) => g
         case Failure(_) => throw new Error(s"failed to load network file ${fileHelper.thisNetworkFilePath}")
       }
-    val populationDijkstrasRoutes =
-      if (SomeParallelProcessesSetting == 1)  // TODO again, parallel config here.
-        populationPartial.exportAsODPairsByEdge.map(sssp.shortestPath(graphWithNoFlows, _))
-      else
-        populationPartial.exportAsODPairsByEdge.par.map(sssp.shortestPath(graphWithNoFlows.par, _))
+
+    val populationDijkstrasRoutes = conf.processes match {
+      case OneProc => populationPartial.exportAsODPairsByEdge.map(sssp.shortestPath(graphWithNoFlows, _))
+      case _ => populationPartial.exportAsODPairsByEdge.par.map(sssp.shortestPath(graphWithNoFlows.par, _))
+    }
 
     val populationUE = populationDijkstrasRoutes.foldLeft(populationPartial)(_.updatePerson(_))
 
     val timeGroups: Iterator[TimeGroup] =
-      (StartOfDay +: (LocalTime.parse(conf.startTime).toSecondOfDay until LocalTime.parse(conf.endTime).toSecondOfDay by conf.algorithmTimeWindow.toInt))
+      (StartOfDay +: (LocalTime.parse(conf.startTime).toSecondOfDay until LocalTime.parse(conf.endTime).toSecondOfDay by conf.timeWindow))
         .sliding(2)
         .map(vec => TimeGroup(vec(0), vec(1)))
 
@@ -67,8 +67,7 @@ object LocalGraphRoutingModule {
 
       val groupToRoute: PopulationOneTrip = populationSO.exportTimeGroup(timeGroupStart, timeGroupEnd)
 
-      if (groupToRoute.persons.isEmpty)
-      acc
+      if (groupToRoute.persons.isEmpty) acc
       else {
         val snapshotPopulation: PopulationOneTrip = acc.population.exportTimeGroup(LocalTime.MIN, timeGroupEnd)
         val snapshotDirectory: String = fileHelper.scaffoldSnapshot(snapshotPopulation, timeGroupStart, timeGroupEnd)
@@ -78,20 +77,20 @@ object LocalGraphRoutingModule {
         val matsimSnapshotRun = MATSimSingleSnapshotRunnerModule(MATSimRunnerConfig(
           s"$snapshotDirectory/config-snapshot.xml",
           s"$snapshotDirectory/matsim-output",
-          conf.algorithmTimeWindow,
+          conf.timeWindow,
           conf.startTime,
           timeGroupEnd.format(HHmmssFormat),
           ArgsNotMissingValues
         ))
 
-        val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
-        val snapshotFilePath: String = matsimSnapshotRun.filePath
-
         // ----------------------------------------------------------------------------------------
         // 2. run routing algorithm for the SO routed population for current time group, using snapshot
 
+        val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
+        val snapshotFilePath: String = matsimSnapshotRun.filePath
+
         val graph: LocalGraphMATSim =
-          LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.algorithmTimeWindow.toDouble)
+          LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
             .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
             case Success(g) => g.par
             case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
@@ -99,14 +98,13 @@ object LocalGraphRoutingModule {
 
         fileHelper.removeSnapshotFiles(timeGroupStart)
 
-//        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
+        //        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
 
-        val routingConfig =
-          if (SomeParallelProcessesSetting == 1)
-            LocalRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
-          else
-            ParallelRoutingConfig(k = 4, PathsFoundBounds(5), IterationTerminationCriteria(10))
-
+        val routingConfig = conf.processes match {
+          case OneProc => LocalRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds)
+          case AllProcs => ParallelRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds)
+          case NumProcs(n) => ParallelRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds, n)
+        }
 
         val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRoute, routingConfig)
 
@@ -119,8 +117,7 @@ object LocalGraphRoutingModule {
               routeCountSO = acc.routeCountSO + routes.size,
               runTime = acc.runTime :+ runTime
             )
-          case _ =>
-            acc
+          case _ => acc
         }
       }
     })

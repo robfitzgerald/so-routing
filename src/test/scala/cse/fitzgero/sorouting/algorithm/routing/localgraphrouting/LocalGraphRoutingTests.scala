@@ -58,10 +58,10 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
         "run faster with a parallel processing" in {
           import scala.concurrent.ExecutionContext.Implicits.global
           val terminationCriteria =
-            CombinedTerminationCriteria(
-              RunningTimeTerminationCriteria(15 seconds),
+            CombinedFWBounds(
+              RunningTimeFWBounds(15 seconds),
               Or,
-              IterationTerminationCriteria(10 iterations))
+              IterationFWBounds(10 iterations))
           val localConfig = LocalRoutingConfig(10, NoKSPBounds, terminationCriteria)
           val parConfig = ParallelRoutingConfig(10, NoKSPBounds, terminationCriteria)
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(fiveByFiveNetworkFilePath).get
@@ -85,10 +85,10 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
         "run faster with a parallel processing" ignore {
           import scala.concurrent.ExecutionContext.Implicits.global
           val terminationCriteria =
-            CombinedTerminationCriteria(
-              RunningTimeTerminationCriteria(15 seconds),
+            CombinedFWBounds(
+              RunningTimeFWBounds(15 seconds),
               Or,
-              IterationTerminationCriteria(5 iterations))
+              IterationFWBounds(5 iterations))
           val localConfig = LocalRoutingConfig(4, NoKSPBounds, terminationCriteria)
           val parConfig = ParallelRoutingConfig(4, NoKSPBounds, terminationCriteria)
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get

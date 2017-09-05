@@ -8,5 +8,5 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.trafficassignment._
 
 abstract class LocalGraphTrafficAssignment extends TrafficAssignment[LocalGraph[VertexMATSim, EdgeMATSim], LocalGraphODPairByVertex]{
-  def solve (graph: LocalGraph[VertexMATSim, EdgeMATSim], odPairs: Seq[LocalGraphODPairByVertex], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
+  def solve (graph: LocalGraph[VertexMATSim, EdgeMATSim], odPairs: Seq[LocalGraphODPairByVertex], terminationCriteria: FWBounds): TrafficAssignmentResult
 }

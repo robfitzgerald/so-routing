@@ -1,19 +1,18 @@
 package cse.fitzgero.sorouting.util
 
 import java.time.LocalTime
-
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{IterationTerminationCriteria, RelativeGapTerminationCriteria, RunningTimeTerminationCriteria, TerminationCriteria}
-import cse.fitzgero.sorouting.app.SOAppConfig
-
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
+
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
+import cse.fitzgero.sorouting.algorithm.trafficassignment.{IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds, FWBounds}
+
 
 case class SORoutingApplicationConfig2 (
   matsimConfigFile: String,
   matsimNetworkFile: String,
   workingDirectory: String,
-  numProcs: Parallelism,
+  numProcesses: Parallelism,
   algorithmTimeWindow: String,
   populationSize: Int,
   routePercentage: Double,
@@ -21,23 +20,19 @@ case class SORoutingApplicationConfig2 (
   endTime: String,      // HH:mm:ss
   k: Int,
   kspBounds: KSPBounds,
-  fwBounds: TerminationCriteria
-) extends SOAppConfig
-
-sealed trait Parallelism
-case class NumProcs(n: Int) extends Parallelism
-case object AllProcs extends Parallelism // *
+  fwBounds: FWBounds
+)
 
 object SORoutingApplicationConfigParseArgs2 {
   def filePathArgsRegex(flag: String): Regex = s"-$flag ([\\w .\\/-]+)".r
   def makeNumberArgsRegex(flag: String): Regex = s"-$flag (\\d+(?:\\.\\d*)?)".r
   def makeTimeArgsRegex(flag: String): Regex = s"-$flag ([0-9]{2}:[0-9]{2}:[0-9]{2})".r
-  def makeSparkProcsRegex(flag: String): Regex = s"-$flag (\\*|(?:\\d+(?:\\.\\d*)?)){1}".r
+  def makeNumProcsRegex(flag: String): Regex = s"-$flag (\\*|(?:\\d+(?:\\.\\d*)?)){1}".r
 
   val confFile: Regex = filePathArgsRegex("conf")
   val networkFile: Regex = filePathArgsRegex("network")
   val workDir: Regex = filePathArgsRegex("wdir")
-  val numProcs: Regex = makeSparkProcsRegex("procs")
+  val numProcs: Regex = makeNumProcsRegex("procs")
   val timeWindow: Regex = makeNumberArgsRegex("win")
   val popSize: Regex = makeNumberArgsRegex("pop")
   val routePercent: Regex = makeNumberArgsRegex("route")
@@ -73,26 +68,20 @@ object SORoutingApplicationConfigParseArgs2 {
     }
 
   def numProcsType(s: String): Parallelism =
-    if (s == "*")
-      AllProcs
-    else
-      NumProcs(s.toInt)
+    if (s == "*") AllProcs
+    else if (s == "1") OneProc
+    else NumProcs(s.toInt)
 
   def kspBoundsType(s: String): KSPBounds = s.split(" ").head match {
-    case "pathsfound" =>
-      PathsFoundBounds(s.split(" ").last.toInt)
-    case "time" =>
-      TimeBounds(s.split(" ").last.toLong)
+    case "pathsfound" => PathsFoundBounds(s.split(" ").last.toInt)
+    case "time" => TimeBounds(s.split(" ").last.toLong)
     case _ => throw new IllegalArgumentException(s"cannot parse k-shortest paths bounds argument: $s")
   }
 
-  def fwBoundsType(s: String): TerminationCriteria = s.split(" ").head match {
-    case "iteration" =>
-      IterationTerminationCriteria(s.split(" ").last.toInt)
-    case "time" =>
-      RunningTimeTerminationCriteria(s.split(" ").last.toLong)
-    case "relgap" =>
-      RelativeGapTerminationCriteria(s.split(" ").last.toLong)
+  def fwBoundsType(s: String): FWBounds = s.split(" ").head match {
+    case "iteration" => IterationFWBounds(s.split(" ").last.toInt)
+    case "time" => RunningTimeFWBounds(s.split(" ").last.toLong)
+    case "relgap" => RelativeGapFWBounds(s.split(" ").last.toLong)
     case _ => throw new IllegalArgumentException(s"cannot parse frank wolfe bounds argument: $s")
   }
 

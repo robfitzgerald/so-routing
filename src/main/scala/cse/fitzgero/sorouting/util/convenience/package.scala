@@ -11,6 +11,7 @@ package object convenience {
 
   class PostfixLongTypeNames(x: Long) {
     def seconds: Long = x * 1000L
+    def ms: Long = x
     def minutesDeviation: Long = x
   }
 

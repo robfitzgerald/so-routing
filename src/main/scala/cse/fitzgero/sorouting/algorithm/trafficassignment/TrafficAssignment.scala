@@ -13,7 +13,7 @@ trait TrafficAssignment [G, O <: ODPair[_]] {
     * @param terminationCriteria the way to determine convergence
     * @return a solution which contains the final graph estimation, or no solution
     */
-  def solve (graph: G, odPairs: GenSeq[O], terminationCriteria: TerminationCriteria): TrafficAssignmentResult
+  def solve (graph: G, odPairs: GenSeq[O], terminationCriteria: FWBounds): TrafficAssignmentResult
 
   /**
     * holds the percentage value 'phi' and it's inverse during an iteration of a traffic assignment step

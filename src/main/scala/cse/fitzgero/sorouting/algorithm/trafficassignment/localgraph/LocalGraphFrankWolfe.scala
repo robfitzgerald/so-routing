@@ -25,7 +25,7 @@ object LocalGraphFrankWolfe
   override def solve (
     graph: LocalGraphMATSim,
     odPairs: GenSeq[LocalGraphODPairByVertex],
-    terminationCriteria: TerminationCriteria): TrafficAssignmentResult = {
+    terminationCriteria: FWBounds): TrafficAssignmentResult = {
 
     val startTime = Instant.now().toEpochMilli
 

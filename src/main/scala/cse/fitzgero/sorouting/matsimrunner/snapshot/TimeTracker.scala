@@ -18,9 +18,9 @@ class TimeTracker (
     * @param startTimeString the start time of the current time window, and name of the timeGroup
     * @param endTimeString the time exclusive where recording will cease
     */
-  def this (wD: String, startTimeString: String, endTimeString: String) {
+  def this (wD: Int, startTimeString: String, endTimeString: String) {
     this(
-      TimeStringConvert.windowValue(wD),
+      wD,
       TimeStringConvert.fromString(startTimeString),
       TimeStringConvert.fromString(endTimeString)
     )
@@ -73,7 +73,7 @@ class TimeTracker (
 }
 
 object TimeTracker {
-  def apply(wD: String, sT: String, eT: String): TimeTracker = new TimeTracker(wD, sT, eT)
+  def apply(wD: Int, sT: String, eT: String): TimeTracker = new TimeTracker(wD, sT, eT)
   def apply(wD: Int, sT: Int, eT: Int): TimeTracker = new TimeTracker(wD, sT, eT)
   def apply(sT: String, eT: String): TimeTracker = {
     val sInt: Int = TimeStringConvert.fromString(sT)

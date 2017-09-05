@@ -20,7 +20,7 @@ import cse.fitzgero.sorouting.app._
   * Produces a directory layout (See bottom of SORoutingFileHelper.scala) and provides utilities for fs interaction within the experiment
   * @param conf configuration of this experiment
   */
-class SORoutingFilesHelper(val conf: SORoutingApplicationConfig1) {
+class SORoutingFilesHelper(val conf: SORoutingConfig3) {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -29,14 +29,14 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig1) {
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH.mm.ss")
 
   // private xml and config assets
-  private val config: xml.Elem = XML.loadFile(conf.matsimConfigFile)
-  private val network: xml.Elem = XML.loadFile(conf.matsimNetworkFile)
+  private val config: xml.Elem = XML.loadFile(conf.configFilePath)
+  private val network: xml.Elem = XML.loadFile(conf.networkFilePath)
   private val configHash: String = config.hashCode().toString
   private val experimentTime: String = LocalDateTime.now().toString
 
 
   // Directory information for this experiment
-  private val baseDir: String = if (conf.workingDirectory.head == '/') conf.workingDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.workingDirectory}"
+  private val baseDir: String = if (conf.outputDirectory.head == '/') conf.outputDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.outputDirectory}"
   private val resultFile: String = s"$baseDir/result.csv"
   val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
   private val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
@@ -290,7 +290,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig1) {
 }
 
 object SORoutingFilesHelper {
-  def apply(config: SORoutingApplicationConfig1): SORoutingFilesHelper =
+  def apply(config: SORoutingConfig3): SORoutingFilesHelper =
     new SORoutingFilesHelper(config)
 }
 

@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{LocalGraphKSPSearchTree, LocalGraphMATSimKSP, LocalGraphSimpleKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{NoTrafficAssignmentSolution, TerminationCriteria, TrafficAssignmentResult}
+import cse.fitzgero.sorouting.algorithm.trafficassignment.{NoTrafficAssignmentSolution, FWBounds, TrafficAssignmentResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.{LocalGraphFWSolverResult, LocalGraphFrankWolfe}
 import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
 import cse.fitzgero.sorouting.roadnetwork.localgraph._

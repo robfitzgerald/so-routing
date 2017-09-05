@@ -16,7 +16,7 @@ import scala.math.abs
 object GraphXFrankWolfe extends GraphXTrafficAssignment {
 
   // TODO: switch to DataFrames or GenSeqs for odPairs/odPaths
-  override def solve(graph: GraphxRoadNetwork, odPairs: GenSeq[SimpleMSSP_ODPair], terminationCriteria: TerminationCriteria): TrafficAssignmentResult = ???
+  override def solve(graph: GraphxRoadNetwork, odPairs: GenSeq[SimpleMSSP_ODPair], terminationCriteria: FWBounds): TrafficAssignmentResult = ???
 
   case class RelativeGapSummation(currentFlowTimesCost: Double, aonFlowTimesCost: Double)
 
@@ -35,7 +35,7 @@ object GraphXFrankWolfe extends GraphXTrafficAssignment {
     * @param terminationCriteria a rule for algorithm termination
     * @return results of this traffic assignment
     */
-  override def solve(initialGraph: GraphxRoadNetwork, odPairs: ODPairs, terminationCriteria: TerminationCriteria): GraphXFWSolverResult = {
+  override def solve(initialGraph: GraphxRoadNetwork, odPairs: ODPairs, terminationCriteria: FWBounds): GraphXFWSolverResult = {
     if (odPairs.isEmpty)
       GraphXFWSolverResult(Nil,  initialGraph, 0, 0)
     else {

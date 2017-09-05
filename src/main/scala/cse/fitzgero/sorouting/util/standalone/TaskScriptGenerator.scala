@@ -4,8 +4,7 @@ import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
 
 import scala.util.{Failure, Success, Try}
-
-import cse.fitzgero.sorouting.app.PrintToResultFile
+import cse.fitzgero.sorouting.util.PrintToResultFile
 
 
 object TaskScriptGenerator extends App {
@@ -89,4 +88,3 @@ object TaskScriptGenerator extends App {
     })
   }
 }
-

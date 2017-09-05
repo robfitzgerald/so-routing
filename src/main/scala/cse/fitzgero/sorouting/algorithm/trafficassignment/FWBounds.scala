@@ -22,7 +22,7 @@ object TerminationData {
 /**
   * an algebra of (composable) criteria used to evaluate algorithm completion
   */
-sealed trait TerminationCriteria {
+sealed trait FWBounds {
   def eval(t: TerminationData): Boolean
 }
 
@@ -30,7 +30,7 @@ sealed trait TerminationCriteria {
   * evaluate the tangent (i.e. optimization) as a termination criteria. default threshold should not exceed 0.1% and is recommended to be 0.0001% (Boyce, 2004)
   * @param relGapThresh a value in the range [0.0, 1.0] which will test as an upper threshold in a boolean function
   */
-final case class RelativeGapTerminationCriteria (relGapThresh: Double = 0.0001D) extends TerminationCriteria {
+final case class RelativeGapFWBounds (relGapThresh: Double = 0.0001D) extends FWBounds {
   require(relGapThresh <= 0.1D)
   override def eval(t: TerminationData): Boolean = t.relGap < relGapThresh
 }
@@ -39,7 +39,7 @@ final case class RelativeGapTerminationCriteria (relGapThresh: Double = 0.0001D)
   * evaluate the current iteration as a termination criteria
   * @param iterThresh a value in the range [1, Int.MaxValue) which will test as an upper threshold inclusive
   */
-final case class IterationTerminationCriteria (iterThresh: Int) extends TerminationCriteria {
+final case class IterationFWBounds (iterThresh: Int) extends FWBounds {
   override def eval(t: TerminationData): Boolean = t.iter >= iterThresh
 }
 
@@ -47,7 +47,7 @@ final case class IterationTerminationCriteria (iterThresh: Int) extends Terminat
   * evaluate the algorithm runtime as a termination criteria
   * @param timeThreshMs upper bound in ms. that tests if the algorithm should run another iteration
   */
-final case class RunningTimeTerminationCriteria (timeThreshMs: Long) extends TerminationCriteria {
+final case class RunningTimeFWBounds (timeThreshMs: Long) extends FWBounds {
   override def eval(t: TerminationData): Boolean =
     Instant.now().toEpochMilli - t.startTime > timeThreshMs
 }
@@ -79,6 +79,6 @@ case object Or extends SumOperation {
   * @param op binary operation used to combine the results of the left and right criteria evaluation
   * @param b right operand criteria
   */
-final case class CombinedTerminationCriteria(a: TerminationCriteria, op: SumOperation, b: TerminationCriteria) extends TerminationCriteria {
+final case class CombinedFWBounds(a: FWBounds, op: SumOperation, b: FWBounds) extends FWBounds {
   override def eval(t: TerminationData): Boolean = op(a.eval(t), b.eval(t))
 }

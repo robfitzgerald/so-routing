@@ -19,8 +19,8 @@ object SORoutingLocalGraphInlineApplication extends App {
 //  Logger.getRootLogger.setLevel(Level.WARN)
 //  val log = Logger.getLogger(this.getClass)
 
-  val conf: SORoutingApplicationConfig1 = SORoutingApplicationConfigParseArgs(args)
-  val SomeParallelProcessesSetting = 2
+  val conf: SORoutingConfig3 = SORoutingConfig3()
+//  val SomeParallelProcessesSetting = 2
 
   println(conf)
 
@@ -86,7 +86,7 @@ object SORoutingLocalGraphInlineApplication extends App {
     MATSimRunnerConfig(
       fileHelper.finalConfigFilePath(FullUEExp),
       fileHelper.experimentPath(FullUEExp),
-      conf.algorithmTimeWindow,
+      conf.timeWindow,
       conf.startTime,
       conf.endTime,
       ArgsNotMissingValues
@@ -108,7 +108,7 @@ object SORoutingLocalGraphInlineApplication extends App {
     MATSimRunnerConfig(
       fileHelper.finalConfigFilePath(CombinedUESOExp),
       fileHelper.experimentPath(CombinedUESOExp),
-      conf.algorithmTimeWindow,
+      conf.timeWindow,
       conf.startTime,
       conf.endTime,
       ArgsNotMissingValues
@@ -126,7 +126,7 @@ object SORoutingLocalGraphInlineApplication extends App {
     routingResult.routeCountUE,
     routingResult.routeCountSO,
     (conf.routePercentage * 100).toInt,
-    conf.algorithmTimeWindow.toInt,
+    conf.timeWindow,
     routingResult.runTime,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),

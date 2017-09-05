@@ -6,7 +6,7 @@ package object matsimrunner {
   case class MATSimRunnerConfig(
     matsimConfigFile: String = "",
     outputDirectory: String = "",
-    window: String = "",
+    window: Int = 0,
     startTime: String = "",
     endTime: String = "",
     incomplete: Boolean = ArgsMissingValues)

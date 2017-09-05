@@ -169,7 +169,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
-          LocalGraphFrankWolfe.solve(graph, odPairs, IterationTerminationCriteria(50)) match {
+          LocalGraphFrankWolfe.solve(graph, odPairs, IterationFWBounds(50)) match {
             case LocalGraphFWSolverResult(result, iter, time, relGap) =>
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
               val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
@@ -186,7 +186,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
-          LocalGraphFrankWolfe.solve(graph, odPairs, IterationTerminationCriteria(50)) match {
+          LocalGraphFrankWolfe.solve(graph, odPairs, IterationFWBounds(50)) match {
             case LocalGraphFWSolverResult(result, iter, time, relGap) =>
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
               val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
@@ -208,7 +208,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
 
           println(graph.edgeAttrs.map(e => (e.id.toInt, e.cost.fixedFlow.toInt, e.linkCostFlow.toInt)).toIndexedSeq.sorted.mkString(" "))
 
-          LocalGraphFrankWolfe.solve(graph, odPairs, RelativeGapTerminationCriteria()) match {
+          LocalGraphFrankWolfe.solve(graph, odPairs, RelativeGapFWBounds()) match {
             case LocalGraphFWSolverResult(result, iter, time, relGap) =>
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum
               val aonCost = blindAssignment.edgeAttrs.map(edge => edge.linkCostFlow).sum
@@ -228,7 +228,7 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(ryeNetworkFilePath).get.par
           val blindAssignment = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairs)
 
-          LocalGraphFrankWolfe.solve(graph, odPairs, RunningTimeTerminationCriteria(10 * 1000L)) match {
+          LocalGraphFrankWolfe.solve(graph, odPairs, RunningTimeFWBounds(10 * 1000L)) match {
             case LocalGraphFWSolverResult(result, iter, time, relGap) =>
               println(f"completed in $iter iterations and ${time / 1000.0D}%1.2f seconds")
               val fwCost = result.edgeAttrs.map(edge => edge.linkCostFlow).sum

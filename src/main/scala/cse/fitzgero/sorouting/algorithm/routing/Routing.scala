@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.routing
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.KSPBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPair
-import cse.fitzgero.sorouting.algorithm.trafficassignment.TerminationCriteria
+import cse.fitzgero.sorouting.algorithm.trafficassignment.FWBounds
 import cse.fitzgero.sorouting.matsimrunner.population.Population
 import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
 
@@ -15,8 +15,8 @@ trait Routing [G <: RoadNetwork, O <: Population] {
 sealed trait RoutingConfig {
   def k: Int
   def kBounds: KSPBounds
-  def fwBounds: TerminationCriteria
+  def fwBounds: FWBounds
 }
 
-case class ParallelRoutingConfig(k: Int = 4, kBounds: KSPBounds, fwBounds: TerminationCriteria, numProcs: Int = 8, parallelBlockSize: Int = 8) extends RoutingConfig
-case class LocalRoutingConfig(k: Int = 4, kBounds: KSPBounds, fwBounds: TerminationCriteria) extends RoutingConfig
+case class ParallelRoutingConfig(k: Int = 4, kBounds: KSPBounds, fwBounds: FWBounds, numProcs: Int = Runtime.getRuntime.availableProcessors(), parallelBlockSize: Int = Runtime.getRuntime.availableProcessors()) extends RoutingConfig
+case class LocalRoutingConfig(k: Int = 4, kBounds: KSPBounds, fwBounds: FWBounds) extends RoutingConfig

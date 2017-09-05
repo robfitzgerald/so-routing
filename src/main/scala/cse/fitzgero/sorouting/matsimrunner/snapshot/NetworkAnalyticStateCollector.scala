@@ -65,7 +65,7 @@ object NetworkAnalyticStateCollector {
 //    )
 //  }
 
-  def apply(network: Network, CostFunctionFactory: CostFunctionFactory, algorithmFlowRate: String): NetworkAnalyticStateCollector = {
+  def apply(network: Network, CostFunctionFactory: CostFunctionFactory, algorithmFlowRate: Int): NetworkAnalyticStateCollector = {
     new NetworkAnalyticStateCollector(
       network.links.aggregate(Map.empty[String, AnalyticLink])(
         (acc, link) => {

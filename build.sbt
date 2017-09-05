@@ -25,3 +25,7 @@ libraryDependencies += "org.matsim" % "matsim" % "0.9.0"
 
 // ~~~ Scallop
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"
+
+
+// ~~~ TypeSafe Config
+libraryDependencies += "com.typesafe" % "config" % "1.3.1"
