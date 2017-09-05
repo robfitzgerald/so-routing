@@ -1,15 +1,14 @@
-package cse.fitzgero.sorouting.util
+package cse.fitzgero.sorouting.app
 
 import com.typesafe.config._
-import org.rogach.scallop._
-import org.apache.log4j.Level
-
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.{FWBounds, IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds}
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util._
+import org.apache.log4j.Level
+import org.rogach.scallop._
 
 
-case class SORoutingConfig3(
+case class SORoutingApplicationConfig (
   configFilePath: String,
   networkFilePath: String,
   outputDirectory: String,
@@ -25,8 +24,8 @@ case class SORoutingConfig3(
   endTime: String
 )
 
-object SORoutingConfig3 {
-  def apply(args: Seq[String]): SORoutingConfig3 = {
+object SORoutingApplicationConfig {
+  def apply(args: Seq[String]): SORoutingApplicationConfig = {
 
     setSystemPropertiesFromConf(new Conf(args))
 
@@ -64,7 +63,7 @@ object SORoutingConfig3 {
     val startTime = config.getString("soRouting.population.startTime")
     val endTime = config.getString("soRouting.population.endTime")
 
-    SORoutingConfig3(
+    SORoutingApplicationConfig(
       configFile,
       networkFile,
       outputDirectory,

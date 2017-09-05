@@ -20,7 +20,7 @@ import cse.fitzgero.sorouting.app._
   * Produces a directory layout (See bottom of SORoutingFileHelper.scala) and provides utilities for fs interaction within the experiment
   * @param conf configuration of this experiment
   */
-class SORoutingFilesHelper(val conf: SORoutingConfig3) {
+class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -290,7 +290,7 @@ class SORoutingFilesHelper(val conf: SORoutingConfig3) {
 }
 
 object SORoutingFilesHelper {
-  def apply(config: SORoutingConfig3): SORoutingFilesHelper =
+  def apply(config: SORoutingApplicationConfig): SORoutingFilesHelper =
     new SORoutingFilesHelper(config)
 }
 

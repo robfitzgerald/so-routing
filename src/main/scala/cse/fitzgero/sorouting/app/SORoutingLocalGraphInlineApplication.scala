@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.util.convenience._
 
 object SORoutingLocalGraphInlineApplication extends App {
 
-  val conf: SORoutingConfig3 = SORoutingConfig3(args)
+  val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
   println(conf)
 
   val fileHelper = SORoutingFilesHelper(conf)

@@ -11,6 +11,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPai
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.{LocalGraphMATSimSSSP, LocalGraphVertexOrientedSSSP}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationFWBounds
+import cse.fitzgero.sorouting.app.SORoutingApplicationConfig
 import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerConfig, MATSimSingleSnapshotRunnerModule}
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
@@ -30,7 +31,7 @@ object LocalGraphRoutingModule {
 
   val sssp = LocalGraphMATSimSSSP()
 
-  def routeAllRequestedTimeGroups(conf: SORoutingConfig3, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
+  def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
 
 //    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
 

@@ -4,6 +4,7 @@ import java.time.LocalTime
 
 import scala.util.{Failure, Success}
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.LocalGraphMATSimSSSP
+import cse.fitzgero.sorouting.app.SORoutingApplicationConfig
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.util._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
@@ -14,7 +15,7 @@ import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGra
   * TODO: did these changes (commented-out code) correct the algorithm? if so, remove these comments
   */
 object GenerateSelfishPopulationFile {
-  def apply(populationFull: PopulationOneTrip, conf: SORoutingConfig3, fileHelper: SORoutingFilesHelper): Int = {
+  def apply(populationFull: PopulationOneTrip, conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper): Int = {
 
     val numProcs = conf.processes match {
       case AllProcs => Runtime.getRuntime.availableProcessors()
