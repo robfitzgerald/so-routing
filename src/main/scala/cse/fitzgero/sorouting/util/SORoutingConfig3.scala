@@ -1,10 +1,13 @@
 package cse.fitzgero.sorouting.util
 
 import com.typesafe.config._
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds, FWBounds}
-import cse.fitzgero.sorouting.util.convenience._
+import org.rogach.scallop._
 import org.apache.log4j.Level
+
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
+import cse.fitzgero.sorouting.algorithm.trafficassignment.{FWBounds, IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds}
+import cse.fitzgero.sorouting.util.convenience._
+
 
 case class SORoutingConfig3(
   configFilePath: String,
@@ -23,7 +26,9 @@ case class SORoutingConfig3(
 )
 
 object SORoutingConfig3 {
-  def apply(): SORoutingConfig3 = {
+  def apply(args: Seq[String]): SORoutingConfig3 = {
+
+    setSystemPropertiesFromConf(new Conf(args))
 
     val config: Config = ConfigFactory.load()
 
@@ -74,5 +79,34 @@ object SORoutingConfig3 {
       startTime,
       endTime
     )
+  }
+
+  /**
+    * finds application arguments for this experiment
+    * @param args the command line arguments for this application
+    */
+  class Conf(args: Seq[String]) extends ScallopConf(args) {
+    val config = opt[String](descr = "MATSim config.xml file")
+    val network = opt[String](descr = "MATSim network.xml file")
+    val dest = opt[String](descr = "directory to write results")
+    val win = opt[Int](descr = "algorithm batch window duration, in seconds")
+    val pop = opt[Int](descr = "population size (in number of people, which may differ from the total number of trips)")
+    val route = opt[Double](descr = "% of population to route using our routing algorithm, in range [0.0, 1.0)")
+
+    verify()
+  }
+
+  /**
+    * takes application input parameters and sets them to system properties
+    * typesafe config expects these values in the environment
+    * @param conf a Scallop Config class that identifies application parameters for SoRouting
+    */
+  def setSystemPropertiesFromConf(conf: Conf): Unit = {
+    System.setProperty("soRouting.application.configFile", conf.config())
+    System.setProperty("soRouting.application.networkFile", conf.network())
+    System.setProperty("soRouting.application.outputDirectory", conf.dest())
+    System.setProperty("soRouting.algorithm.timeWindow", conf.win().toString)
+    System.setProperty("soRouting.population.size", conf.pop().toString)
+    System.setProperty("soRouting.population.routePercentage", conf.route().toString)
   }
 }

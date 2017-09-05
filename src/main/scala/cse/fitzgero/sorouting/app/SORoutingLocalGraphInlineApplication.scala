@@ -16,19 +16,11 @@ import cse.fitzgero.sorouting.util.convenience._
 
 object SORoutingLocalGraphInlineApplication extends App {
 
-//  Logger.getRootLogger.setLevel(Level.WARN)
-//  val log = Logger.getLogger(this.getClass)
-
-  val conf: SORoutingConfig3 = SORoutingConfig3()
-//  val SomeParallelProcessesSetting = 2
-
+  val conf: SORoutingConfig3 = SORoutingConfig3(args)
   println(conf)
 
   val fileHelper = SORoutingFilesHelper(conf)
   val networkData = MATSimNetworkToCollection(fileHelper.thisNetworkFilePath)
-
-//  val commuterPopulationSize: Int = (conf.populationSize * 0.8).toInt
-//  val otherPopulationSize: Int = conf.populationSize - commuterPopulationSize
 
   // Create a population from the road network topology
   // from that population, partition it to drivers that will receive our routing and drivers that will not
@@ -55,27 +47,6 @@ object SORoutingLocalGraphInlineApplication extends App {
           Seq(ModeConfig("car"))
         )
       )
-
-//  val otherPopulation: PopulationOneTrip =
-//    PopulationOneTrip
-//      .generateRandomOneTripPopulation(
-//        fileHelper.getNetwork,
-//        RandomPopulationOneTripConfig(
-//          commuterPopulationSize,
-//          Seq(
-//            ActivityConfig2(
-//              "home",
-//              LocalTime.parse("10:00:00") endTime,
-//              30 minutesDeviation),
-//            ActivityConfig2(
-//              "work",
-//              LocalTime.parse("12:00:00") endTime,
-//              30 minutesDeviation)),
-//          Seq(ModeConfig("car"))
-//        )
-//      )
-
-//  val populationFull = PopulationOneTrip(commuterPopulation.persons ++ otherPopulation.persons)
 
 
   //----------------------------------------------------------------------------------------------
