@@ -1,5 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp
 
+import java.time.Instant
+
 import cse.fitzgero.sorouting.algorithm.pathsearch.KSP
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, NoKSPBounds}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
@@ -16,15 +18,21 @@ class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, 
 
   val KSP: LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
     LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+  val startTime = Instant.now().toEpochMilli
 
-  override def kShortestPaths(graph: LocalGraphMATSim, od: LocalGraphODPairByEdge, k: Int = 1, bounds: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
+  override def kShortestPaths(graph: LocalGraphMATSim, od: LocalGraphODPairByEdge, k: Int = 1, bounds: KSPBounds = NoKSPBounds): KSPLocalGraphMATSimResult = {
     val oTriplet = graph.edgeTripletOf(od.src).get
     val dTriplet = graph.edgeTripletOf(od.dst).get
 
     if (oTriplet.e == dTriplet.e) {
 
       // the source is the destination
-      Seq(LocalGraphODPath(od.personId, oTriplet.o, dTriplet.d, List(), List()))
+      KSPLocalGraphMATSimResult(
+        Seq(LocalGraphODPath(od.personId, oTriplet.o, dTriplet.d, List(), List())),
+        k,
+        0,
+        Instant.now().toEpochMilli - startTime
+      )
 
     } else {
       val (oCost, dCost) =
@@ -40,17 +48,28 @@ class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, 
       if (oTriplet.d == dTriplet.o) {
 
         // the path is two edges long and is the source and destination edges only
-        Seq(LocalGraphODPath(od.personId, oTriplet.o, dTriplet.d, List(oTriplet.e, dTriplet.e), List(oCost, dCost)))
+        KSPLocalGraphMATSimResult(
+          Seq(LocalGraphODPath(od.personId, oTriplet.o, dTriplet.d, List(oTriplet.e, dTriplet.e), List(oCost, dCost))),
+          k,
+          0,
+          Instant.now().toEpochMilli - startTime
+        )
 
       } else {
 
         // let's run the Vertex-Oriented SSSP, using the oTriplet destination and dTriplet origin, and then add the first and last edges to the result
         val odByVertex = LocalGraphODPairByVertex(od.personId, oTriplet.d, dTriplet.o)
         val result = KSP.kShortestPaths(graph, odByVertex, k, bounds)
-        result.map(res => res.copy(
+        val kspMATSimPaths = result.paths.map(res => res.copy(
           path = oTriplet.e +: res.path :+ dTriplet.e,
           cost = oCost +: res.cost :+ dCost
         ))
+        KSPLocalGraphMATSimResult(
+          kspMATSimPaths,
+          result.kRequested,
+          result.kSelected,
+          Instant.now().toEpochMilli - startTime
+        )
       }
     }
   }

@@ -69,9 +69,9 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           PopulationMultipleTripsFactory.setSeed(1)
           val population = PopulationOneTrip.generateRandomOneTripPopulation(fiveByFiveNetworkXML, config(200 persons))
           LocalGraphRouting.route(graph, population, localConfig) flatMap {
-            case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
+            case LocalGraphRoutingResult(resLocal, _, _, _, runTimeLocal) =>
               LocalGraphRouting.route(graph, population, parConfig) map {
-                case LocalGraphRoutingResult(resPar, runTimePar) =>
+                case LocalGraphRoutingResult(resPar, _, _, _, runTimePar) =>
                   println(s"runTimePar: $runTimePar runTimeLocal: $runTimeLocal")
                   runTimePar should be < runTimeLocal
                 case _ => fail()
@@ -95,9 +95,9 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val puebloNetworkXML = XML.loadFile(ryeNetworkFilePath)
           val population = PopulationOneTrip.generateRandomOneTripPopulation(puebloNetworkXML, config(20 persons))
           LocalGraphRouting.route(graph, population, localConfig) flatMap {
-            case LocalGraphRoutingResult(resLocal, runTimeLocal) =>
+            case LocalGraphRoutingResult(resLocal, _, _, _, runTimeLocal) =>
               LocalGraphRouting.route(graph, population, parConfig) map {
-                case LocalGraphRoutingResult(resPar, runTimePar) =>
+                case LocalGraphRoutingResult(resPar, _, _, _, runTimePar) =>
                   println(s"networkSize: ${graph.edges.size} edges; runTimePar: ${runTimePar/1000D} secs; runTimeLocal: ${runTimeLocal/1000D} secs")
                   runTimePar should be < runTimeLocal
                 case _ => fail()

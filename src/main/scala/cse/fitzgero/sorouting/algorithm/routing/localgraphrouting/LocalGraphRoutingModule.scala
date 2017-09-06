@@ -20,14 +20,16 @@ import cse.fitzgero.sorouting.util._
 
 import scala.xml.XML
 
+case class LocalGraphRoutingResultRunTimes(ksp: List[Long] = List(), fw: List[Long] = List(), selection: List[Long] = List(), overall: List[Long] = List())
+
 /**
   * return tuple containing results from the completion of the routing algorithm
   * @param population the complete population, with selfish and system-optimal routes applied
   * @param routeCountUE number of selfish routes produced. each person may have more than one route.
   * @param routeCountSO number of system-optimal routes produced.
-  * @param runTime
+  * @param runTimes an object capturing the types of runtime values we are aggregating
   */
-case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTime: List[Long] = List.empty[Long])
+case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingResultRunTimes = LocalGraphRoutingResultRunTimes())
 
 object LocalGraphRoutingModule {
 
@@ -125,12 +127,18 @@ object LocalGraphRoutingModule {
 
         val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
         routingResult match {
-          case LocalGraphRoutingResult(routes, runTime) =>
+          case LocalGraphRoutingResult(routes, kspRunTime, fwRunTime, routeSelectionRunTime, overallRunTime) =>
             val withUpdatedRoutes = routes.foldLeft(groupToRoute)(_.updatePerson(_))
+            val previousRunTimes = acc.runTimes
             acc.copy(
               population = acc.population.reintegrateSubset(withUpdatedRoutes),
               routeCountSO = acc.routeCountSO + routes.size,
-              runTime = acc.runTime :+ runTime
+              runTimes = acc.runTimes.copy(
+                ksp = previousRunTimes.ksp :+ kspRunTime,
+                fw = previousRunTimes.fw :+ fwRunTime,
+                selection = previousRunTimes.selection :+ routeSelectionRunTime,
+                overall = previousRunTimes.overall :+ overallRunTime
+              )
             )
           case _ => acc
         }

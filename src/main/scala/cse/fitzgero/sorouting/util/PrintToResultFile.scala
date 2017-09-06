@@ -7,7 +7,10 @@ case class PrintToResultFile (
   soRouteRequests: Int,
   routePercent: Int,
   windowDur: Int,
-  routeTimes: List[Long],
+  kspRunTimes: List[Long],
+  fwRunTimes: List[Long],
+  selectionRunTimes: List[Long],
+  overallRunTimes: List[Long],
   popAvgTripUE: Double,
   popAvgTripUESO: Double,
   netAvgTripUE: Double,
@@ -25,22 +28,25 @@ case class PrintToResultFile (
   }
 
   override def toString: String = {
-    val routeStats = quickStats(routeTimes)
+    val kspRouteStats = quickStats(kspRunTimes)
+    val fwRouteStats = quickStats(fwRunTimes)
+    val selectionRouteStats = quickStats(selectionRunTimes)
+    val overallRouteStats = quickStats(overallRunTimes)
     // fullPop uePop soPop route% window totalAlgRunTime minRouteTime meanRouteTime maxRouteTime stdDevRouteTime avgTripUE avgTripUESO
     // fullPop: number of people
     // ueRouteRequests: number of route requests belonging to UE agents
     // soRouteRequests: number of route requests belonging to SO agents
     // routePercent: percentage of population that will be given SO routes
     // windowDur: duration (seconds) of the batching time for SO-routed agents
-    // routeStats: total/min/mean/max/stddev travel time
+    // routeStats: total/min/mean/max/stddev travel time for each aspect of the algorithm
     // avgTripUE: MATSim-reported average travel time, all drivers assigned via Dijkstra's Algorithm (selfish)
     // avgTripUESO: MATSim-reported average travel time, drivers assigned via Dijkstra's and some % of the population routed via our SO routing algorithm
     // netAvgTripUE: for each link, the average time it took for a car to pass through it, averaged across the network, for the selfish drivers
     // netTripUESO: network avg travel time (as above), but for the mixed population
-    f"$populationSize,$totRouteRequests,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$routeStats,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f,$popTravelTimeImprovement%.4f,$netTravelTimeImprovement%.4f"
+    f"$populationSize,$totRouteRequests,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$kspRouteStats,$fwRouteStats,$selectionRouteStats,$overallRouteStats,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f,$popTravelTimeImprovement%.4f,$netTravelTimeImprovement%.4f"
   }
 }
 
 object PrintToResultFile {
-  def resultFileHeader: String = "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,totalAlgRuntime,minBatchRuntime,meanBatchRuntime,maxBatchRuntime,stdDevBatchRuntime,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement"
+  def resultFileHeader: String = "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,algKSPRuntime,minKSPRuntime,meanKSPRuntime,maxKSPRuntime,stdKSPRuntime,algFWRuntime,minFWRuntime,meanFWRuntime,maxFWRuntime,stdFWRuntime,algSelRuntime,minSelRuntime,meanSelRuntime,maxSelRuntime,stdSelRuntime,algORuntime,minORuntime,meanORuntime,maxORuntime,stdORuntime,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement"
 }

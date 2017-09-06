@@ -29,11 +29,6 @@ abstract class KSPSolution [O <: ODPath[_,_]] extends KSPResult {
   def kRequested: Int
 
   /**
-    * the selected number of alternate paths, which can be less than or equal to $kRequested
-    */
-  def kSelected: Int = paths.size
-
-  /**
     * the n paths, n >= k, of which the k-shortest are a subset
     */
   def nExplored: Int
@@ -42,6 +37,12 @@ abstract class KSPSolution [O <: ODPath[_,_]] extends KSPResult {
     * algorithm duration, milliseconds
     */
   def runTime: Long
+
+  /**
+    * the selected number of alternate paths, which can be less than or equal to $kRequested
+    */
+  def kSelected: Int = paths.size
+
   require(0 <= kRequested)
   require(0 <= kSelected)
   require(0 <= nExplored)

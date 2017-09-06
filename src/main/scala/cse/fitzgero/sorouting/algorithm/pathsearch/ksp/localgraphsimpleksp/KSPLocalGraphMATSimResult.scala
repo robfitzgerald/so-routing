@@ -16,5 +16,5 @@ case class KSPLocalGraphMATSimResult (
   paths: GenSeq[LocalGraphODPath],
   kRequested: Int,
   nExplored: Int,
-  runTime: Long,
+  runTime: Long
 ) extends KSPSolution[LocalGraphODPath]

@@ -5,4 +5,10 @@ import cse.fitzgero.sorouting.algorithm.routing._
 
 import scala.collection.GenSeq
 
-case class LocalGraphRoutingResult (routes: GenSeq[LocalGraphODPath] = Seq.empty[LocalGraphODPath], runTime: Long) extends RoutingSolution[LocalGraphODPath]
+case class LocalGraphRoutingResult (
+  routes: GenSeq[LocalGraphODPath] = Seq.empty[LocalGraphODPath],
+  kspRunTime: Long,
+  fwRunTime: Long,
+  routeSelectionRunTime: Long,
+  overallRunTime: Long
+) extends RoutingSolution[LocalGraphODPath]

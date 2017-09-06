@@ -34,7 +34,7 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
 
   case class ReversePathData(path: List[EdgeId], cost: List[Double])
 
-  override def kShortestPaths(graph: G, od: LocalGraphODPairByVertex, k: Int = 1, boundsTest: KSPBounds = NoKSPBounds): GenSeq[LocalGraphODPath] = {
+  override def kShortestPaths(graph: G, od: LocalGraphODPairByVertex, k: Int = 1, boundsTest: KSPBounds = NoKSPBounds): KSPLocalGraphResult = {
 
     val startTime = Instant.now().toEpochMilli
 
@@ -58,13 +58,18 @@ class LocalGraphSimpleKSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: Ed
     def _kShortestPaths(
       walkBack: ReversePathData,
       previousGraph: G,
-      iteration: Int = 1): GenSeq[LocalGraphODPath] = {
+      iteration: Int = 1): KSPLocalGraphResult = {
 
       val currentTime = Instant.now().toEpochMilli
       val kspBoundsData = KSPBoundsData(currentTime - startTime, iteration)
 
       if (walkBack.path.isEmpty || boundsTest.test(kspBoundsData))
-        solution.dequeueAll[LocalGraphODPath, Seq[LocalGraphODPath]].take(k)
+        KSPLocalGraphResult(
+          solution.dequeueAll[LocalGraphODPath, Seq[LocalGraphODPath]].take(k),
+          k,
+          iteration,
+          Instant.now().toEpochMilli - currentTime
+        )
       else {
         // grab the current edge
         val thisEdge: EdgeId = walkBack.path.head

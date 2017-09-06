@@ -9,10 +9,10 @@ import scala.collection.{GenIterable, GenMap, GenSeq}
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{LocalGraphKSPSearchTree, LocalGraphMATSimKSP, LocalGraphSimpleKSP}
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphKSPSearchTree, LocalGraphMATSimKSP, LocalGraphSimpleKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{NoTrafficAssignmentSolution, FWBounds, TrafficAssignmentResult}
+import cse.fitzgero.sorouting.algorithm.trafficassignment.{FWBounds, NoTrafficAssignmentSolution, TrafficAssignmentResult}
 import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.{LocalGraphFWSolverResult, LocalGraphFrankWolfe}
 import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
@@ -24,9 +24,10 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
   override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {
     val startTime = Instant.now().toEpochMilli
 
-    val kShortestAsync: Future[GenSeq[KSPSearchRoot[VertexId, EdgeId]]] = findKShortest(g, odPairs.exportAsODPairsByEdge, config).map(_.flatMap(LocalGraphKSPSearchTree(_) match {
+    // TODO better encapsulation of KSP calls
+    val kShortestAsync: Future[GenSeq[(KSPLocalGraphMATSimResult, KSPSearchRoot[VertexId, EdgeId])]] = findKShortest(g, odPairs.exportAsODPairsByEdge, config).map(_.flatMap(result => LocalGraphKSPSearchTree(result.paths) match {
       case KSPEmptySearchTree => None
-      case x => Some(x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]])
+      case x => Some((result, x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]]))
     }))
     val trafficAssignmentOracleFlowAsync: Future[TrafficAssignmentResult] = trafficAssignmentOracleFlow(g, odPairs.exportAsODPairsByVertex, config)
 
@@ -35,19 +36,41 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
 //    println("starting")
     Future {
       kShortestAsync onComplete {
-        case Success(kShortestPaths: GenSeq[KSPSearchTree]) =>
+        case Success(kShortestPaths: GenSeq[(KSPLocalGraphMATSimResult, KSPSearchTree)]) =>
+
+          val (kspResults, kspPaths) =
+            kShortestPaths
+              .unzip
+
+//          more interesting results can be processed here, but summing ksp runtimes will not be a true overall runtime since they can be parallelized
+//          val kspRunTime = kspResults.map(_.runTime).sum
+          val kspRunTime = Instant.now().toEpochMilli - startTime
 
           trafficAssignmentOracleFlowAsync onComplete {
             case Success(fwResult: TrafficAssignmentResult) =>
               fwResult match {
-                case LocalGraphFWSolverResult(network, iter, time, relGap) =>
+                case LocalGraphFWSolverResult(macroscopicFlowEstimate, fwIterations, fwRunTime, relGap) =>
 //                  println(s"fw iters: $iter time: $time relGap: $relGap network:")
 //                  println(s"$network")
 //                  println(s"kShortest")
 //                  println(s"${kShortestPaths.map(_.toString)}")
 
-                  val runTime = Instant.now().toEpochMilli - startTime
-                  promise.success(LocalGraphRoutingResult(selectRoutes(kShortestPaths, network), runTime))
+                  val routeSelectionStartTime = Instant.now().toEpochMilli
+
+                  val selectedSystemOptimalRoutes = selectRoutes(kspPaths, macroscopicFlowEstimate)
+
+                  val routeSelectionRunTime = Instant.now().toEpochMilli - routeSelectionStartTime
+                  val overallRunTime = Instant.now().toEpochMilli - startTime
+
+                  promise.success(
+                    LocalGraphRoutingResult(
+                      routes = selectedSystemOptimalRoutes,
+                      kspRunTime = kspRunTime,
+                      fwRunTime = fwRunTime,
+                      routeSelectionRunTime = routeSelectionRunTime,
+                      overallRunTime = overallRunTime
+                    )
+                  )
 
                 case _ => promise.failure(new IllegalStateException())
               }
@@ -64,7 +87,13 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
     promise.future
   }
 
-  def selectRoutes(trees: GenSeq[KSPSearchNode[EdgeId]], graph: LocalGraphMATSim): GenSeq[LocalGraphODPath] = {
+  /**
+    * use the flow estimate as a oracle to select the best alternate paths
+    * @param trees a tree of alternate paths
+    * @param macroscopicFlowEstimate a graph with outflow proportions at each vertex
+    * @return
+    */
+  def selectRoutes(trees: GenSeq[KSPSearchNode[EdgeId]], macroscopicFlowEstimate: LocalGraphMATSim): GenSeq[LocalGraphODPath] = {
 
     def _selectRoute(tree: KSPSearchTree): List[(EdgeId, Double)] = {
       tree match {
@@ -72,14 +101,14 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
           val node = x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]]
           if (node.children.isEmpty) List[(String, Double)]()
           else {
-            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
+            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, macroscopicFlowEstimate.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
             (edge, cost) :: _selectRoute(node.traverse(edge))
           }
         case y if y.isInstanceOf[KSPSearchBranch[_]] =>
           val node = y.asInstanceOf[KSPSearchBranch[EdgeId]]
           if (node.children.isEmpty) List[(String, Double)]()
           else {
-            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, graph.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
+            val (edge, cost, proportion): (EdgeId, Double, Double) = node.children.map(tup => (tup._1, tup._2._1, macroscopicFlowEstimate.edgeAttrOf(tup._1).get.assignedFlow)).maxBy(_._3)
             (edge, cost) :: _selectRoute(node.traverse(edge))
           }
         case KSPSearchLeaf => Nil
@@ -109,7 +138,7 @@ object LocalGraphRouting extends Routing[LocalGraphMATSim, PopulationOneTrip] {
   val KSP: LocalGraphMATSimKSP = LocalGraphMATSimKSP()
 
 
-  def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPairByEdge], config: RoutingConfig): Future[GenSeq[GenSeq[LocalGraphODPath]]] = {
+  def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPairByEdge], config: RoutingConfig): Future[GenSeq[KSPLocalGraphMATSimResult]] = {
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
         // TODO: use procs value (modify ExecutionContext?)
