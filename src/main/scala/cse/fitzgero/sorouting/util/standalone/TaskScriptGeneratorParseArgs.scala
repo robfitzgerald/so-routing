@@ -17,6 +17,7 @@ object TaskScriptGeneratorParseArgs {
     val config = opt[String](descr = "MATSim config.xml file")
     val network = opt[String](descr = "MATSim network.xml file")
     val dest = opt[String](default = Some("result"), descr = "destination base directory. will store in $dest/$name")
+    val repeat = opt[Int](default = Some(1), descr = "number of times to repeat these tests. default is no repetition.")
     val pop = propsLong[Double]("pop", keyName = "p", descr = "population size. if one value, a constant. if two values, a range. if three values, a range with a step factor.")
     val win = propsLong[Int]("win", keyName = "w", descr = "algorithm batch window duration, in seconds. if one value, a constant. if two values, a range. if three values, a range with a step value.")
     val route = propsLong[Double]("route", keyName = "r", descr = "% of population to route using our routing algorithm. if one value, a constant. if two values, a range. if three values, a range with a step value.")
@@ -68,6 +69,8 @@ object TaskScriptGeneratorParseArgs {
       case _ => EmptyIterable  // List.empty would cause for comprehension to have no output
     }
 
+    val repeat = 1 to conf.repeat()
+
     // generate all permutations
     val scripts = for {
       win <- makeRange(conf.win)
@@ -76,6 +79,7 @@ object TaskScriptGeneratorParseArgs {
       k <- kValues
       ksp <- kspValues
       fw <- fwValues
+      repetition <- repeat
     } yield s"""sbt -mem 12288 "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication --config ${conf.config()} --network ${conf.network()} --dest ${conf.dest()}/${conf.name()} --win $win --pop $pop --route $route $k$ksp$fw""""
     (conf, scripts)
   }
