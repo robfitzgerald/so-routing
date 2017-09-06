@@ -5,6 +5,8 @@ import org.rogach.scallop._
 object TaskScriptGeneratorParseArgs {
 
   val EmptyIterable = List("")
+  val KSPOptions = Seq("time","pathsfound")
+  val FWOptions = Seq("time","iteration","relgap")
 
   class Conf(args: Seq[String]) extends ScallopConf(args) {
     // experimentName: String (perhaps aggregated config vals),
@@ -19,12 +21,14 @@ object TaskScriptGeneratorParseArgs {
     val win = propsLong[Int]("win", keyName = "w", descr = "algorithm batch window duration, in seconds. if one value, a constant. if two values, a range. if three values, a range with a step value.")
     val route = propsLong[Double]("route", keyName = "r", descr = "% of population to route using our routing algorithm. if one value, a constant. if two values, a range. if three values, a range with a step value.")
 
-    val k = opt[Int](required = false, descr = "number of alternative paths to find per origin/destination pair")
-    val ksptype = opt[String](required = false, validate = (t) => Seq("time","pathsfound").contains(t), descr = "type of ksp bound {iteration|time}")
-    val klow = opt[Int](required = false, descr = "lower bound for ksp, as # iterations, or time (seconds).")
-    val khigh = opt[Int](required = false, descr = "upper bound for ksp, as # iterations, or time (seconds).")
+    val klow = opt[Int](required = false, descr = "lower bound for k")
+    val khigh = opt[Int](required = false, descr = "upper bound for k")
     val kstep = opt[Int](required = false, descr = "step size")
-    val fwtype = opt[String](required = false, validate = (t) => Seq("time","iteration","relgap").contains(t), descr = "type of fw bound {iteration|time|relgap}")
+    val ksptype = opt[String](required = false, validate = (t) => KSPOptions.contains(t), descr = s"type of ksp bound ${KSPOptions.mkString("{","|","}")}")
+    val kblow = opt[Int](required = false, descr = "lower bound for ksp, as # iterations, or time (seconds).")
+    val kbhigh = opt[Int](required = false, descr = "upper bound for ksp, as # iterations, or time (seconds).")
+    val kbstep = opt[Int](required = false, descr = "step size")
+    val fwtype = opt[String](required = false, validate = (t) => FWOptions.contains(t), descr = s"type of fw bound ${FWOptions.mkString("{","|","}")}")
     val flow = opt[Double](required = false, descr = "lower bound for fw, as # iterations, or time (seconds), or error.")
     val fhigh = opt[Double](required = false, descr = "upper bound for fw, as # iterations, or time (seconds), or error.")
     val fstep = opt[Double](required = false, descr = "step size")
@@ -35,7 +39,8 @@ object TaskScriptGeneratorParseArgs {
     //  val kBoundType = opt[String](default = Some("iteration"), descr = "")
     //    ...
 
-    codependent(k, ksptype, klow, khigh, kstep)
+    codependent(klow, khigh, kstep)
+    codependent(ksptype, kblow, kbhigh, kbstep)
     codependent(fwtype, flow, fhigh, fstep)
 
     verify()
@@ -44,10 +49,17 @@ object TaskScriptGeneratorParseArgs {
   def parse(args: Seq[String]): (Conf, Seq[String]) = {
     val conf = new Conf(args)
 
+    // optional k value
+
+    val kValues =
+      if (conf.klow.isSupplied)
+        (conf.klow() to conf.khigh() by conf.kstep()).map(k => s" -k $k").toList
+      else EmptyIterable
+
     // optional k-shortest paths settings
     val kspValues =
       if (conf.ksptype.isSupplied)
-        (conf.klow() to conf.khigh() by conf.kstep()).map(n => s"--ksptype ${conf.ksptype()} --kspvalue $n").toList
+        (conf.kblow() to conf.kbhigh() by conf.kbstep()).map(n => s" --ksptype ${conf.ksptype()} --kspvalue $n").toList
       else EmptyIterable
 
     // optional frank wolfe settings
@@ -61,9 +73,10 @@ object TaskScriptGeneratorParseArgs {
       win <- makeRange(conf.win)
       route <- makeIterable(conf.route)
       pop <- makeRangeByFactor(conf.pop)
+      k <- kValues
       ksp <- kspValues
       fw <- fwValues
-    } yield s"""sbt -mem 12288 "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication --config ${conf.config()} --network ${conf.network()} --dest ${conf.dest()}/${conf.name()} --win $win --pop $pop --route $route $ksp $fw""""
+    } yield s"""sbt -mem 12288 "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication --config ${conf.config()} --network ${conf.network()} --dest ${conf.dest()}/${conf.name()} --win $win --pop $pop --route $route $k$ksp$fw""""
     (conf, scripts)
   }
 
@@ -115,9 +128,9 @@ object TaskScriptGeneratorParseArgs {
     if (conf.fwtype.isSupplied) conf.fwtype() match {
       case "time" =>
         // time and iteration should be as integers with an additive step function
-        Iterator.iterate(conf.flow())(_ + conf.fstep()).takeWhile(_ < conf.fhigh()).map(n => s"--fwtype ${conf.fwtype()} --fwvalue ${n.toInt}").toList
+        Iterator.iterate(conf.flow())(_ + conf.fstep()).takeWhile(_ < conf.fhigh()).map(n => s" --fwtype ${conf.fwtype()} --fwvalue ${n.toInt}").toList
       case "iteration" =>
-        Iterator.iterate(conf.flow())(_ + conf.fstep()).takeWhile(_ < conf.fhigh()).map(n => s"--fwtype ${conf.fwtype()} --fwvalue ${n.toInt}").toList
+        Iterator.iterate(conf.flow())(_ + conf.fstep()).takeWhile(_ < conf.fhigh()).map(n => s" --fwtype ${conf.fwtype()} --fwvalue ${n.toInt}").toList
       case "relgap" =>
         // differs in that the step function is a multiplier and the values are doubles
         val (start, end, step) =
@@ -135,7 +148,7 @@ object TaskScriptGeneratorParseArgs {
             (conf.flow(), conf.fhigh(), conf.fstep())
           else
             (conf.fhigh(), conf.flow(), conf.fstep())
-        Iterator.iterate(start)(_ * step).takeWhile(_ < end).map(n => s"--fwtype ${conf.fwtype()} --fwvalue $n").toList
+        Iterator.iterate(start)(_ * step).takeWhile(_ < end).map(n => s" --fwtype ${conf.fwtype()} --fwvalue $n").toList
     }
     else List.empty
   }
