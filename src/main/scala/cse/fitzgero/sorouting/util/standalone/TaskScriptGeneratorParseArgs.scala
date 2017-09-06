@@ -3,6 +3,9 @@ package cse.fitzgero.sorouting.util.standalone
 import org.rogach.scallop._
 
 object TaskScriptGeneratorParseArgs {
+
+  val EmptyIterable = List("")
+
   class Conf(args: Seq[String]) extends ScallopConf(args) {
     // experimentName: String (perhaps aggregated config vals),
     // timeWindow: Range | Int, soRouted: Range | Int, popSize: Range | Int
@@ -17,7 +20,7 @@ object TaskScriptGeneratorParseArgs {
     val route = propsLong[Double]("route", keyName = "r", descr = "% of population to route using our routing algorithm. if one value, a constant. if two values, a range. if three values, a range with a step value.")
 
     val k = opt[Int](required = false, descr = "number of alternative paths to find per origin/destination pair")
-    val ksptype = opt[String](required = false, validate = (t) => Seq("time","iteration").contains(t), descr = "type of ksp bound {iteration|time}")
+    val ksptype = opt[String](required = false, validate = (t) => Seq("time","pathsfound").contains(t), descr = "type of ksp bound {iteration|time}")
     val klow = opt[Int](required = false, descr = "lower bound for ksp, as # iterations, or time (seconds).")
     val khigh = opt[Int](required = false, descr = "upper bound for ksp, as # iterations, or time (seconds).")
     val kstep = opt[Int](required = false, descr = "step size")
@@ -45,10 +48,13 @@ object TaskScriptGeneratorParseArgs {
     val kspValues =
       if (conf.ksptype.isSupplied)
         (conf.klow() to conf.khigh() by conf.kstep()).map(n => s"--ksptype ${conf.ksptype()} --kspvalue $n").toList
-      else List.empty
+      else EmptyIterable
 
     // optional frank wolfe settings
-    val fwValues = findFWValues(conf)
+    val fwValues = findFWValues(conf) match {
+      case xs: List[String] if xs.nonEmpty => xs
+      case _ => EmptyIterable  // List.empty would cause for comprehension to have no output
+    }
 
     // generate all permutations
     val scripts = for {
@@ -87,7 +93,8 @@ object TaskScriptGeneratorParseArgs {
   private def makeRangeByFactor(args: Map[String, Double]): Iterator[Int] = {
     val vec = args.values.toVector
     val step: Double =
-      if (vec(2) < 0) 2
+      if (vec.size < 3) 2
+      else if (vec(2) < 0) 2
       else if (vec(2) < 1.0D) 1.0 + vec(2)
       else if (vec(2) > FactorBounds) 2
       else vec(2)
