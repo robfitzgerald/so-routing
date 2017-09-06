@@ -16,10 +16,10 @@ import org.matsim.run.Controler
   * Injector, NetworkImpl, and MobsimListenerManager. instead, globally squashing log4j.
   */
 trait MATSimSimulator {
-  def suppressMATSimInfoLogging(): Unit = {
+  def suppressMATSimInfoLogging(level: Level = Level.WARN): Unit = {
 
     // this deactivates INFO logging globally :-(
-    Logger.getRootLogger.setLevel(Level.WARN)
+    Logger.getRootLogger.setLevel(level)
     Logger.getLogger(classOf[CharyparNagelActivityScoring]).setLevel(Level.ERROR)
 
     // TODO: figure out how to shut off all MATSim logging without shutting off log4j

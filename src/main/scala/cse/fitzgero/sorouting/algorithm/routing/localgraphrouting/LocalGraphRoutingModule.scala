@@ -20,6 +20,13 @@ import cse.fitzgero.sorouting.util._
 
 import scala.xml.XML
 
+/**
+  * return tuple containing results from the completion of the routing algorithm
+  * @param population the complete population, with selfish and system-optimal routes applied
+  * @param routeCountUE number of selfish routes produced. each person may have more than one route.
+  * @param routeCountSO number of system-optimal routes produced.
+  * @param runTime
+  */
 case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTime: List[Long] = List.empty[Long])
 
 object LocalGraphRoutingModule {
@@ -31,6 +38,13 @@ object LocalGraphRoutingModule {
 
   val sssp = LocalGraphMATSimSSSP()
 
+  /**
+    * solves the routing over a provided network with a provided population
+    * @param conf
+    * @param fileHelper
+    * @param population
+    * @return
+    */
   def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
 
 //    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
