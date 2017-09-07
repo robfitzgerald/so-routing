@@ -36,7 +36,7 @@ final case class RelativeGapFWBounds (relGapThresh: Double = 0.0001D) extends FW
 }
 
 /**
-  * evaluate the current iteration as a termination criteria
+  * evaluate the current iteration as a termination criteria. iterations begin at 1 (per algorithm pseudocode in Modeling Transport).
   * @param iterThresh a value in the range [1, Int.MaxValue) which will test as an upper threshold inclusive
   */
 final case class IterationFWBounds (iterThresh: Int) extends FWBounds {
