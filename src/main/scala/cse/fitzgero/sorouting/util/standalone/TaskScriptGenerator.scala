@@ -51,7 +51,7 @@ object TaskScriptGenerator extends App {
 
   val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/${conf.name()}")).toString
   println(s"experiment directory created at $createExperimentDirectory")
-  val header = s"""echo "${PrintToResultFile.resultFileHeader}" > result/${conf.name()}/result.csv"""
+  val header = s"""echo "${PrintToResultFile.resultFileHeader}" >> result/${conf.name()}/result.csv"""
 
   val experimentsWithHeader = (header +: experiments).mkString("\n")
 
