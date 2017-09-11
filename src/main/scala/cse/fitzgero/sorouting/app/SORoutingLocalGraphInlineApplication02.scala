@@ -2,19 +2,17 @@ package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
 
+import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting._
 import cse.fitzgero.sorouting.matsimrunner._
-import cse.fitzgero.sorouting.matsimrunner.population._
-import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting.{LocalGraphRoutingModule, LocalGraphRoutingModuleResult}
 import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
+import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
 import cse.fitzgero.sorouting.util.convenience._
 
 
-
-
-object SORoutingLocalGraphInlineApplication extends App {
+object SORoutingLocalGraphInlineApplication02 extends App {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
   println(conf)
@@ -52,7 +50,11 @@ object SORoutingLocalGraphInlineApplication extends App {
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
-  val overallNumberOfTrips: Int = GenerateSelfishPopulationFile(populationFull, conf, fileHelper)
+  val overallNumberOfTrips: Int = {
+    val routingResultUE: LocalGraphUERoutingModuleResult = LocalGraphRoutingUEModule.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+    fileHelper.savePopulation(routingResultUE.population, FullUEExp, FullUEPopulation)
+    routingResultUE.routeCountUE
+  }
   MATSimSingleAnalyticSnapshotRunnerModule(
     MATSimRunnerConfig(
       fileHelper.finalConfigFilePath(FullUEExp),
@@ -69,9 +71,11 @@ object SORoutingLocalGraphInlineApplication extends App {
   //----------------------------------------------------------------------------------------------
   //  3. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
-  val routingResult: LocalGraphRoutingModuleResult = LocalGraphRoutingModule.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
-  fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
-
+  val (runTimes, routeCountUE, routeCountSO) = {
+    val routingResult: LocalGraphRoutingModule02Result = LocalGraphRoutingUESOModule02.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+    fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
+    (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
+  }
   //----------------------------------------------------------------------------------------------
   //  4. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
@@ -94,14 +98,14 @@ object SORoutingLocalGraphInlineApplication extends App {
   fileHelper.appendToReportFile(PrintToResultFile(
     conf.populationSize,
     overallNumberOfTrips,
-    routingResult.routeCountUE,
-    routingResult.routeCountSO,
+    routeCountUE,
+    routeCountSO,
     (conf.routePercentage * 100).toInt,
     conf.timeWindow,
-    routingResult.runTimes.ksp,
-    routingResult.runTimes.fw,
-    routingResult.runTimes.selection,
-    routingResult.runTimes.overall,
+    runTimes.ksp,
+    runTimes.fw,
+    runTimes.selection,
+    runTimes.overall,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),

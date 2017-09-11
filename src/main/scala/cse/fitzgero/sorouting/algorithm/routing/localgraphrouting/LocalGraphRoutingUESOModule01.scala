@@ -29,9 +29,9 @@ case class LocalGraphRoutingResultRunTimes(ksp: List[Long] = List(), fw: List[Lo
   * @param routeCountSO number of system-optimal routes produced.
   * @param runTimes an object capturing the types of runtime values we are aggregating
   */
-case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingResultRunTimes = LocalGraphRoutingResultRunTimes())
+case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingUESOResult02RunTimes = LocalGraphRoutingUESOResult02RunTimes())
 
-object LocalGraphRoutingModule {
+object LocalGraphRoutingUESOModule01 {
 
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds
@@ -96,7 +96,7 @@ object LocalGraphRoutingModule {
           s"$snapshotDirectory/matsim-output",
           conf.timeWindow,
           conf.startTime,
-          timeGroupEnd.format(HHmmssFormat),
+          timeGroupEnd.format(HHmmssFormat), // TODO shouldn't this be timeGroupStart?
           ArgsNotMissingValues
         ))
 

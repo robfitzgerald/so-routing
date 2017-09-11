@@ -8,10 +8,10 @@ import scala.math.pow
   */
 class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, val fixedFlow: Double = 0D) extends CostFunction {
   val costTerm1: Double = freeFlowSpeed
-  val costTerm2: Double = freeFlowSpeed * 0.15D
-  val marginalCostTerm: Double = costTerm2 * 4
+  lazy val costTerm2: Double = freeFlowSpeed * 0.15D
+  lazy val marginalCostTerm: Double = costTerm2 * 4
 
-  // S_a(v_a) = t_a(1 + 0.15(v_a/c_a)^4)
+  // S_a(v_a) = t_a(1 + 0.15(v_a/c_a)^4) = t_a + 0.15t_a(v_a/c_a)^4 = costTerm1 + costTerm2 * expTerm
   override def costFlow(flow: Double): Double = {
     val expTerm = pow(flow + fixedFlow / capacity, 4)
     costTerm1 + costTerm2 * expTerm

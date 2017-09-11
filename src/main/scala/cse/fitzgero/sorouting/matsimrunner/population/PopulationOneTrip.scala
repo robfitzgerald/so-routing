@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.util.convenience._
 // think about role of inheritance or collection-oriented functional style
 
 
-case class PopulationOneTrip (persons: Set[PersonOneTrip], seed: Long = System.currentTimeMillis) extends Population with ConvertsToXml {
+case class PopulationOneTrip (persons: Set[PersonOneTrip] = Set(), seed: Long = System.currentTimeMillis) extends Population with ConvertsToXml {
   // random values
   implicit val sampling = PopulationOneTrip.RandomSampling
   sampling.setSeed(seed)

@@ -14,6 +14,7 @@ object TaskScriptGeneratorParseArgs {
     //-conf data/rye/config.xml -network data/rye/network.xml -wdir result/$name -procs * -win $win -pop $pop -route $route -start 08:00:00 -end 18:00:00
 
     val name = opt[String](default = Some("test"), descr = "experiment name, defaults to 'test'")
+    val algorithm = opt[Int](default = Some(1), descr = "the id of the routing algorithm to use (see cse.fitzgero.sorouting.app")
     val config = opt[String](descr = "MATSim config.xml file")
     val network = opt[String](descr = "MATSim network.xml file")
     val dest = opt[String](default = Some("result"), descr = "destination base directory. will store in $dest/$name")
@@ -52,6 +53,8 @@ object TaskScriptGeneratorParseArgs {
 
     // optional k value
 
+    val algorithmId = f"${conf.algorithm()}%02d"
+
     val kValues =
       if (conf.klow.isSupplied)
         (conf.klow() to conf.khigh() by conf.kstep()).map(k => s" -k $k").toList
@@ -80,7 +83,7 @@ object TaskScriptGeneratorParseArgs {
       ksp <- kspValues
       fw <- fwValues
       repetition <- repeat
-    } yield s"""sbt -mem 12288 "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication --config ${conf.config()} --network ${conf.network()} --dest ${conf.dest()}/${conf.name()} --win $win --pop $pop --route $route $k$ksp$fw""""
+    } yield s"""sbt -mem 12288 "run-main cse.fitzgero.sorouting.app.SORoutingLocalGraphInlineApplication$algorithmId --config ${conf.config()} --network ${conf.network()} --dest ${conf.dest()}/${conf.name()} --win $win --pop $pop --route $route $k$ksp$fw""""
     (conf, scripts)
   }
 
