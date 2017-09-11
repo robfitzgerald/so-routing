@@ -69,7 +69,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
   )
 
   //----------------------------------------------------------------------------------------------
-  //  3. For each snapshot, load and run our algorithm
+  //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
   val (runTimes, routeCountUE, routeCountSO) = {
     val routingResult: LocalGraphRoutingModule02Result = LocalGraphRoutingUESOModule02.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
@@ -77,7 +77,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
   }
   //----------------------------------------------------------------------------------------------
-  //  4. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
+  //  3. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
   MATSimSingleAnalyticSnapshotRunnerModule(
     MATSimRunnerConfig(
@@ -93,7 +93,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
   )
 
   //----------------------------------------------------------------------------------------------
-  //  5. Analyze Results
+  //  4. Analyze Results
   //----------------------------------------------------------------------------------------------
   fileHelper.appendToReportFile(PrintToResultFile(
     conf.populationSize,

@@ -62,11 +62,12 @@ var MATSimFlowRate: Double
           val linkData: Map[String, String] = link.attributes.asAttrMap
           val linkId: String = linkData("id").toString
           val attrsObject: CostFunctionAttributes = CostFunctionAttributes(
-            linkData.getOrElse("capacity", "100").toDouble,
-            linkData.getOrElse("freespeed", "50").toDouble,
-            linkFlows.getOrElse(linkId, 0D),
-            MATSimFlowRate,
-            AlgorithmFlowRate
+            capacity = linkData.getOrElse("capacity", "100").toDouble,
+            freespeed = linkData.getOrElse("freespeed", "50").toDouble,
+            flow = linkFlows.getOrElse(linkId, 0D),
+            flowRate = MATSimFlowRate,
+            algorithmFlowRate = AlgorithmFlowRate,
+            length = linkData.getOrElse("length", "100").toDouble
           )
           val newTriplet: Triplet =
             Triplet(

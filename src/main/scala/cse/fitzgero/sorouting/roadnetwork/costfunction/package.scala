@@ -16,11 +16,11 @@ package object costfunction {
     })
   }
 
-
   case class CostFunctionAttributes (
     capacity: Double = 1000D,
     freespeed: Double = 50D,
     flow: Double = 0D,
     flowRate: Double = 3600D,
-    algorithmFlowRate: Double = 3600D) extends Serializable {}
+    algorithmFlowRate: Double = 3600D,
+    length: Double = 100D) extends Serializable {}
 }

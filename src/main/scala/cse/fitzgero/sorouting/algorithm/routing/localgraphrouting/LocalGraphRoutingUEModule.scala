@@ -90,6 +90,8 @@ object LocalGraphRoutingUEModule {
             case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
           }
 
+        graph.toString
+
         fileHelper.removeSnapshotFiles(timeGroupStart)
 
         //        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")

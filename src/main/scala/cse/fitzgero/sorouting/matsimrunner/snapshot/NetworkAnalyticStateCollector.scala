@@ -72,6 +72,7 @@ object NetworkAnalyticStateCollector {
           val costFunction = CostFunctionFactory(CostFunctionAttributes(
             capacity = link._2.capacity,
             freespeed = link._2.freespeed,
+            length = link._2.length,
             algorithmFlowRate = algorithmFlowRate.toDouble
           ))
           acc.updated(link._1, AnalyticLink(costFunction))
