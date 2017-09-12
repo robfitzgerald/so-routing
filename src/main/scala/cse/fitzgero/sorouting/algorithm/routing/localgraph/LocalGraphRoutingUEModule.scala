@@ -52,7 +52,6 @@ object LocalGraphRoutingUEModule {
         .sliding(2)
         .map(vec => TimeGroup(vec(0), vec(1)))
 
-
     // run UE algorithm for each time window, updating the population data with their routes while stepping through time windows
     timeGroups.foldLeft(LocalGraphUERoutingModuleResult(population, routeCountUE = population.exportAsODPairsByEdge.size))((acc, timeGroupSecs) => {
       val (timeGroupStart, timeGroupEnd) =
@@ -66,6 +65,7 @@ object LocalGraphRoutingUEModule {
         val snapshotPopulation: PopulationOneTrip = acc.population.exportTimeGroup(LocalTime.MIN, timeGroupEnd)
         val snapshotDirectory: String = fileHelper.scaffoldSnapshot(snapshotPopulation, timeGroupStart, timeGroupEnd)
 
+        println(s"${LocalTime.now()} [routeUE] snapshot run for timeGroup [$timeGroupStart, $timeGroupEnd) ${snapshotPopulation.size} persons")
         // ----------------------------------------------------------------------------------------
         // 1. run MATSim snapshot for the populations associated with all previous time groups
         val matsimSnapshotRun = MATSimSingleSnapshotRunnerModule(MATSimRunnerConfig(
@@ -83,6 +83,7 @@ object LocalGraphRoutingUEModule {
         val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
         val snapshotFilePath: String = matsimSnapshotRun.filePath
 
+//        println(s"${LocalTime.now()} [routeUE] loading graph")
         val graph: LocalGraphMATSim =
           LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
             .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
@@ -90,15 +91,17 @@ object LocalGraphRoutingUEModule {
             case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
           }
 
-//        graph.toString
-
         fileHelper.removeSnapshotFiles(timeGroupStart)
 
-        //        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
+//        println(s"${LocalTime.now()} [routeUE] running shortest path search")
+        val withUpdatedRoutes: PopulationOneTrip =
+          groupToRoute
+            .exportAsODPairsByEdge
+            .par
+            .map(sssp.shortestPath(graph, _))
+            .foldLeft(groupToRoute)(_.updatePerson(_))
 
-
-        val withUpdatedRoutes: PopulationOneTrip = groupToRoute.exportAsODPairsByEdge.map(sssp.shortestPath(graph, _)).foldLeft(groupToRoute)(_.updatePerson(_))
-
+//        println(s"${LocalTime.now()} [routeUE] finishing timeGroup [$timeGroupStart, $timeGroupEnd)")
         acc.copy(population = acc.population.reintegrateSubset(withUpdatedRoutes))
       }
     })

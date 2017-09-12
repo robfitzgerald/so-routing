@@ -6,7 +6,7 @@ import scala.util.Random
 
 abstract class ActivityTime (time: LocalTime) {
   protected def nextSample(): Long = throw new NotImplementedError("Any ActivityTimeAndDeviation subclass should implement it's own random generator function with the signature 'def nextSample(): Long'")
-  def nextTime(): LocalTime = time.plusMinutes(nextSample())
+  def nextTime(): LocalTime = time.plusSeconds(nextSample())
 }
 
 final case class NoDeviation(time: LocalTime) extends ActivityTime(time) {

@@ -1,5 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphMATSimKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingConfig}
