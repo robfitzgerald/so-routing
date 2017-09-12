@@ -52,6 +52,9 @@ case object KSPSearchLeaf extends KSPEmptyNode
 
 case class TreeBuildData [V,E] (srcVertex: V, dstVertex: V, path: List[E], cost: List[Double])
 
+/**
+  * methods on KSP Search Trees
+  */
 object KSPSearchTree {
 
   def buildTree [O <: ODPath[V,E], V, E] (paths: GenSeq[O]): KSPSearchTree = {

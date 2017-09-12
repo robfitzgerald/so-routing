@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.routing.localgraphrouting
+package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -123,7 +123,7 @@ object LocalGraphRoutingUESOModule01 {
           case NumProcs(n) => ParallelRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds, n)
         }
 
-        val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRoute, routingConfig)
+        val routingAlgorithm: Future[RoutingResult] = LocalGraphRouting01.route(graph, groupToRoute, routingConfig)
 
         val routingResult: RoutingResult = Await.result(routingAlgorithm, RoutingAlgorithmTimeout)
         routingResult match {

@@ -14,7 +14,7 @@ class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, distance: Double
   lazy val freeFlowTravelTime: Double = distance / freeFlowSpeed
   val costTerm1: Double = freeFlowTravelTime
   lazy val costTerm2: Double = freeFlowTravelTime * 0.15D
-  lazy val marginalCostTerm: Double = costTerm2 * 4
+  lazy val marginalCostTerm1: Double = costTerm2 * 4
 
   /**
     * calculates the link travel time, via S_a(v_a) = t_a(1 + 0.15(v_a/c_a)^4) = t_a + 0.15t_a(v_a/c_a)^4 = costTerm1 + costTerm2 * expTerm
@@ -37,7 +37,7 @@ class BPRCostFunction (capacity: Double, freeFlowSpeed: Double, distance: Double
     * @param flow the current value for flow, which will be added to the fixed flow
     * @return
     */
-  override def marginalCost(flow: Double): Double = marginalCostTerm * pow(flow / capacity, 3)
+  override def marginalCost(flow: Double): Double = marginalCostTerm1 * pow(flow / capacity, 3)
 }
 
 object BPRCostFunction extends CostFunctionFactory {

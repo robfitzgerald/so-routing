@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.routing.localgraphrouting
+package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -90,7 +90,7 @@ object LocalGraphRoutingUEModule {
             case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
           }
 
-        graph.toString
+//        graph.toString
 
         fileHelper.removeSnapshotFiles(timeGroupStart)
 

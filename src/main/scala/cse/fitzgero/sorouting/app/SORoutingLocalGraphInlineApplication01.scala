@@ -4,7 +4,7 @@ import java.time.LocalTime
 
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.population._
-import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting.{LocalGraphRoutingUESOModule01, LocalGraphRoutingModuleResult}
+import cse.fitzgero.sorouting.algorithm.routing.localgraph.{LocalGraphRoutingUESOModule01, LocalGraphRoutingModuleResult}
 import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction

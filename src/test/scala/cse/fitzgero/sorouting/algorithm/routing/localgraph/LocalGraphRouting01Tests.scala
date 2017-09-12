@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.routing.localgraphrouting
+package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import java.time.LocalTime
 
@@ -13,7 +13,7 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
 import cse.fitzgero.sorouting.util.convenience._
 
-class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
+class LocalGraphRouting01Tests extends SORoutingAsyncUnitTestTemplate {
   "LocalGraphRouting" when {
     val networkFilePath =            "src/test/resources/SimpleKSPTests/ksp-simple-alternate-routes-network.xml"
     val snapshotFilePath =           "src/test/resources/SimpleKSPTests/ksp-simple-alternate-routes-snapshot.xml"
@@ -68,9 +68,9 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val fiveByFiveNetworkXML = XML.loadFile(fiveByFiveNetworkFilePath)
           PopulationMultipleTripsFactory.setSeed(1)
           val population = PopulationOneTrip.generateRandomOneTripPopulation(fiveByFiveNetworkXML, config(200 persons))
-          LocalGraphRouting.route(graph, population, localConfig) flatMap {
+          LocalGraphRouting01.route(graph, population, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, _, _, _, runTimeLocal) =>
-              LocalGraphRouting.route(graph, population, parConfig) map {
+              LocalGraphRouting01.route(graph, population, parConfig) map {
                 case LocalGraphRoutingResult(resPar, _, _, _, runTimePar) =>
                   println(s"runTimePar: $runTimePar runTimeLocal: $runTimeLocal")
                   runTimePar should be < runTimeLocal
@@ -94,9 +94,9 @@ class LocalGraphRoutingTests extends SORoutingAsyncUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get
           val puebloNetworkXML = XML.loadFile(ryeNetworkFilePath)
           val population = PopulationOneTrip.generateRandomOneTripPopulation(puebloNetworkXML, config(20 persons))
-          LocalGraphRouting.route(graph, population, localConfig) flatMap {
+          LocalGraphRouting01.route(graph, population, localConfig) flatMap {
             case LocalGraphRoutingResult(resLocal, _, _, _, runTimeLocal) =>
-              LocalGraphRouting.route(graph, population, parConfig) map {
+              LocalGraphRouting01.route(graph, population, parConfig) map {
                 case LocalGraphRoutingResult(resPar, _, _, _, runTimePar) =>
                   println(s"networkSize: ${graph.edges.size} edges; runTimePar: ${runTimePar/1000D} secs; runTimeLocal: ${runTimeLocal/1000D} secs")
                   runTimePar should be < runTimeLocal

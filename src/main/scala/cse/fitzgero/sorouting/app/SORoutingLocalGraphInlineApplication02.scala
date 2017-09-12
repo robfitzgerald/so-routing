@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.app
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.algorithm.routing.localgraphrouting._
+import cse.fitzgero.sorouting.algorithm.routing.localgraph._
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.population._
@@ -47,6 +47,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
       )
 
 
+  println(s"${LocalTime.now()} - running 100% UE simulation")
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
@@ -68,6 +69,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     BPRCostFunction
   )
 
+  println(s"${LocalTime.now()} - running our algorithm")
   //----------------------------------------------------------------------------------------------
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
@@ -76,6 +78,8 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
     (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
   }
+
+  println(s"${LocalTime.now()} - running UESO simulation")
   //----------------------------------------------------------------------------------------------
   //  3. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
@@ -92,6 +96,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     BPRCostFunction
   )
 
+  println(s"${LocalTime.now()} - analyzing results")
   //----------------------------------------------------------------------------------------------
   //  4. Analyze Results
   //----------------------------------------------------------------------------------------------

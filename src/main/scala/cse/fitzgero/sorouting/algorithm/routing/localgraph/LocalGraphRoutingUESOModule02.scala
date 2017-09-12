@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.routing.localgraphrouting
+package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -50,26 +50,7 @@ object LocalGraphRoutingUESOModule02 {
     */
   def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModule02Result = {
 
-//    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
-
     val (populationSO, populationUE) = population.subsetPartition(conf.routePercentage)
-
-//    XML.save(s"${fileHelper.thisExperimentDirectory}/soPop.xml", populationSO.toXml)
-
-    // assign shortest path search to all UE drivers
-//    val graphWithNoFlows: LocalGraphMATSim =
-//      LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
-//        .fromFile(fileHelper.thisNetworkFilePath) match {
-//        case Success(g) => g
-//        case Failure(_) => throw new Error(s"failed to load network file ${fileHelper.thisNetworkFilePath}")
-//      }
-
-//    val populationDijkstrasRoutes = conf.processes match {
-//      case OneProc => populationPartial.exportAsODPairsByEdge.map(sssp.shortestPath(graphWithNoFlows, _))
-//      case _ => populationPartial.exportAsODPairsByEdge.par.map(sssp.shortestPath(graphWithNoFlows.par, _))
-//    }
-
-//    val populationUE = populationDijkstrasRoutes.foldLeft(populationPartial)(_.updatePerson(_))
 
     val timeGroups: Iterator[TimeGroup] =
       (StartOfDay +: (LocalTime.parse(conf.startTime).toSecondOfDay until LocalTime.parse(conf.endTime).toSecondOfDay by conf.timeWindow))
@@ -98,7 +79,7 @@ object LocalGraphRoutingUESOModule02 {
           s"$snapshotDirectory/matsim-output",
           conf.timeWindow,
           conf.startTime,
-          timeGroupEnd.format(HHmmssFormat), // TODO shouldn't this be timeGroupStart?
+          timeGroupStart.format(HHmmssFormat),
           ArgsNotMissingValues
         ))
 
@@ -111,7 +92,8 @@ object LocalGraphRoutingUESOModule02 {
         val graph: LocalGraphMATSim =
           LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
             .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
-            case Success(g) => g.par
+            case Success(g) =>
+              g.par
             case Failure(e) => throw new Error(s"failed to load network file $networkFilePath and snapshot $snapshotFilePath")
           }
 
@@ -126,11 +108,16 @@ object LocalGraphRoutingUESOModule02 {
         }
 
         // run shortest path based on time/cost function graph for selfish (UE) population subset
-        val routesUE: GenSeq[LocalGraphODPath] = groupToRouteUE.exportAsODPairsByEdge.map(sssp.shortestPath(graph, _))
+        val routesUE: GenSeq[LocalGraphODPath] =
+          groupToRouteUE
+            .exportAsODPairsByEdge
+            .par // TODO: parallelism should be selectable
+            .map(sssp.shortestPath(graph, _))
+
         val withUpdatedUERoutes: PopulationOneTrip = routesUE.foldLeft(groupToRouteUE)(_.updatePerson(_))
 
         // run system-optimal routing algorithm for system-optimal (SO) population subset
-        val routingAlgorithmResult: Future[RoutingResult] = LocalGraphRouting.route(graph, groupToRouteSO, routingConfig)
+        val routingAlgorithmResult: Future[RoutingResult] = LocalGraphRouting01.route(graph, groupToRouteSO, routingConfig)
         val routedSO: RoutingResult = Await.result(routingAlgorithmResult, RoutingAlgorithmTimeout)
 
         routedSO match {
