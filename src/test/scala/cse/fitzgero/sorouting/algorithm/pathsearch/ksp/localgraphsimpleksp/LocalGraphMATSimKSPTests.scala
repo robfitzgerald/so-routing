@@ -1,8 +1,7 @@
-package cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraph.simpleksp
+package cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{LocalGraphMATSimKSP, LocalGraphSimpleKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, LocalGraphMATSimFactory, VertexMATSim}

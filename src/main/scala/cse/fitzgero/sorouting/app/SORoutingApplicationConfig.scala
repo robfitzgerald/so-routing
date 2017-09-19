@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.app
 
 import com.typesafe.config._
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, PathsFoundBounds, TimeBounds}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{FWBounds, IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds}
+import cse.fitzgero.sorouting.algorithm.flowestimation.{FWBounds, IterationFWBounds, RelativeGapFWBounds, RunningTimeFWBounds}
 import cse.fitzgero.sorouting.util._
 import org.apache.log4j.Level
 import org.rogach.scallop._
@@ -13,7 +13,6 @@ case class SORoutingApplicationConfig (
   networkFilePath: String,
   outputDirectory: String,
   processes: Parallelism,
-  logging: Level,
   timeWindow: Int,
   k: Int,
   kspBounds: KSPBounds,
@@ -40,15 +39,14 @@ object SORoutingApplicationConfig {
       case "1" => OneProc
       case x: String => NumProcs(x.toInt)
     }
-    val logging: Level = Level.toLevel(config.getString("soRouting.application.logging"))
 
     // Algorithm configuration
     val timeWindow: Int = config.getInt("soRouting.algorithm.timeWindow")
-    val k: Int = config.getInt("soRouting.algorithm.k")
-    val kspBounds: KSPBounds = config.getString("soRouting.algorithm.kspBoundsType") match {
-      case "pathsfound" => PathsFoundBounds(config.getInt("soRouting.algorithm.kspBoundsValue"))
-      case "time" => TimeBounds(config.getInt("soRouting.algorithm.kspBoundsValue"))
-      case _ => throw new ConfigException.NotResolved("soRouting.algorithm.kspBounds{Type|Value} should be defined in application.conf")
+    val k: Int = config.getInt("soRouting.algorithm.ksp.k")
+    val kspBounds: KSPBounds = config.getString("soRouting.algorithm.ksp.kspBoundsType") match {
+      case "pathsfound" => PathsFoundBounds(config.getInt("soRouting.algorithm.ksp.kspBoundsValue"))
+      case "time" => TimeBounds(config.getInt("soRouting.algorithm.ksp.kspBoundsValue"))
+      case _ => throw new ConfigException.NotResolved("soRouting.algorithm.ksp.kspBounds{Type|Value} should be defined in application.conf")
     }
     val fwBounds: FWBounds = config.getString("soRouting.algorithm.fwBoundsType") match {
       case "iteration" => IterationFWBounds(config.getInt("soRouting.algorithm.fwBoundsValue"))
@@ -68,7 +66,6 @@ object SORoutingApplicationConfig {
       networkFile,
       outputDirectory,
       processes,
-      logging,
       timeWindow,
       k,
       kspBounds,
@@ -121,14 +118,14 @@ object SORoutingApplicationConfig {
 
     // OPTIONAL
     conf.k.toOption match {
-      case Some(k) => System.setProperty("soRouting.algorithm.k", k.toString)
+      case Some(k) => System.setProperty("soRouting.algorithm.ksp.k", k.toString)
       case None =>
     }
     conf.ksptype.toOption match {
       case Some(t) => conf.kspvalue.toOption match {
         case Some(v) =>
-          System.setProperty("soRouting.algorithm.kspBoundsType", t)
-          System.setProperty("soRouting.algorithm.kspBoundsValue", v)
+          System.setProperty("soRouting.algorithm.ksp.kspBoundsType", t)
+          System.setProperty("soRouting.algorithm.ksp.kspBoundsValue", v)
         case None =>
       }
       case None =>

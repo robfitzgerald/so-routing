@@ -4,7 +4,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 
 import scala.collection.{GenMap, GenSeq}
 
-// a sealed tree hierarchy for building and traversing multiple shortest paths with a common root
+// a tree hierarchy for building and traversing multiple shortest paths with a common root
 // note: there are k different leaf nodes for the k different paths, but, they represent only one
 // vertex in the real graph.
 //
@@ -17,8 +17,7 @@ import scala.collection.{GenMap, GenSeq}
 //   KSPSearchLeaf(o)   KSPInvalidNode(o)     KSPSearchLeaf(o)   KSPSearchRoot[E]   KSPSearchBranch[E]
 //
 
-trait KSPSearchTree
-
+sealed trait KSPSearchTree
 case object KSPEmptySearchTree extends KSPSearchTree
 abstract class KSPSearchNode[E] extends KSPSearchTree {
   def children: GenMap[E, (Double, KSPSearchTree)]
@@ -43,13 +42,11 @@ case class KSPSearchBranch[E] (children: GenMap[E, (Double, KSPSearchTree)], dep
     s"${tabs}branch of ksp\n${printChildren(tabs)}"
   }
 }
-
 abstract class KSPEmptyNode extends KSPSearchNode[Nothing] {
   def children: GenMap[Nothing, (Double, KSPSearchTree)] = GenMap.empty[Nothing, (Double, KSPSearchTree)]
 }
 case object KSPInvalidNode extends KSPEmptyNode
 case object KSPSearchLeaf extends KSPEmptyNode
-
 case class TreeBuildData [V,E] (srcVertex: V, dstVertex: V, path: List[E], cost: List[Double])
 
 /**

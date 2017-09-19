@@ -4,26 +4,23 @@ import java.time.Instant
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
 
-import scala.reflect.runtime.universe._
-import scala.collection.{GenIterable, GenMap, GenSeq}
+import scala.collection.GenSeq
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphKSPSearchTree, LocalGraphMATSimKSP, LocalGraphSimpleKSP}
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphKSPSearchTree}
 import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.trafficassignment.{FWBounds, NoTrafficAssignmentSolution, TrafficAssignmentResult}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.{LocalGraphFWSolverResult, LocalGraphFrankWolfe}
-import cse.fitzgero.sorouting.matsimrunner.population.{Population, PopulationOneTrip}
+import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
+import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFWSolverResult
+import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.util.Logging
 
 
 /**
   * runs concurrent fw + ksp, then selects routes based on the two results
   */
-object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] {
-
-
+object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] with Logging {
   override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {
     val startTime = Instant.now().toEpochMilli
 
@@ -36,7 +33,6 @@ object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] 
 
     val promise = Promise[RoutingResult]()
 
-//    println("starting")
     Future {
       kShortestAsync onComplete {
         case Success(kShortestPaths: GenSeq[(KSPLocalGraphMATSimResult, KSPSearchTree)]) =>
@@ -53,15 +49,8 @@ object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] 
             case Success(fwResult: TrafficAssignmentResult) =>
               fwResult match {
                 case LocalGraphFWSolverResult(macroscopicFlowEstimate, fwIterations, fwRunTime, relGap) =>
-//                  println(s"fw iters: $iter time: $time relGap: $relGap network:")
-//                  println(s"$network")
-//                  println(s"kShortest")
-//                  println(s"${kShortestPaths.map(_.toString)}")
-
                   val routeSelectionStartTime = Instant.now().toEpochMilli
-
                   val selectedSystemOptimalRoutes = LocalGraphRouteSelection.selectRoutes(kspPaths, macroscopicFlowEstimate)
-
                   val routeSelectionRunTime = Instant.now().toEpochMilli - routeSelectionStartTime
                   val overallRunTime = Instant.now().toEpochMilli - startTime
 
@@ -77,9 +66,6 @@ object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] 
 
                 case _ => promise.failure(new IllegalStateException())
               }
-
-            // TODO: call method to select routes using flow estimation as a heuristic
-
             case Failure(e) =>
               promise.failure(new IllegalStateException(e))
           }

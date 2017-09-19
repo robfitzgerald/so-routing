@@ -91,3 +91,4 @@ object LocalGraph {
   def apply[A,B](adj: Map[VertexId, Map[EdgeId, VertexId]], v: Map[VertexId, A], e: Map[EdgeId, B]): LocalGraph[A,B] =
     new LocalGraph[A,B](adj, v, e)
 }
+

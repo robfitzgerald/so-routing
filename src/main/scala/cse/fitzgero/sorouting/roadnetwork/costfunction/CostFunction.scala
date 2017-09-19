@@ -1,6 +1,5 @@
 package cse.fitzgero.sorouting.roadnetwork.costfunction
 
-
 abstract class CostFunction extends Serializable {
   def fixedFlow: Double
   def freeFlowCost: Double

@@ -7,11 +7,11 @@ import cse.fitzgero.sorouting.SORoutingAsyncUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.NoKSPBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPairByVertex
 import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.trafficassignment._
+import cse.fitzgero.sorouting.algorithm.flowestimation._
 import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{LocalGraphMATSim, LocalGraphMATSimFactory}
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 class LocalGraphRouting01Tests extends SORoutingAsyncUnitTestTemplate {
   "LocalGraphRouting" when {

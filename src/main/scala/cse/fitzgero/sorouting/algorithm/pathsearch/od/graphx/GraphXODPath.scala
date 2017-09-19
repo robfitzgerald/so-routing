@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx
+package cse.fitzgero.sorouting.algorithm.pathsearch.od.graphx
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId

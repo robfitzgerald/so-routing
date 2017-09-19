@@ -2,12 +2,12 @@ package cse.fitzgero.sorouting.util.standalone
 
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
-
 import scala.util.{Failure, Success, Try}
-import cse.fitzgero.sorouting.util.PrintToResultFile
+
+import cse.fitzgero.sorouting.util.{Logging, PrintToResultFile}
 
 
-object TaskScriptGenerator extends App {
+object TaskScriptGenerator extends App with Logging {
 
   val (conf, experiments) = TaskScriptGeneratorParseArgs.parse(args)
 
@@ -50,14 +50,14 @@ object TaskScriptGenerator extends App {
 
 
   val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/${conf.name()}")).toString
-  println(s"experiment directory created at $createExperimentDirectory")
+  logger.info(s"experiment directory created at $createExperimentDirectory")
   val header = s"""echo "${PrintToResultFile.resultFileHeader}" >> result/${conf.name()}/result.csv"""
 
   val experimentsWithHeader = (header +: experiments).mkString("\n")
 
   toRawFile("experiments.sh", experimentsWithHeader) match {
-    case Success(fileName) => println(s"saved $fileName.")
-    case Failure(e) => println(s"failed. ${e.getMessage}")
+    case Success(fileName) => logger.info(s"saved $fileName.")
+    case Failure(e) => logger.warn(s"failed", e)
   }
 
   def toRawFile(fileName: String, content: String): Try[String] = {

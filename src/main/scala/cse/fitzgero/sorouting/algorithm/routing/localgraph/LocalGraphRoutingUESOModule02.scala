@@ -13,7 +13,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByVertex, LocalGraphODPath}
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.{LocalGraphMATSimSSSP, LocalGraphVertexOrientedSSSP}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationFWBounds
+import cse.fitzgero.sorouting.algorithm.flowestimation.IterationFWBounds
 import cse.fitzgero.sorouting.app.SORoutingApplicationConfig
 import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerConfig, MATSimSingleSnapshotRunnerModule}
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
@@ -32,7 +32,7 @@ case class LocalGraphRoutingUESOResult02RunTimes(ksp: List[Long] = List(), fw: L
   */
 case class LocalGraphRoutingModule02Result(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingUESOResult02RunTimes = LocalGraphRoutingUESOResult02RunTimes())
 
-object LocalGraphRoutingUESOModule02 {
+object LocalGraphRoutingUESOModule02 extends Logging {
 
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds
@@ -71,7 +71,6 @@ object LocalGraphRoutingUESOModule02 {
         val snapshotPopulation: PopulationOneTrip = acc.population.exportTimeGroup(LocalTime.MIN, timeGroupEnd)
         val snapshotDirectory: String = fileHelper.scaffoldSnapshot(snapshotPopulation, timeGroupStart, timeGroupEnd)
 
-//        println(s"${LocalTime.now()} [routeUESO] snapshot run for timeGroup [$timeGroupStart, $timeGroupEnd) - ${snapshotPopulation.size} persons")
         // ----------------------------------------------------------------------------------------
         // 1. run MATSim snapshot for the populations associated with all previous time groups
         val matsimSnapshotRun = MATSimSingleSnapshotRunnerModule(MATSimRunnerConfig(
@@ -89,7 +88,6 @@ object LocalGraphRoutingUESOModule02 {
         val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
         val snapshotFilePath: String = matsimSnapshotRun.filePath
 
-//        println(s"${LocalTime.now()} [routeUESO] loading graph")
         val graph: LocalGraphMATSim =
           LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = conf.timeWindow)
             .fromFileAndSnapshot(networkFilePath, snapshotFilePath) match {
@@ -105,7 +103,6 @@ object LocalGraphRoutingUESOModule02 {
           case NumProcs(n) => ParallelRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds, n)
         }
 
-//        println(s"${LocalTime.now()} [routeUESO] beginning route algorithms")
         // run shortest path based on time/cost function graph for selfish (UE) population subset
         val routingUE: Future[PopulationOneTrip] =
           Future {
@@ -122,14 +119,11 @@ object LocalGraphRoutingUESOModule02 {
 
         routingSO match {
           case LocalGraphRoutingResult(routesSO, kspRunTime, fwRunTime, routeSelectionRunTime, overallRunTime) =>
-//            println(s"${LocalTime.now()} [routeUESO] SO algorithm complete")
             val routesUE: PopulationOneTrip = Await.result(routingUE, RoutingAlgorithmTimeout)
-//            println(s"${LocalTime.now()} [routeUESO] UE algorithm complete")
             val withUpdatedUERoutes: PopulationOneTrip = routesUE
             val withUpdatedSORoutes: PopulationOneTrip = routesSO.foldLeft(groupToRouteSO)(_.updatePerson(_))
 
             val prevRT: LocalGraphRoutingUESOResult02RunTimes = acc.runTimes
-//            println(s"${LocalTime.now()} [routeUESO] finishing with timeGroup [$timeGroupStart, $timeGroupEnd)")
             acc.copy(
               population = acc.population.reintegrateSubset(withUpdatedSORoutes).reintegrateSubset(withUpdatedUERoutes),
               routeCountUE = acc.routeCountUE + routesUE.size,

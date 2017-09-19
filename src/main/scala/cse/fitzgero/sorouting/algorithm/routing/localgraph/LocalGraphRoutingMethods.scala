@@ -1,18 +1,18 @@
 package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphMATSimKSP}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingConfig}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.TrafficAssignmentResult
-import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.LocalGraphFrankWolfe
+import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
+import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFrankWolfe
 import cse.fitzgero.sorouting.roadnetwork.localgraph.LocalGraphMATSim
+import cse.fitzgero.sorouting.util.Logging
 
 import scala.collection.GenSeq
 import scala.concurrent.Future
 
-object LocalGraphRoutingMethods {
+object LocalGraphRoutingMethods extends Logging {
   //  selecting our routes starts with a KSP tree for each od pair. we want to select exactly one route for that od.
   //
   //  map the collection of KSP trees to a recursive function that will
@@ -25,7 +25,6 @@ object LocalGraphRoutingMethods {
   def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPairByEdge], config: RoutingConfig): Future[GenSeq[KSPLocalGraphMATSimResult]] = {
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
-        // TODO: use procs value (modify ExecutionContext?)
         Future {
           odPairs.grouped(blockSize).flatMap(_.par.map(od => KSP.kShortestPaths(g, od, k, kspBounds))).toSeq
         }
@@ -40,7 +39,6 @@ object LocalGraphRoutingMethods {
   def trafficAssignmentOracleFlow(g: LocalGraphMATSim, odPairs: GenSeq[LocalGraphODPairByVertex], config: RoutingConfig): Future[TrafficAssignmentResult] =
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
-        // TODO: use procs value (modify ExecutionContext?)
         Future {
           LocalGraphFrankWolfe.solve(g.par, odPairs.par, config.fwBounds)
         }

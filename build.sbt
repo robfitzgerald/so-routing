@@ -29,3 +29,9 @@ libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"
 
 // ~~~ TypeSafe Config
 libraryDependencies += "com.typesafe" % "config" % "1.3.1"
+
+
+// ~~~ Logging - log service - using log4j instead
+//libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
+// ~~~ Logging - logging wrapper
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2" // exclude("org.slf4j", "slf4j-log4j12")

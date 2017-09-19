@@ -3,6 +3,7 @@ package cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.GraphXMSSP
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.graphx._
+import cse.fitzgero.sorouting.util.Logging
 import org.apache.spark.graphx.{EdgeTriplet, VertexId}
 
 
@@ -13,7 +14,7 @@ import org.apache.spark.graphx.{EdgeTriplet, VertexId}
   * https://spark.apache.org/docs/2.1.0/graphx-programming-guide.html#pregel-api
   */
 
-object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] {
+object SimpleMSSP extends GraphXMSSP[SimpleMSSP_ODPair, SimpleMSSP_ODPath] with Logging {
   private var costMethod: CostMethod = CostFlow()
 
   def setCostMethod(c: CostMethod): Unit = { costMethod = c; }

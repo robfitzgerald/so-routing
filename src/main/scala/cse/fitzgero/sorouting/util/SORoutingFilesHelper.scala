@@ -20,7 +20,7 @@ import cse.fitzgero.sorouting.app._
   * Produces a directory layout (See bottom of SORoutingFileHelper.scala) and provides utilities for fs interaction within the experiment
   * @param conf configuration of this experiment
   */
-class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) {
+class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends Logging {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Constructor

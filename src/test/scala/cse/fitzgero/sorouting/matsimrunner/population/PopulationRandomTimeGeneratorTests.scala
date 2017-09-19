@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.matsimrunner.population
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 class PopulationRandomTimeGeneratorTests extends SORoutingUnitTestTemplate {
   "PopulationRandomTimeGenerator" when {

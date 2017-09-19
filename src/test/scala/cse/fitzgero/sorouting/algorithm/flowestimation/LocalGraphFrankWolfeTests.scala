@@ -1,15 +1,15 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment
+package cse.fitzgero.sorouting.algorithm.flowestimation
 
 import java.time.LocalTime
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
-import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph._
+import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph._
 import cse.fitzgero.sorouting.matsimrunner.population.{PopulationMultipleTrips, PopulationMultipleTripsFactory, RandomPopulationConfig}
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, TestCostFunction}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.LocalGraphMATSimFactory
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 import scala.collection.GenSeq
 import scala.collection.parallel.ParSeq

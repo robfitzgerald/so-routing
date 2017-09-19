@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.util
 
 import java.time.LocalTime
 
-package object convenience {
+package object implicits {
 
   class PostfixIntTypeNames(x: Int) {
     def iterations: Int = x

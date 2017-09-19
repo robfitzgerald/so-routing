@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment
+package cse.fitzgero.sorouting.algorithm.flowestimation
 
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPair
 import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
@@ -25,7 +25,7 @@ trait TrafficAssignment [G, O <: ODPair[_]] {
   }
 
   /**
-    * convenience methods for types of Phi values
+    * implicits methods for types of Phi values
     */
   case object Phi {
     /**

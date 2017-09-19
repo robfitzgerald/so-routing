@@ -1,19 +1,23 @@
 package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
+import scala.collection.GenSeq
+
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeId, LocalGraphMATSim, VertexId}
+import cse.fitzgero.sorouting.util.Logging
 
-import scala.collection.GenSeq
-
-object LocalGraphRouteSelection {
+object LocalGraphRouteSelection extends Logging {
   /**
     * use the flow estimate as a oracle to select the best alternate paths
     * @param trees a tree of alternate paths
     * @param macroscopicFlowEstimate a graph with outflow proportions at each vertex
     * @return
     */
-  def selectRoutes(trees: GenSeq[KSPSearchNode[EdgeId]], macroscopicFlowEstimate: LocalGraphMATSim): GenSeq[LocalGraphODPath] = {
+  def selectRoutes(
+    trees: GenSeq[KSPSearchNode[EdgeId]],
+    macroscopicFlowEstimate: LocalGraphMATSim
+  ): GenSeq[LocalGraphODPath] = {
     def _selectRoute(tree: KSPSearchTree): List[(EdgeId, Double)] = {
       tree match {
         case x if x.isInstanceOf[KSPSearchRoot[_, _]] =>

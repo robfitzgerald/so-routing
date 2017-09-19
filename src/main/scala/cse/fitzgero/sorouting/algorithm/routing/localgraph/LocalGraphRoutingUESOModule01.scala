@@ -10,7 +10,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.PathsFoundBounds
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPairByVertex
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp.{LocalGraphMATSimSSSP, LocalGraphVertexOrientedSSSP}
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingResult}
-import cse.fitzgero.sorouting.algorithm.trafficassignment.IterationFWBounds
+import cse.fitzgero.sorouting.algorithm.flowestimation.IterationFWBounds
 import cse.fitzgero.sorouting.app.SORoutingApplicationConfig
 import cse.fitzgero.sorouting.matsimrunner.{ArgsNotMissingValues, MATSimRunnerConfig, MATSimSingleSnapshotRunnerModule}
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
@@ -31,7 +31,7 @@ case class LocalGraphRoutingResultRunTimes(ksp: List[Long] = List(), fw: List[Lo
   */
 case class LocalGraphRoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingUESOResult02RunTimes = LocalGraphRoutingUESOResult02RunTimes())
 
-object LocalGraphRoutingUESOModule01 {
+object LocalGraphRoutingUESOModule01 extends Logging {
 
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds
@@ -49,11 +49,7 @@ object LocalGraphRoutingUESOModule01 {
     */
   def routeAllRequestedTimeGroups(conf: SORoutingApplicationConfig, fileHelper: SORoutingFilesHelper, population: PopulationOneTrip): LocalGraphRoutingModuleResult = {
 
-//    val SomeParallelProcessesSetting: Int = 2 // TODO: more clearly handle parallelism at config level
-
     val (populationSO, populationPartial) = population.subsetPartition(conf.routePercentage)
-
-//    XML.save(s"${fileHelper.thisExperimentDirectory}/soPop.xml", populationSO.toXml)
 
     // assign shortest path search to all UE drivers
     val graphWithNoFlows: LocalGraphMATSim =
@@ -114,8 +110,6 @@ object LocalGraphRoutingUESOModule01 {
           }
 
         fileHelper.removeSnapshotFiles(timeGroupStart)
-
-        //        println(s"${timeGroupStart.format(HHmmssFormat)} : routing ${groupToRoute.persons.size} requests: ${groupToRoute.persons.map(p => (p.id, p.act1.opts)).mkString(", ")}")
 
         val routingConfig = conf.processes match {
           case OneProc => LocalRoutingConfig(conf.k, conf.kspBounds, conf.fwBounds)

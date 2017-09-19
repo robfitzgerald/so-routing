@@ -2,8 +2,11 @@ package cse.fitzgero.sorouting.roadnetwork.localgraph
 
 import scala.collection.{GenMap, GenSeq, GenSet}
 
-class LocalGraphMATSim
-(adj: GenMap[VertexId, Map[EdgeId, VertexId]], _vAttr: GenMap[VertexId, VertexMATSim], _eAttr: GenMap[EdgeId, EdgeMATSim], _eTrip: GenMap[EdgeId, Triplet])
+class LocalGraphMATSim (
+  adj: GenMap[VertexId, Map[EdgeId, VertexId]],
+  _vAttr: GenMap[VertexId, VertexMATSim],
+  _eAttr: GenMap[EdgeId, EdgeMATSim],
+  _eTrip: GenMap[EdgeId, Triplet])
   extends LocalGraph[VertexMATSim, EdgeMATSim](adj, _vAttr, _eAttr) {
 
   def edgeTripletOf(e: EdgeId): Option[Triplet] =
@@ -62,3 +65,4 @@ object LocalGraphMATSim {
     _eTrip: GenMap[EdgeId, Triplet]): LocalGraphMATSim =
     new LocalGraphMATSim(adj, _v, _e, _eTrip)
 }
+

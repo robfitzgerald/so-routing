@@ -9,13 +9,13 @@ import cse.fitzgero.sorouting.matsimrunner.population._
 import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 
-object SORoutingLocalGraphInlineApplication02 extends App {
+object SORoutingLocalGraphInlineApplication02 extends App with Logging {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
-  println(conf)
+  logger.info(conf.toString)
 
   val fileHelper = SORoutingFilesHelper(conf)
   val networkData = MATSimNetworkToCollection(fileHelper.thisNetworkFilePath)
@@ -47,7 +47,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
       )
 
 
-  println(s"${LocalTime.now()} - running 100% UE simulation")
+  logger.info("running 100% UE simulation")
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
@@ -56,6 +56,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     fileHelper.savePopulation(routingResultUE.population, FullUEExp, FullUEPopulation)
     routingResultUE.routeCountUE
   }
+
   MATSimSingleAnalyticSnapshotRunnerModule(
     MATSimRunnerConfig(
       fileHelper.finalConfigFilePath(FullUEExp),
@@ -69,7 +70,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     BPRCostFunction
   )
 
-  println(s"${LocalTime.now()} - running our algorithm")
+  logger.info("running our algorithm")
   //----------------------------------------------------------------------------------------------
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
@@ -79,7 +80,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
   }
 
-  println(s"${LocalTime.now()} - running UESO simulation")
+  logger.info("running UESO simulation")
   //----------------------------------------------------------------------------------------------
   //  3. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
@@ -96,7 +97,7 @@ object SORoutingLocalGraphInlineApplication02 extends App {
     BPRCostFunction
   )
 
-  println(s"${LocalTime.now()} - analyzing results")
+  logger.info("analyzing results")
   //----------------------------------------------------------------------------------------------
   //  4. Analyze Results
   //----------------------------------------------------------------------------------------------

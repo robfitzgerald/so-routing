@@ -6,7 +6,7 @@ import scala.xml.XML
 import scala.xml.dtd.{DocType, SystemID}
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.{ODPairs, SimpleMSSP_ODPath}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 
 // TODO finish Population overhaul

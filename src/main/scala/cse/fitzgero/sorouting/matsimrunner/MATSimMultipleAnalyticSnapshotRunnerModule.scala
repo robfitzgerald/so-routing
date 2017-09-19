@@ -2,8 +2,6 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.app.MATSimSimulator
-
 import scala.collection.JavaConverters._
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
@@ -13,6 +11,7 @@ import org.matsim.core.scenario.ScenarioUtils
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.matsimrunner.network._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFunctionFactory}
+import cse.fitzgero.sorouting.util.Logging
 
 // should collect more interesting information about events.
 // for each snapshot,
@@ -26,10 +25,10 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFuncti
 // aggregated to an overall population analysis
 
 
-class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator {
+class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator with Logging {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
-  println(matsimConfig.toString)
+  logger.info(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"
@@ -62,10 +61,8 @@ class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConf
                   val writerData: WriterData = WriterData(snapshotOutputDirectory, currentIteration, timeTracker.currentTimeStringFS)
                   NetworkAnalyticStateCollector.toXMLFile(writerData, currentNetworkState)
                   timeTracker = timeTracker.advance
-//                  println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker advanced due to event inaction. group is now ${timeTracker.currentTimeString}")
                 }
 
-//                println(s"${LocalTime.now} - MATSimSnapshotRunner iter $currentIteration - timeTracker group is now ${timeTracker.currentTimeString}")
                 currentNetworkState = currentNetworkState.update(e)
               }
             }

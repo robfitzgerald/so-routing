@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.roadnetwork.edge
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{BPRCostFunction, CostFunctionAttributes}
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 
 class MacroscopicEdgePropertyTests extends SORoutingUnitTestTemplate {

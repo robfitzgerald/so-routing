@@ -1,19 +1,15 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import cse.fitzgero.sorouting.app.MATSimSimulator
-import org.apache.log4j.{Level, Logger}
+import cse.fitzgero.sorouting.util.Logging
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
 
-class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator {
-  // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
-
-  println(matsimConfig)
+class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator with Logging {
+  logger.debug(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}"
-
   val config: Config = ConfigUtils.loadConfig(matsimConfig.matsimConfigFile)
   config.controler().setOutputDirectory(matsimOutputDirectory)
   val scenario: Scenario = ScenarioUtils.loadScenario(config)
@@ -27,7 +23,6 @@ class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimula
     matsimConfig.outputDirectory
   }
 
-  suppressMATSimInfoLogging()
   run()
 }
 

@@ -9,15 +9,15 @@ import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
-import cse.fitzgero.sorouting.util.convenience._
+import cse.fitzgero.sorouting.util.implicits._
 
 
 
 
-object SORoutingLocalGraphInlineApplication01 extends App {
+object SORoutingLocalGraphInlineApplication01 extends App with Logging {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
-  println(conf)
+  logger.info(conf.toString)
 
   val fileHelper = SORoutingFilesHelper(conf)
   val networkData = MATSimNetworkToCollection(fileHelper.thisNetworkFilePath)

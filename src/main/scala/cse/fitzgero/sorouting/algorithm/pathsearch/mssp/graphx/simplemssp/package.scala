@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx
 
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.graphx.{GraphXODPair, GraphXODPath}
 import cse.fitzgero.sorouting.matsimrunner.population.PersonIDType
 import cse.fitzgero.sorouting.roadnetwork.graphx._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.EdgeId

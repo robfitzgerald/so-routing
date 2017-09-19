@@ -2,20 +2,17 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.app.MATSimSimulator
-
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
-
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
-
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.matsimrunner.network._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFunctionFactory}
+import cse.fitzgero.sorouting.util.Logging
 
 
 // should collect more interesting information about events.
@@ -30,9 +27,9 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFuncti
 // aggregated to an overall population analysis
 
 
-class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator {
+class MATSimSingleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator with Logging {
 
-  //  println(matsimConfig.toString)
+  logger.info(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}/matsim"
   val snapshotOutputDirectory: String = s"${matsimConfig.outputDirectory}/snapshot"

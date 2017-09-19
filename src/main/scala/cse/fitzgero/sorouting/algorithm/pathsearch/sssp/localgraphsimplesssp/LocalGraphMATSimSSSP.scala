@@ -3,8 +3,9 @@ package cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp
 import cse.fitzgero.sorouting.algorithm.pathsearch.SSSP
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.util.Logging
 
-class LocalGraphMATSimSSSP extends SSSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath] {
+class LocalGraphMATSimSSSP extends SSSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath] with Logging {
 
   val SSSP: LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
     LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()

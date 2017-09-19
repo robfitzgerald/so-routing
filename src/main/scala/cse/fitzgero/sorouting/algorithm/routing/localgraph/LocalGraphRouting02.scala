@@ -5,10 +5,11 @@ import java.time.Instant
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphKSPSearchTree}
 import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.trafficassignment.TrafficAssignmentResult
-import cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph.LocalGraphFWSolverResult
+import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
+import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFWSolverResult
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
+import cse.fitzgero.sorouting.util.Logging
 
 import scala.collection.GenSeq
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,7 +22,7 @@ import scala.util.{Failure, Success}
   * this is probably a bad idea!!  the flows from fw are flows that we want to fit to, not flows we want to avoid. setting up KSP to
   * use the estimated flows will make KSP avoid those flows.
   */
-object LocalGraphRouting02 extends Routing[LocalGraphMATSim, PopulationOneTrip] {
+object LocalGraphRouting02 extends Routing[LocalGraphMATSim, PopulationOneTrip] with Logging {
 
 
   override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {

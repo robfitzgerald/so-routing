@@ -2,23 +2,26 @@ package cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp
 
 import java.time.Instant
 
+import com.typesafe.config.ConfigFactory
 import cse.fitzgero.sorouting.algorithm.pathsearch.KSP
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, NoKSPBounds}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, VertexMATSim}
-
-import scala.collection.GenSeq
+import cse.fitzgero.sorouting.util.Logging
 
 /**
   * Solves Edge-oriented K-Shortest-Paths problems, as MATSim is an edge-oriented simulator
   * Internally determines if KSP needs to be called, and if so, frames the problem as a vertex-oriented KSP
   * and calls the Vertex-Oriented solver.
   */
-class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath]{
+class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath] with Logging {
 
-  val KSP: LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
-    LocalGraphSimpleKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
-  val startTime = Instant.now().toEpochMilli
+  val KSP: LocalGraphKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
+    ConfigFactory.load().getInt("soRouting.algorithm.ksp.localgraph.version") match {
+      case 1 => LocalGraphSimpleKSP01[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+      case 2 => LocalGraphSimpleKSP02[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
+    }
+  val startTime: Long = Instant.now().toEpochMilli
 
   override def kShortestPaths(graph: LocalGraphMATSim, od: LocalGraphODPairByEdge, k: Int = 1, bounds: KSPBounds = NoKSPBounds): KSPLocalGraphMATSimResult = {
     val oTriplet = graph.edgeTripletOf(od.src).get
@@ -64,6 +67,7 @@ class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, 
           path = oTriplet.e +: res.path :+ dTriplet.e,
           cost = oCost +: res.cost :+ dCost
         ))
+        logger.info(f"[ksp] ${od.src} -> ${od.dst} has ${result.kSelected} paths with ${result.paths.flatMap(_.path).distinct.size.toDouble / result.paths.flatMap(_.path).size}%02f %% unique edges in its edge set")
         KSPLocalGraphMATSimResult(
           kspMATSimPaths,
           result.kRequested,

@@ -1,16 +1,15 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment.localgraph
+package cse.fitzgero.sorouting.algorithm.flowestimation.localgraph
 
 import java.time.Instant
 
 import scala.collection.GenSeq
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
-import cse.fitzgero.sorouting.algorithm.trafficassignment._
-import cse.fitzgero.sorouting.roadnetwork.edge.MacroscopicEdgeProperty
+import cse.fitzgero.sorouting.algorithm.flowestimation._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, _}
+import cse.fitzgero.sorouting.util.Logging
 
-object LocalGraphFrankWolfe
-  extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPairByVertex] {
+object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPairByVertex] with Logging {
 
   val SSSP: LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
     LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
@@ -39,7 +38,7 @@ object LocalGraphFrankWolfe
       terminationCriteria
         .eval(TerminationData(startTime, iteration, relativeGap(currentGraph, oracleGraph)))
 
-//      println(s"_solve at iteration $iteration with phi ${phi.value} and network cost ${currentGraph.edgeAttrs.map(_.linkCostFlow).sum}")
+      logger.info(s"_solve at iteration $iteration with phi ${phi.value} and network cost ${currentGraph.edgeAttrs.map(_.linkCostFlow).sum}")
 
       if (stoppingConditionIsMet) {
         val totalTime = Instant.now().toEpochMilli - startTime
@@ -79,7 +78,6 @@ object LocalGraphFrankWolfe
       odPairs
       .flatMap(od => {
         val path = SSSP.shortestPath(g, od)
-//        println(path)
         path.path
       })
       .groupBy(identity)

@@ -5,11 +5,14 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
+import cse.fitzgero.sorouting.util.Logging
 
 import scala.annotation.tailrec
 
 
-class LocalGraphVertexOrientedSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends SSSP[G, LocalGraphODPairByVertex, LocalGraphODPath] {
+class LocalGraphVertexOrientedSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty]
+  extends SSSP[G, LocalGraphODPairByVertex, LocalGraphODPath] with Logging {
+
   override def shortestPath (graph: G, od: LocalGraphODPairByVertex): LocalGraphODPath =
     djikstrasAlgorithm(graph, od)
 
@@ -77,7 +80,10 @@ class LocalGraphVertexOrientedSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_]
   @tailrec
   final def _backPropagate
   (searchResults: Map[VertexId, SimpleSSSP_SearchNode])
-    (currentVertex: VertexId, result: List[(EdgeId, Double)] = List.empty[(EdgeId, Double)]): List[(EdgeId, Double)] = {
+    (
+      currentVertex: VertexId,
+      result: List[(EdgeId, Double)] = List.empty[(EdgeId, Double)]
+    ): List[(EdgeId, Double)] = {
     val currentNode: SimpleSSSP_SearchNode = searchResults(currentVertex)
     currentNode.π match {
       case Origin => result.reverse

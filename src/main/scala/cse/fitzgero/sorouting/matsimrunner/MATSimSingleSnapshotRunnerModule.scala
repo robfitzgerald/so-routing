@@ -3,14 +3,11 @@ package cse.fitzgero.sorouting.matsimrunner
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
-
 import org.matsim.api.core.v01.network.Link
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
-
-import cse.fitzgero.sorouting.app.MATSimSimulator
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 
 

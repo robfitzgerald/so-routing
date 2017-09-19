@@ -1,6 +1,6 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment.graphx
+package cse.fitzgero.sorouting.algorithm.flowestimation.graphx
 
-import cse.fitzgero.sorouting.algorithm.trafficassignment._
+import cse.fitzgero.sorouting.algorithm.flowestimation._
 import cse.fitzgero.sorouting.algorithm.pathsearch.mssp.graphx.simplemssp.ODPaths
 import cse.fitzgero.sorouting.roadnetwork.graphx.GraphxRoadNetwork
 

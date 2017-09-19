@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.algorithm.trafficassignment
+package cse.fitzgero.sorouting.algorithm.flowestimation
 
 import java.time.Instant
 
