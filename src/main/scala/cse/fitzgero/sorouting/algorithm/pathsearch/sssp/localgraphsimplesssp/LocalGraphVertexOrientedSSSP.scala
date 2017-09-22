@@ -5,13 +5,13 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.edge._
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.vertex._
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 import scala.annotation.tailrec
 
 
 class LocalGraphVertexOrientedSSSP [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty]
-  extends SSSP[G, LocalGraphODPairByVertex, LocalGraphODPath] with Logging {
+  extends SSSP[G, LocalGraphODPairByVertex, LocalGraphODPath] with ClassLogging {
 
   override def shortestPath (graph: G, od: LocalGraphODPairByVertex): LocalGraphODPath =
     djikstrasAlgorithm(graph, od)

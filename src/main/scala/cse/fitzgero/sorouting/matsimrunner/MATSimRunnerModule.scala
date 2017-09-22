@@ -1,12 +1,12 @@
 package cse.fitzgero.sorouting.matsimrunner
 
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 import org.matsim.api.core.v01.{Id, Scenario}
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
 import org.matsim.core.scenario.ScenarioUtils
 
-class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator with Logging {
+class MATSimRunnerModule (matsimConfig: MATSimRunnerConfig) extends MATSimSimulator with ClassLogging {
   logger.debug(matsimConfig.toString)
 
   val matsimOutputDirectory: String = s"${matsimConfig.outputDirectory}"

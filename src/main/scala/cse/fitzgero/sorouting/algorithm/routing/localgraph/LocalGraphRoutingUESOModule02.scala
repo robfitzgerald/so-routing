@@ -32,7 +32,7 @@ case class LocalGraphRoutingUESOResult02RunTimes(ksp: List[Long] = List(), fw: L
   */
 case class LocalGraphRoutingModule02Result(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingUESOResult02RunTimes = LocalGraphRoutingUESOResult02RunTimes())
 
-object LocalGraphRoutingUESOModule02 extends Logging {
+object LocalGraphRoutingUESOModule02 extends ClassLogging {
 
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds

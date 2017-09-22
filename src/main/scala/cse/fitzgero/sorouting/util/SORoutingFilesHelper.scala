@@ -20,7 +20,7 @@ import cse.fitzgero.sorouting.app._
   * Produces a directory layout (See bottom of SORoutingFileHelper.scala) and provides utilities for fs interaction within the experiment
   * @param conf configuration of this experiment
   */
-class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends Logging {
+class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLogging {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -38,12 +38,12 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends Logging
   // Directory information for this experiment
   private val baseDir: String = if (conf.outputDirectory.head == '/') conf.outputDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.outputDirectory}"
   private val resultFile: String = s"$baseDir/result.csv"
-  val thisExperimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
+  private val experimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
   private val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
   private val resultsDirectory: String = s"$thisExperimentDirectory/results"
   private val fullUEResultsDirectory: String = s"$resultsDirectory/$FullUEExp"
   private val combinedUESOResultsDirectory: String = s"$resultsDirectory/$CombinedUESOExp"
-  val thisNetworkFilePath: String = s"$thisExperimentDirectory/network.xml"
+  private val networkFilePath: String = s"$thisExperimentDirectory/network.xml"
   private val relPathToMATSimTripDurationsFile: String = "matsim/ITERS/it.0/0.tripdurations.txt"
 
 
@@ -63,9 +63,10 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends Logging
   // Public methods
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+  def thisExperimentDirectory: String = experimentDirectory
+  def thisNetworkFilePath: String = networkFilePath
   def getNetwork: xml.Elem = network
-
+  def auxLoggingFileDirectory: String = experimentDirectory
 
   /**
     * set up the directory for this snapshot run

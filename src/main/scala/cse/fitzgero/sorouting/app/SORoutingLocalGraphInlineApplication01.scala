@@ -14,7 +14,7 @@ import cse.fitzgero.sorouting.util.implicits._
 
 
 
-object SORoutingLocalGraphInlineApplication01 extends App with Logging {
+object SORoutingLocalGraphInlineApplication01 extends App with ClassLogging {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
   logger.info(conf.toString)

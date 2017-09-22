@@ -29,7 +29,7 @@ import scala.xml.XML
   */
 case class LocalGraphUERoutingModuleResult(population: PopulationOneTrip, routeCountUE: Int = 0)
 
-object LocalGraphRoutingUEModule extends Logging {
+object LocalGraphRoutingUEModule extends ClassLogging {
 
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds

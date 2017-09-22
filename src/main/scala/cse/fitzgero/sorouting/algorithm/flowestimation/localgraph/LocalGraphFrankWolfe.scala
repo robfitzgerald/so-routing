@@ -7,9 +7,9 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph._
 import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.algorithm.flowestimation._
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, _}
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
-object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPairByVertex] with Logging {
+object LocalGraphFrankWolfe extends TrafficAssignment[LocalGraphMATSim, LocalGraphODPairByVertex] with ClassLogging {
 
   val SSSP: LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
     LocalGraphVertexOrientedSSSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()

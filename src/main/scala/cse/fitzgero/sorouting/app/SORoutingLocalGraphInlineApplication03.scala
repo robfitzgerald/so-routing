@@ -6,13 +6,12 @@ import cse.fitzgero.sorouting.algorithm.routing.localgraph._
 import cse.fitzgero.sorouting.matsimrunner._
 import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.population._
-import cse.fitzgero.sorouting.matsimrunner.util.GenerateSelfishPopulationFile
 import cse.fitzgero.sorouting.roadnetwork.costfunction.BPRCostFunction
 import cse.fitzgero.sorouting.util._
 import cse.fitzgero.sorouting.util.implicits._
 
 
-object SORoutingLocalGraphInlineApplication02 extends App with ClassLogging {
+object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
 
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig(args)
   logger.info(conf.toString)
@@ -117,4 +116,7 @@ object SORoutingLocalGraphInlineApplication02 extends App with ClassLogging {
     fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(CombinedUESOExp).getOrElse(-1D)
   ))
+
+  AuxLogger.setPath("algorithm", fileHelper.auxLoggingFileDirectory)
+  AuxLogger.get("algorithm").writeLog()
 }

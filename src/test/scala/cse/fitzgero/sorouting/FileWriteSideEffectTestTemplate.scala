@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting
 
 import java.io.File
+import java.nio.file.{Files, Path, Paths}
 
 import scala.util.{Failure, Success, Try}
 
@@ -14,9 +15,14 @@ abstract class FileWriteSideEffectTestTemplate (testName: String) extends SORout
     */
   val testRootPath: String = s"src/test/temp/$testName"
 
+  private val fullPath: Path = Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath")
+
+  if (!Files.exists(fullPath))
+    Files.createDirectory(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath"))
+
   private def clearTempData: Try[String]= {
     Try({
-      val file: File = new File(testRootPath)
+      val file: File = new File(s"$testRootPath/*")
       delete(file).filter(_._2).map(_._1).mkString("\n")
     })
   }

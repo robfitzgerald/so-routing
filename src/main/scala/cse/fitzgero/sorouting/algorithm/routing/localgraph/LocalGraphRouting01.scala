@@ -14,13 +14,13 @@ import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
 import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFWSolverResult
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 
 /**
   * runs concurrent fw + ksp, then selects routes based on the two results
   */
-object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] with Logging {
+object LocalGraphRouting01 extends Routing[LocalGraphMATSim, PopulationOneTrip] with ClassLogging {
   override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {
     val startTime = Instant.now().toEpochMilli
 

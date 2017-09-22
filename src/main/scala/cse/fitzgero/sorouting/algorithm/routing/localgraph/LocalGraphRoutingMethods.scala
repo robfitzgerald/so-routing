@@ -7,12 +7,12 @@ import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRou
 import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
 import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFrankWolfe
 import cse.fitzgero.sorouting.roadnetwork.localgraph.LocalGraphMATSim
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 import scala.collection.GenSeq
 import scala.concurrent.Future
 
-object LocalGraphRoutingMethods extends Logging {
+object LocalGraphRoutingMethods extends ClassLogging {
   //  selecting our routes starts with a KSP tree for each od pair. we want to select exactly one route for that od.
   //
   //  map the collection of KSP trees to a recursive function that will

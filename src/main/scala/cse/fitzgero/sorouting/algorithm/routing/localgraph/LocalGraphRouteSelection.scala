@@ -5,9 +5,9 @@ import scala.collection.GenSeq
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeId, LocalGraphMATSim, VertexId}
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
-object LocalGraphRouteSelection extends Logging {
+object LocalGraphRouteSelection extends ClassLogging {
   /**
     * use the flow estimate as a oracle to select the best alternate paths
     * @param trees a tree of alternate paths

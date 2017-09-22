@@ -7,14 +7,14 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.KSP
 import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPBounds, NoKSPBounds}
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPairByEdge, LocalGraphODPairByVertex, LocalGraphODPath}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeMATSim, LocalGraphMATSim, VertexMATSim}
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 /**
   * Solves Edge-oriented K-Shortest-Paths problems, as MATSim is an edge-oriented simulator
   * Internally determines if KSP needs to be called, and if so, frames the problem as a vertex-oriented KSP
   * and calls the Vertex-Oriented solver.
   */
-class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath] with Logging {
+class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, LocalGraphODPath] with ClassLogging {
 
   val KSP: LocalGraphKSP[LocalGraphMATSim, VertexMATSim, EdgeMATSim] =
     ConfigFactory.load().getInt("soRouting.algorithm.ksp.localgraph.version") match {

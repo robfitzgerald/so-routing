@@ -4,10 +4,10 @@ import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
 import scala.util.{Failure, Success, Try}
 
-import cse.fitzgero.sorouting.util.{Logging, PrintToResultFile}
+import cse.fitzgero.sorouting.util.{ClassLogging, PrintToResultFile}
 
 
-object TaskScriptGenerator extends App with Logging {
+object TaskScriptGenerator extends App with ClassLogging {
 
   val (conf, experiments) = TaskScriptGeneratorParseArgs.parse(args)
 

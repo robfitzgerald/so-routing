@@ -11,7 +11,7 @@ import org.matsim.core.scenario.ScenarioUtils
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.matsimrunner.network._
 import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, CostFunctionFactory}
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 // should collect more interesting information about events.
 // for each snapshot,
@@ -25,7 +25,7 @@ import cse.fitzgero.sorouting.util.Logging
 // aggregated to an overall population analysis
 
 
-class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator with Logging {
+class MATSimMultipleAnalyticSnapshotRunnerModule (matsimConfig: MATSimRunnerConfig, networkData: Network, costFunctionFactory: CostFunctionFactory) extends MATSimSimulator with ClassLogging {
   // example AppConfig("examples/tutorial/programming/example7-config.xml", "output/example7", "5", "06:00:00", "07:00:00", ArgsNotMissingValues)
 
   logger.info(matsimConfig.toString)

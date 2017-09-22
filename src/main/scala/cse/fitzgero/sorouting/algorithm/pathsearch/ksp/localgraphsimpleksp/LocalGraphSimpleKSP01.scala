@@ -11,7 +11,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.sssp.localgraphsimplesssp._
 import cse.fitzgero.sorouting.roadnetwork.edge.EdgeProperty
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.roadnetwork.vertex.VertexProperty
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
 
 /**
@@ -23,7 +23,7 @@ import cse.fitzgero.sorouting.util.Logging
   * @tparam V vertex type
   * @tparam E edge type
   */
-class LocalGraphSimpleKSP01 [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends LocalGraphKSP[G, V, E] with Logging {
+class LocalGraphSimpleKSP01 [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends LocalGraphKSP[G, V, E] with ClassLogging {
 
   val sssp: LocalGraphVertexOrientedSSSP[G,V,E] = LocalGraphVertexOrientedSSSP[G,V,E]()
 

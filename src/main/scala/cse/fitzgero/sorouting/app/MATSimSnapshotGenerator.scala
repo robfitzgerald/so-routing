@@ -1,9 +1,9 @@
 package cse.fitzgero.sorouting.app
 
 import cse.fitzgero.sorouting.matsimrunner._
-import cse.fitzgero.sorouting.util.Logging
+import cse.fitzgero.sorouting.util.ClassLogging
 
-object MATSimSnapshotGenerator extends App with Logging {
+object MATSimSnapshotGenerator extends App with ClassLogging {
 
   val appConfig: MATSimRunnerConfig = args match {
     case Array(in, out, wD, sT, eT) => MATSimRunnerConfig(in, out, wD.toInt, sT, eT, ArgsNotMissingValues)
