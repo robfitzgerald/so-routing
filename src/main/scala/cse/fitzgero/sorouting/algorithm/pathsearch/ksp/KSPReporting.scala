@@ -4,7 +4,7 @@ import scala.collection.GenSeq
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 import cse.fitzgero.sorouting.util.AuxLogger
 
-trait KSPInfoClassLogging {
+trait KSPReporting {
 
   private val logger = AuxLogger.get("algorithm")
 

@@ -29,7 +29,7 @@ class LocalGraphSimpleKSP01Tests extends SORoutingUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFileAndSnapshot(networkFilePath, snapshotFilePath).get
           val ksp = LocalGraphSimpleKSP01[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("",1L, 11L), 100).paths
-          // should result in shortestPath.length + 1 distinct paths
+              // should result in shortestPath.length + 1 distinct paths
           result.distinct.size should equal (result.head.path.size + 1)
         }
       }
@@ -38,8 +38,7 @@ class LocalGraphSimpleKSP01Tests extends SORoutingUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP01[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254224738L), 10).paths
-
-          result.distinct.size should equal (10)
+              result.distinct.size should equal (10)
           result.iterator.sliding(2).foreach(pair => pair(0).cost.sum should be <= pair(1).cost.sum)
         }
       }
@@ -48,8 +47,7 @@ class LocalGraphSimpleKSP01Tests extends SORoutingUnitTestTemplate {
           val graph: LocalGraphMATSim = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10).fromFile(ryeNetworkFilePath).get.par
           val ksp = LocalGraphSimpleKSP01[LocalGraphMATSim, VertexMATSim, EdgeMATSim]()
           val result: GenSeq[LocalGraphODPath] = ksp.kShortestPaths(graph, LocalGraphODPairByVertex("", 2292029039L, 254224738L), 10, PathsFoundBounds(20)).paths
-
-          result.distinct.size should equal (10)
+              result.distinct.size should equal (10)
           result.iterator.sliding(2).foreach(pair => pair(0).cost.sum should be <= pair(1).cost.sum)
         }
       }

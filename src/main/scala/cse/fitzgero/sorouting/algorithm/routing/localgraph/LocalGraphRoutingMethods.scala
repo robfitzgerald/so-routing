@@ -6,13 +6,14 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.{LocalGraphODPa
 import cse.fitzgero.sorouting.algorithm.routing.{LocalRoutingConfig, ParallelRoutingConfig, RoutingConfig}
 import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
 import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFrankWolfe
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.KSPReporting
 import cse.fitzgero.sorouting.roadnetwork.localgraph.LocalGraphMATSim
 import cse.fitzgero.sorouting.util.ClassLogging
 
 import scala.collection.GenSeq
 import scala.concurrent.Future
 
-object LocalGraphRoutingMethods extends ClassLogging {
+object LocalGraphRoutingMethods extends ClassLogging with KSPReporting {
   //  selecting our routes starts with a KSP tree for each od pair. we want to select exactly one route for that od.
   //
   //  map the collection of KSP trees to a recursive function that will
@@ -26,11 +27,15 @@ object LocalGraphRoutingMethods extends ClassLogging {
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
         Future {
-          odPairs.grouped(blockSize).flatMap(_.par.map(od => KSP.kShortestPaths(g, od, k, kspBounds))).toSeq
+          val result = odPairs.grouped(blockSize).flatMap(_.par.map(od => KSP.kShortestPaths(g, od, k, kspBounds))).toSeq
+          routesWithKAlts(result, k)
+          result
         }
       case LocalRoutingConfig(k, kSPBounds, _) =>
         Future {
-          odPairs.map(od => KSP.kShortestPaths(g, od, k, kSPBounds))
+          val result = odPairs.map(od => KSP.kShortestPaths(g, od, k, kSPBounds))
+          routesWithKAlts(result, k)
+          result
         }
     }
   }

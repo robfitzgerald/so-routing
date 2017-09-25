@@ -67,7 +67,7 @@ class LocalGraphMATSimKSP extends KSP[LocalGraphMATSim, LocalGraphODPairByEdge, 
           path = oTriplet.e +: res.path :+ dTriplet.e,
           cost = oCost +: res.cost :+ dCost
         ))
-        logger.info(f"[ksp] ${od.src} -> ${od.dst} has ${result.kSelected} paths with ${result.paths.flatMap(_.path).distinct.size.toDouble / result.paths.flatMap(_.path).size}%02f %% unique edges in its edge set")
+//        logger.info(f"[ksp] ${od.src} -> ${od.dst} has ${result.kSelected} paths with ${result.paths.flatMap(_.path).distinct.size.toDouble / result.paths.flatMap(_.path).size}%02f %% unique edges in its edge set")
         KSPLocalGraphMATSimResult(
           kspMATSimPaths,
           result.kRequested,

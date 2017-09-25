@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.pathsearch.ksp
 
-import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
+import cse.fitzgero.sorouting.algorithm.pathsearch.od.{ODAltPathSet, ODPath}
 
 import scala.collection.GenSeq
 
@@ -17,7 +17,7 @@ case class NoKSPSolution (time: Long = 0L) extends KSPResult
   * a result of a k-shortest paths algorithm should fit these requirements
   * @tparam O origin-destination pairs with paths and costs
   */
-abstract class KSPSolution [O <: ODPath[_,_]] extends KSPResult {
+trait KSPSolution [O <: ODPath[_,_]] extends KSPResult with ODAltPathSet[O] {
   /**
     * the k paths, sorted in ascending order
     */

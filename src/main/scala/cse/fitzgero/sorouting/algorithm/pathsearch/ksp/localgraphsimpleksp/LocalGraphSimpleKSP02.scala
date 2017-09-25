@@ -26,7 +26,7 @@ import cse.fitzgero.sorouting.util.ClassLogging
   * @tparam V vertex type
   * @tparam E edge type
   */
-class LocalGraphSimpleKSP02 [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends LocalGraphKSP[G,V,E] with ClassLogging {
+class LocalGraphSimpleKSP02 [G <: LocalGraph[V,E], V <: VertexProperty[_], E <: EdgeProperty] extends LocalGraphKSP[G,V,E] with KSPReporting {
 
   val sssp: LocalGraphVertexOrientedSSSP[G,V,E] = LocalGraphVertexOrientedSSSP[G,V,E]()
   val OverlapThreshold: Double = ConfigFactory.load().getDouble("soRouting.algorithm.ksp.localgraph.kspOverlapThreshold")

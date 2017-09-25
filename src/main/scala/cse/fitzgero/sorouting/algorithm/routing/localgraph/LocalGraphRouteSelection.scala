@@ -39,7 +39,7 @@ object LocalGraphRouteSelection extends ClassLogging {
       }
     }
 
-    trees.map({
+    val result = trees.map({
       case x if x.isInstanceOf[KSPSearchRoot[_, _]] =>
         val node = x.asInstanceOf[KSPSearchRoot[VertexId,EdgeId]]
         val result: List[(EdgeId, Double)] = _selectRoute(x)
@@ -48,5 +48,9 @@ object LocalGraphRouteSelection extends ClassLogging {
       case _ =>
         LocalGraphODPath("",0,0,List(), List())
     })
+
+
+
+    result
   }
 }
