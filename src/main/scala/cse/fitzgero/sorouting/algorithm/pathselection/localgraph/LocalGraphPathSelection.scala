@@ -9,8 +9,7 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPat
 import cse.fitzgero.sorouting.algorithm.pathselection.{PathSelection, PathSelectionResult}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeId, LocalGraphMATSim}
 
-
-class LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGraphMATSim]{
+object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGraphMATSim]{
 
   /**
     * given a set of alternate paths for each O/D pair, select a best fit, and return the set of best fit paths
@@ -113,8 +112,4 @@ class LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGraph
   type Tag = String
 
   case class SelectData(personId: String, tag: String, cost: Double)
-}
-
-object LocalGraphPathSelection {
-  def apply(): LocalGraphPathSelection = new LocalGraphPathSelection()
 }

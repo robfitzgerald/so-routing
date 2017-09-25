@@ -7,6 +7,8 @@ import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPL
 import cse.fitzgero.sorouting.algorithm.routing._
 import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
 import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFWSolverResult
+import cse.fitzgero.sorouting.algorithm.pathselection.PathSelectionResult
+import cse.fitzgero.sorouting.algorithm.pathselection.localgraph.{LocalGraphPathSelection, LocalGraphPathSelectionResult}
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.util.ClassLogging
@@ -18,12 +20,9 @@ import scala.util.{Failure, Success}
 
 
 /**
-  * runs fw, runs ksp on resulting graph, then selects routes based on the two results
-  * this is probably a bad idea!!  the flows from fw are flows that we want to fit to, not flows we want to avoid. setting up KSP to
-  * use the estimated flows will make KSP avoid those flows.
+  * runs fw, runs ksp on resulting graph, then selects routes based on the two results using a combinatorial search
   */
 object LocalGraphRouting02 extends Routing[LocalGraphMATSim, PopulationOneTrip] with ClassLogging {
-
 
   override def route(g: LocalGraphMATSim, odPairs: PopulationOneTrip, config: RoutingConfig): Future[RoutingResult] = {
 
@@ -36,27 +35,22 @@ object LocalGraphRouting02 extends Routing[LocalGraphMATSim, PopulationOneTrip] 
         case Success(fwResult: TrafficAssignmentResult) =>
           fwResult match {
             case LocalGraphFWSolverResult(macroscopicFlowEstimate, fwIterations, fwRunTime, relGap) =>
-
-              LocalGraphRoutingMethods.findKShortest(macroscopicFlowEstimate, odPairs.exportAsODPairsByEdge, config).map(_.flatMap(result => LocalGraphKSPSearchTree(result.paths) match {
-                case KSPEmptySearchTree => None
-                case x => Some((result, x.asInstanceOf[KSPSearchRoot[VertexId, EdgeId]]))
-              })) onComplete {
-                case Success(kShortestPaths: GenSeq[(KSPLocalGraphMATSimResult, KSPSearchTree)]) =>
-                  val (kspResults, kspPaths) =
-                    kShortestPaths
-                      .unzip
-
+              LocalGraphRoutingMethods.findKShortest(macroscopicFlowEstimate, odPairs.exportAsODPairsByEdge, config) map {
+                case x: GenSeq[KSPLocalGraphMATSimResult] =>
+                  val kTimesNPaths = x.map(_.paths)
                   val kspRunTime = Instant.now().toEpochMilli - startTime
-                  val routeSelectionStartTime = Instant.now().toEpochMilli
-
-                  val selectedSystemOptimalRoutes = LocalGraphRouteSelection.selectRoutes(kspPaths, macroscopicFlowEstimate)
-
-                  val routeSelectionRunTime = Instant.now().toEpochMilli - routeSelectionStartTime
+                  (kspRunTime, LocalGraphPathSelection.run(kTimesNPaths, g))
+                case _ => None
+              } onComplete {
+                case Success(result: (Long, LocalGraphPathSelectionResult)) =>
+                  val kspRunTime = result._1
+                  val routeSelectionRunTime = result._2.runTime
+                  val routes = result._2.paths
                   val overallRunTime = Instant.now().toEpochMilli - startTime
 
                   promise.success(
                     LocalGraphRoutingResult(
-                      routes = selectedSystemOptimalRoutes,
+                      routes = routes,
                       kspRunTime = kspRunTime,
                       fwRunTime = fwRunTime,
                       routeSelectionRunTime = routeSelectionRunTime,

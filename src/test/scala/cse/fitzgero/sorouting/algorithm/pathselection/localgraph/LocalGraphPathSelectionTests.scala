@@ -32,8 +32,7 @@ class LocalGraphPathSelectionTests extends SORoutingAsyncUnitTestTemplate {
           )
         )
 
-        val PathSelection = LocalGraphPathSelection()
-        PathSelection.run(requests, graph) map {
+        LocalGraphPathSelection.run(requests, graph) map {
           case LocalGraphPathSelectionResult(paths, runTime) =>
             // there should be one result per person: 2 total
             paths.size should equal (2)
