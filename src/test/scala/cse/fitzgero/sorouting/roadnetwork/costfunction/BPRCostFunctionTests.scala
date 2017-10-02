@@ -7,7 +7,7 @@ class BPRCostFunctionTests extends SORoutingUnitTestTemplate {
     "generated" should {
       "generates a BPR Cost Function which, when all coefficients are 1, returns 1.15D" in {
         val costFunction = BPRCostFunction(CostFunctionAttributes(1, 1))
-        costFunction.costFlow(1) should equal (1.15D)
+        costFunction.costFlow(1) should equal (115D)
       }
       "generates a BPR Cost Function which is always positive for a range of values" in {
         val costFunction = BPRCostFunction(CostFunctionAttributes(10, 10))
@@ -23,11 +23,11 @@ class BPRCostFunctionTests extends SORoutingUnitTestTemplate {
       }
       "generates a BPR Cost Function whose freeFlowCost is based on a flow of zero from the default attribute" in {
         val costFunction = BPRCostFunction(CostFunctionAttributes(1, 1))
-        costFunction.freeFlowCost should equal (1D)
+        costFunction.freeFlowCost should equal (100D)
       }
       "generates a BPR Cost Function whose freeFlowCost is based on a passed in flow value" in {
         val costFunction = BPRCostFunction(CostFunctionAttributes(capacity = 10, freespeed = 1, flow = 10))
-        costFunction.freeFlowCost should equal (1.15D)
+        costFunction.freeFlowCost should equal (115D)
       }
     }
   }

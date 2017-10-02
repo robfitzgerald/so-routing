@@ -17,9 +17,11 @@ class PopulationTimeGeneratorTests extends SORoutingUnitTestTemplate {
         val result: GeneratedTimeValues = populationRandomTimeGenerator.next()
         result.foreach(a => println(a.toString))
         result("home").getHour should equal (9)
-        result("home").getMinute should equal (15)
+        result("home").getMinute should equal (0)
+        result("home").getSecond should equal (15)
         result("work").getHour should equal (7)
-        result("work").getMinute should equal (50)
+        result("work").getMinute should equal (59)
+        result("work").getSecond should equal (50)
       }
     }
   }

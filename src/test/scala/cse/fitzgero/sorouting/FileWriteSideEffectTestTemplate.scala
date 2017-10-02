@@ -18,7 +18,7 @@ abstract class FileWriteSideEffectTestTemplate (testName: String) extends SORout
   private val fullPath: Path = Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath")
 
   if (!Files.exists(fullPath))
-    Files.createDirectory(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath"))
+    Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath"))
 
   private def clearTempData: Try[String]= {
     Try({
