@@ -6,10 +6,10 @@ import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.localgraph.LocalGraphODPath
-import cse.fitzgero.sorouting.algorithm.pathselection.{PathSelection, PathSelectionResult}
+import cse.fitzgero.sorouting.algorithm.pathselection.{PathSelection, PathSelectionEmptySet, PathSelectionResult}
 import cse.fitzgero.sorouting.roadnetwork.localgraph.{EdgeId, LocalGraphMATSim}
 
-object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGraphMATSim]{
+object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGraphMATSim] {
 
   /**
     * given a set of alternate paths for each O/D pair, select a best fit, and return the set of best fit paths
@@ -19,21 +19,23 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
   override def run(set: GenSeq[GenSeq[LocalGraphODPath]], graph: LocalGraphMATSim): Future[PathSelectionResult] = {
 
     val startTime = Instant.now.toEpochMilli
-
     val (allChoiceCombinations, originalsMap): (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) = _prepareSet(set)
 
     Future {
-      val findCostOfThisChoiceSet = _findCostOfChoiceSet(originalsMap, graph)_
+      if (set.isEmpty) PathSelectionEmptySet
+      else {
+        val findCostOfThisChoiceSet = _findCostOfChoiceSet(originalsMap, graph)_
 
-      val selectedPathSet: GenSeq[LocalGraphODPath] =
-        _generateChoices(allChoiceCombinations)
-          .map(findCostOfThisChoiceSet)
-          .minBy(_._2)
-          ._1
-          .map(originalsMap(_)) // map from Tags to the ODPaths that they pointed at originally
+        val selectedPathSet: GenSeq[LocalGraphODPath] =
+          generateChoices(allChoiceCombinations)
+            .map(findCostOfThisChoiceSet)
+            .minBy(_._2)
+            ._1
+            .map(originalsMap(_)) // map from Tags to the ODPaths that they pointed at originally
 
-      val endTime = Instant.now.toEpochMilli
-      LocalGraphPathSelectionResult(selectedPathSet, endTime - startTime)
+        val endTime = Instant.now.toEpochMilli
+        LocalGraphPathSelectionResult(selectedPathSet, endTime - startTime)
+      }
     }
   }
 
@@ -43,18 +45,17 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
     * @return a tuple containing the two collections
     */
   def _prepareSet(set: GenSeq[GenSeq[LocalGraphODPath]]): (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) = {
-
     def makeTag(personId: String, index: Int): String = s"$personId#$index"
-
-    val (all, orig) = set
-      .flatMap(
-        _
-          .zipWithIndex // attach unique index for tagging
-          .map(tup => {
-          val tag = makeTag(tup._1.personId, tup._2)
-          (SelectData(tup._1.personId, tag, tup._1.cost.sum), (tag, tup._1))
-        })
-      ).unzip
+    val (all, orig) =
+      set
+        .flatMap(
+          _
+            .zipWithIndex // attach unique index for tagging
+            .map(tup => {
+            val tag = makeTag(tup._1.personId, tup._2)
+            (SelectData(tup._1.personId, tag, tup._1.cost.sum), (tag, tup._1))
+          })
+        ).unzip
     (all, orig.toMap)
   }
 
@@ -64,12 +65,12 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
     * @param solution a collection of tags where each one is associated with a unique personId
     * @return the possible combinations
     */
-  def _generateChoices(choices: GenSeq[SelectData], solution: Seq[Tag] = Seq.empty[Tag]): GenSeq[Seq[Tag]] = {
-    val filterChoicesByPerson = _constrainBy(choices)_
-    if (choices.isEmpty)
-      Seq(solution)
-    else
-      choices.flatMap(choice => _generateChoices(filterChoicesByPerson(choice), choice.tag +: solution))
+  def generateChoices(choices: GenSeq[SelectData], solution: Seq[Tag] = Seq.empty[Tag]): GenSeq[Seq[Tag]] = {
+    if (choices.isEmpty) Seq(solution)
+    else {
+      val filterChoicesByPerson = _constrainBy(choices)_
+      choices.filter(_.personId == choices.head.personId).flatMap(choice => generateChoices(filterChoicesByPerson(choice), choice.tag +: solution))
+    }
   }
 
   /**

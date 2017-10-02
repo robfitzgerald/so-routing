@@ -2,13 +2,10 @@ package cse.fitzgero.sorouting.algorithm.routing.localgraph
 
 import java.time.Instant
 
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp._
-import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.{KSPLocalGraphMATSimResult, LocalGraphKSPSearchTree}
-import cse.fitzgero.sorouting.algorithm.routing._
-import cse.fitzgero.sorouting.algorithm.flowestimation.TrafficAssignmentResult
-import cse.fitzgero.sorouting.algorithm.flowestimation.localgraph.LocalGraphFWSolverResult
-import cse.fitzgero.sorouting.algorithm.pathselection.PathSelectionResult
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.localgraphsimpleksp.KSPLocalGraphMATSimResult
 import cse.fitzgero.sorouting.algorithm.pathselection.localgraph.{LocalGraphPathSelection, LocalGraphPathSelectionResult}
+import cse.fitzgero.sorouting.algorithm.pathselection.{PathSelectionEmptySet, PathSelectionResult}
+import cse.fitzgero.sorouting.algorithm.routing._
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.roadnetwork.localgraph._
 import cse.fitzgero.sorouting.util.ClassLogging
@@ -29,41 +26,71 @@ object LocalGraphRouting02 extends Routing[LocalGraphMATSim, PopulationOneTrip] 
     val startTime = Instant.now().toEpochMilli
     val promise = Promise[RoutingResult]()
 
-    Future {
+    //    Future {
+    if (odPairs.size == 0) promise.success(RoutingEmptyRequests)
+    else {
+      val kspFuture: Future[GenSeq[KSPLocalGraphMATSimResult]] = LocalGraphRoutingMethods.findKShortest(g, odPairs.exportAsODPairsByEdge, config)
 
-      LocalGraphRoutingMethods.trafficAssignmentOracleFlow(g, odPairs.exportAsODPairsByVertex, config) onComplete {
-        case Success(fwResult: TrafficAssignmentResult) =>
-          fwResult match {
-            case LocalGraphFWSolverResult(macroscopicFlowEstimate, fwIterations, fwRunTime, relGap) =>
-              LocalGraphRoutingMethods.findKShortest(macroscopicFlowEstimate, odPairs.exportAsODPairsByEdge, config) map {
-                case x: GenSeq[KSPLocalGraphMATSimResult] =>
-                  val kTimesNPaths = x.map(_.paths)
-                  val kspRunTime = Instant.now().toEpochMilli - startTime
-                  (kspRunTime, LocalGraphPathSelection.run(kTimesNPaths, g))
-                case _ => None
-              } onComplete {
-                case Success(result: (Long, LocalGraphPathSelectionResult)) =>
-                  val kspRunTime = result._1
-                  val routeSelectionRunTime = result._2.runTime
-                  val routes = result._2.paths
-                  val overallRunTime = Instant.now().toEpochMilli - startTime
+      kspFuture flatMap (kspResult => {
+        val kTimesNPaths = kspResult.map(_.paths)
+        LocalGraphPathSelection.run(kTimesNPaths, g)
+      }) onComplete {
 
-                  promise.success(
-                    LocalGraphRoutingResult(
-                      routes = routes,
-                      kspRunTime = kspRunTime,
-                      fwRunTime = fwRunTime,
-                      routeSelectionRunTime = routeSelectionRunTime,
-                      overallRunTime = overallRunTime
-                    )
-                  )
-                case Failure(e) =>
-                  promise.failure(new IllegalStateException(e))
-              }
-          }
-        case _ => promise.failure(new IllegalStateException())
+        case Failure(e) => promise.failure(e)
+
+        case Success(selectionResult) => selectionResult match {
+          case PathSelectionEmptySet => promise.success(RoutingEmptyRequests)
+          case selectionResult: LocalGraphPathSelectionResult =>
+//            val routes = selectionResult.paths
+            val routeSelectionRunTime = selectionResult.runTime
+            val overallRunTime = Instant.now().toEpochMilli - startTime
+
+            promise.success(LocalGraphRoutingResult(
+              routes = selectionResult.paths,
+              kspRunTime = -1L,
+              fwRunTime = -1L,
+              routeSelectionRunTime = routeSelectionRunTime,
+              overallRunTime = overallRunTime
+            ))
+          case other => promise.failure(new IllegalArgumentException(s"PathSelectionResult with incorrect type was returned: ${other.getClass}"))
+        }
       }
     }
     promise.future
   }
 }
+
+//      kspFuture onComplete {
+//        case Failure(e) =>
+//          promise.failure(e)
+//        case Success(kspResult: GenSeq[KSPLocalGraphMATSimResult]) =>
+//          val kTimesNPaths = kspResult.map(_.paths)
+//          val kspRunTime = Instant.now().toEpochMilli - startTime
+//
+//          LocalGraphPathSelection.run(kTimesNPaths, g) onComplete {
+//            case Failure(e) =>
+//              promise.failure(e)
+//            case Success(selectionResult) =>
+//              selectionResult match {
+//                case PathSelectionEmptySet =>
+//                  promise.success(RoutingEmptyRequests)
+//                case selectionResult: LocalGraphPathSelectionResult =>
+//                  val routes = selectionResult.paths
+//                  val routeSelectionRunTime = selectionResult.runTime
+//                  val overallRunTime = Instant.now().toEpochMilli - startTime
+//                  val returnObject = LocalGraphRoutingResult(
+//                    routes = routes,
+//                    kspRunTime = -1L,
+//                    fwRunTime = -1L,
+//                    routeSelectionRunTime = routeSelectionRunTime,
+//                    overallRunTime = overallRunTime
+//                  )
+//
+//                  promise.success(returnObject)
+//              }
+//          }
+//      }
+//    }
+//    }
+
+

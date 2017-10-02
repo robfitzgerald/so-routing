@@ -50,6 +50,7 @@ object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
+//  val overallNumberOfTrips = 200
   val overallNumberOfTrips: Int = {
     val routingResultUE: LocalGraphUERoutingModuleResult = LocalGraphRoutingUEModule.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     fileHelper.savePopulation(routingResultUE.population, FullUEExp, FullUEPopulation)
@@ -74,7 +75,7 @@ object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
   val (runTimes, routeCountUE, routeCountSO) = {
-    val routingResult: LocalGraphRoutingModule02Result = LocalGraphRoutingUESOModule02.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+    val routingResult: LocalGraphRoutingModule03Result = LocalGraphRoutingUESOModule03.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
     (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
   }

@@ -9,4 +9,4 @@ abstract class PathSelectionFound [O <: ODPath[_,_]] extends PathSelectionResult
   def paths: GenSeq[O]
   def runTime: Long
 }
-object PathSelectionNotFound extends PathSelectionResult
+object PathSelectionEmptySet extends PathSelectionResult

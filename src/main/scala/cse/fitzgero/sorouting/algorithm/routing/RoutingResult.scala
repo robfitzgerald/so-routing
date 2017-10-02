@@ -11,6 +11,8 @@ abstract class RoutingSolution [O <: ODPath[_,_]] extends RoutingResult {
   def routes: GenSeq[O]
 }
 
+case object RoutingEmptyRequests extends RoutingResult
+
 /**
   * for cases when routing fails.  why would it fail?
   * - we could have a timeout

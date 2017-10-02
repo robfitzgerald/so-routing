@@ -45,7 +45,7 @@ trait MATSimSimulator {
     * tries DESPERATELY to quiet down MATSim logging
     * @param level optionally set the log level for all MATSim classes I could find
     */
-  def suppressMATSimInfoLogging(level: Level = Level.WARN): Unit = {
+  def suppressMATSimInfoLogging(level: Level = Level.ERROR): Unit = {
 
     Logger.getLogger(classOf[CharyparNagelActivityScoring]).setLevel(level)
     Logger.getLogger(classOf[MATSimConfig]).setLevel(level)
