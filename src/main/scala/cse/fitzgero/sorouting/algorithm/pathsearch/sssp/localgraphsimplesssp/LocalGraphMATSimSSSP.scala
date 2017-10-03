@@ -14,6 +14,12 @@ class LocalGraphMATSimSSSP extends SSSP[LocalGraphMATSim, LocalGraphODPairByEdge
   case class TripletPair(src: Triplet, dst: Triplet) extends SPTriplets
   case object InvalidPair extends SPTriplets
 
+  /**
+    * performs an edge-oriented shortest path search built on Dijkstra's algorithm
+    * @param graph a road network
+    * @param od an origin/destination pair
+    * @return the resulting shortest path
+    */
   override def shortestPath(graph: LocalGraphMATSim, od: LocalGraphODPairByEdge): LocalGraphODPath = {
 
     // TODO: currently unsafe, but that should be ok at this depth, right? The data structure shouldn't be getting confirmed here in the middle of this algorithm.
