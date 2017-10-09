@@ -24,9 +24,9 @@ case class LocalGraphRoutingUESOResult03RunTimes(ksp: List[Long] = List(), fw: L
   * @param population the complete population, with selfish and system-optimal routes applied
   * @param routeCountUE number of selfish routes produced. each person may have more than one route.
   * @param routeCountSO number of system-optimal routes produced.
-  * @param runTimes an object capturing the types of runtime values we are aggregating
+  * @param logs an object capturing the types of runtime values we are aggregating
   */
-case class LocalGraphRoutingModule03Result(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, runTimes: LocalGraphRoutingUESOResult03RunTimes = LocalGraphRoutingUESOResult03RunTimes())
+case class LocalGraphRoutingModule03Result(population: PopulationOneTrip, routeCountUE: Int = 0, routeCountSO: Int = 0, logs: LogsGroup = LogsGroup())
 
 object LocalGraphRoutingUESOModule03 extends ClassLogging {
 
@@ -114,22 +114,16 @@ object LocalGraphRoutingUESOModule03 extends ClassLogging {
         val routingSO: RoutingResult = Await.result(routingAlgorithmResult, RoutingAlgorithmTimeout)
 
         routingSO match {
-          case LocalGraphRoutingResult(routesSO, kspRunTime, fwRunTime, routeSelectionRunTime, overallRunTime) =>
+          case LocalGraphRoutingResult02(routesSO, logs) =>
             val routesUE: PopulationOneTrip = Await.result(routingUE, RoutingAlgorithmTimeout)
             val withUpdatedUERoutes: PopulationOneTrip = routesUE
             val withUpdatedSORoutes: PopulationOneTrip = routesSO.foldLeft(groupToRouteSO)(_.updatePerson(_))
 
-            val prevRT: LocalGraphRoutingUESOResult03RunTimes = acc.runTimes
             acc.copy(
               population = acc.population.reintegrateSubset(withUpdatedSORoutes).reintegrateSubset(withUpdatedUERoutes),
               routeCountUE = acc.routeCountUE + routesUE.size,
               routeCountSO = acc.routeCountSO + routesSO.size,
-              runTimes = prevRT.copy(
-                ksp = prevRT.ksp :+ kspRunTime,
-                fw = prevRT.fw :+ fwRunTime,
-                selection = prevRT.selection :+ routeSelectionRunTime,
-                overall = prevRT.overall :+ overallRunTime
-              )
+              acc.logs ++ logs
             )
           case x: RoutingResult =>
 //            println(s"routing result was $x")

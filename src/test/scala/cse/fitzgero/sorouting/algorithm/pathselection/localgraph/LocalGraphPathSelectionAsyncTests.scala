@@ -16,7 +16,7 @@ class LocalGraphPathSelectionAsyncTests extends SORoutingAsyncUnitTestTemplate {
               .fromFileAndSnapshot(TestAssets.networkFilePath, TestAssets.snapshotFilePath).get
 
           LocalGraphPathSelection.run(TestAssets.requests, graph) map {
-            case LocalGraphPathSelectionResult(paths, runTime) =>
+            case LocalGraphPathSelectionResult(paths, originals, runTime) =>
               // there should be one result per person: 2 total
               paths.size should equal (2)
               // person 2's alternates were very poor. it should force them to select the path through -[2]->-[11]->

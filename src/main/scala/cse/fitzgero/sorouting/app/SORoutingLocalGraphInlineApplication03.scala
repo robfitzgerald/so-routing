@@ -50,7 +50,6 @@ object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
-//  val overallNumberOfTrips = 200
   val overallNumberOfTrips: Int = {
     val routingResultUE: LocalGraphUERoutingModuleResult = LocalGraphRoutingUEModule.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     fileHelper.savePopulation(routingResultUE.population, FullUEExp, FullUEPopulation)
@@ -74,10 +73,25 @@ object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
   //----------------------------------------------------------------------------------------------
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
-  val (runTimes, routeCountUE, routeCountSO) = {
+  val (logs, routeCountUE, routeCountSO) = {
     val routingResult: LocalGraphRoutingModule03Result = LocalGraphRoutingUESOModule03.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
-    (routingResult.runTimes, routingResult.routeCountUE, routingResult.routeCountSO)
+
+
+    val analytics = routingResult.logs.analytic
+    val algorithmLogger = AuxLogger.get("algorithm")
+
+    val totalRoutes = analytics.getOrZero("algorithm.global.totalroutes")
+//    val altRoutesFound = analytics.getOrZero("algorithm.analytics.selection.altroutesfound")
+//    val choseOriginalRoute = analytics.getOrZero("algorithm.analytics.selection.choseoriginal")
+//    val selectionOriginalCost = analytics.getOrZero("algorithm.analytics.selection.originalcost.value")
+//    val selectionSORoutesCost = analytics.getOrZero("algorithm.analytics.selection.socost.value")
+
+    algorithmLogger.info("total routes (count)", totalRoutes)
+//    logger.info("ksp algorithm total alt routes found (count)", altRoutesFound)
+//    logger.info("ksp algorithm average alt routes found (count)", altRoutesFound / totalRoutes)
+
+    (routingResult.logs, routingResult.routeCountUE, routingResult.routeCountSO)
   }
 
   logger.info("running UESO simulation")
@@ -108,10 +122,10 @@ object SORoutingLocalGraphInlineApplication03 extends App with ClassLogging {
     routeCountSO,
     (conf.routePercentage * 100).toInt,
     conf.timeWindow,
-    runTimes.ksp,
-    runTimes.fw,
-    runTimes.selection,
-    runTimes.overall,
+    List(0L), // runTimes.ksp,
+    List(0L), // runTimes.fw,
+    List(0L), // runTimes.selection,
+    List(0L), // runTimes.overall,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),

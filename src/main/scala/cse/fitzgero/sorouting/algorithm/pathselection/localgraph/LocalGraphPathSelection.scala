@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.algorithm.pathselection.localgraph
 
 import java.time.Instant
 
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.{KSPResult, KSPSolution}
+
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,7 +18,7 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
     * @param set for each OD Pair, a set of alternate paths
     * @param graph a road network. we will add flows for each possible combination of these sets, and return the set with each driver that has the minimal cost
     */
-  override def run(set: GenSeq[GenSeq[LocalGraphODPath]], graph: LocalGraphMATSim): Future[PathSelectionResult] = {
+  override def run(set: GenSeq[KSPResult], graph: LocalGraphMATSim): Future[PathSelectionResult] = {
 
     val startTime = Instant.now.toEpochMilli
     val (allChoiceCombinations, originalsMap): (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) = _prepareSet(set)
@@ -34,7 +36,7 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
             .map(originalsMap(_)) // map from Tags to the ODPaths that they pointed at originally
 
         val endTime = Instant.now.toEpochMilli
-        LocalGraphPathSelectionResult(selectedPathSet, endTime - startTime)
+        LocalGraphPathSelectionResult(selectedPathSet, set, endTime - startTime)
       }
     }
   }
@@ -44,10 +46,11 @@ object LocalGraphPathSelection extends PathSelection[LocalGraphODPath, LocalGrap
     * @param set the K shortest paths set
     * @return a tuple containing the two collections
     */
-  def _prepareSet(set: GenSeq[GenSeq[LocalGraphODPath]]): (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) = {
+  def _prepareSet(set: GenSeq[KSPResult]): (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) = {
     def makeTag(personId: String, index: Int): String = s"$personId#$index"
     val (all, orig) =
       set
+        .flatMap({case x: KSPSolution[LocalGraphODPath] => Some(x.paths); case _ => None})
         .flatMap(
           _
             .zipWithIndex // attach unique index for tagging

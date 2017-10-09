@@ -22,12 +22,16 @@ object LocalGraphRoutingMethods extends ClassLogging with KSPReporting {
 
   val KSP: LocalGraphMATSimKSP = LocalGraphMATSimKSP()
 
-
   def findKShortest(g: LocalGraphMATSim, odPairs: Seq[LocalGraphODPairByEdge], config: RoutingConfig): Future[GenSeq[KSPLocalGraphMATSimResult]] = {
+
     config match {
       case ParallelRoutingConfig(k, kspBounds, _, procs, blockSize) =>
         Future {
-          val result = odPairs.grouped(blockSize).flatMap(_.par.map(od => KSP.kShortestPaths(g, od, k, kspBounds))).toSeq
+          val result =
+            odPairs
+              .grouped(blockSize)
+              .flatMap(_.par.map(od => KSP.kShortestPaths(g, od, k, kspBounds)))
+              .toSeq
           routesWithKAlts(result, k)
           result
         }

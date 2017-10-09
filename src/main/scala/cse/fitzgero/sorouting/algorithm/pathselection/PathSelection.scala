@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.pathselection
 
+import cse.fitzgero.sorouting.algorithm.pathsearch.ksp.KSPResult
 import cse.fitzgero.sorouting.algorithm.pathsearch.od.ODPath
 import cse.fitzgero.sorouting.roadnetwork.RoadNetwork
 
@@ -14,5 +15,5 @@ trait PathSelection [O <: ODPath[_,_], G <: RoadNetwork] {
     * @param set for each OD Pair, a set of alternate paths
     * @param graph a road network. we will add flows for each possible combination of these sets, and return the set with each driver that has the minimal cost
     */
-  def run (set: GenSeq[GenSeq[O]], graph: G): Future[PathSelectionResult]
+  def run (set: GenSeq[KSPResult], graph: G): Future[PathSelectionResult]
 }

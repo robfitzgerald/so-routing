@@ -58,6 +58,7 @@ class AuxLogger private[AuxLogger] (name: String, path: String, private val stor
   def generateUniqueKey(msg: String): Long =
     (LocalTime.now.hashCode * 10000000000L) + msg.hashCode
   def info(msg: String): Unit = storedAnalytics.update(generateUniqueKey(msg), msg)
+  def info(msg: String, value: Double): Unit = storedAnalytics.update(generateUniqueKey(msg+value), f"$msg $value%03f")
   def info(msg: String, t: Throwable): Unit = storedAnalytics.update(generateUniqueKey(msg), s"$msg ${t.getMessage}")
   def info(self: AnyRef, msg: String): Unit = storedAnalytics.update(generateUniqueKey(msg), s"${self.getClass.getCanonicalName} : $msg")
   def info(self: AnyRef, name: String, value: Double): Unit =

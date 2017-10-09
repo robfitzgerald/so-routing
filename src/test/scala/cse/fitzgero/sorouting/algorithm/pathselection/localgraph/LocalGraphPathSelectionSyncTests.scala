@@ -16,9 +16,9 @@ class LocalGraphPathSelectionSyncTests extends SORoutingUnitTestTemplate {
           val result: (GenSeq[SelectData], GenMap[Tag, LocalGraphODPath]) =
             LocalGraphPathSelection._prepareSet(TestAssets.requests)
 
-          result._1.map(_.tag).distinct.size should equal (TestAssets.requests.flatten.size)
+          result._1.map(_.tag).distinct.size should equal (TestAssets.requests.map(_.paths.size).sum)
           result._1.map(_.tag).forall(tag => result._2.isDefinedAt(tag)) should be (true)
-          result._2.keys.size should equal (TestAssets.requests.flatten.size)
+          result._2.keys.size should equal (TestAssets.requests.map(_.paths.size).sum)
           result._1.foreach(selectData => {
             result._2(selectData.tag).personId should equal (selectData.personId)
           })
@@ -37,7 +37,7 @@ class LocalGraphPathSelectionSyncTests extends SORoutingUnitTestTemplate {
         val findCost = LocalGraphPathSelection._findCostOfChoiceSet(originals, graph)_
         val result = choiceSets.map(findCost(_))
 //        println(result)
-        result.map(_._1.toSet).distinct.size should equal (TestAssets.requests.map(_.size).product)
+        result.map(_._1.toSet).distinct.size should equal (TestAssets.requests.map(_.paths.size).product)
       }
     }
   }
@@ -58,7 +58,7 @@ class LocalGraphPathSelectionSyncTests extends SORoutingUnitTestTemplate {
         val (choices, originals) = LocalGraphPathSelection._prepareSet(TestAssets.requests)
         val result = LocalGraphPathSelection.generateChoices(choices)
         result.foreach(println)
-        result.map(_.toSet).distinct.size should equal (TestAssets.requests.map(_.size).product)
+        result.map(_.toSet).distinct.size should equal (TestAssets.requests.map(_.paths.size).product)
       }
     }
   }
