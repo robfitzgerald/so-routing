@@ -4,7 +4,7 @@ import cse.fitzgero.sorouting.roadnetwork.costfunction.{CostFunction, TestCostFu
 
 
 /**
-  * basicgraph requirements for a traffic assignment optimization framework
+  * basic requirements for a traffic assignment optimization framework
   *
   * @param id the MATSim edge id, used when converting back to MATSim
   * @param assignedFlow current flow assignment on edge (vehicles/time), not including the snapshot flows
