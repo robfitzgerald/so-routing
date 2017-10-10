@@ -54,7 +54,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   private val populationDocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
 
 
-  // build the basic file directory setup for this experiment
+  // build the basicgraph file directory setup for this experiment
   scaffoldFileRequirements()
 
 

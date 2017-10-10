@@ -36,7 +36,7 @@ class PopulationMultipleTripsTests extends SORoutingUnitTestTemplate {
       }
     }
     "generateRandomPopulation" when {
-      "called with some basic config with one activity" should {
+      "called with some basicgraph config with one activity" should {
         "generates a population" in {
           val network = XML.loadFile(equilNetworkFile)
           val config =
