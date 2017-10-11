@@ -5,12 +5,12 @@ import java.time.LocalTime
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
-import cse.fitzgero.graph.algorithm.ShortestPathService
+import cse.fitzgero.graph.algorithm.ShortestPathAlgorithm
+import cse.fitzgero.graph.service.ShortestPathService
 import cse.fitzgero.sorouting.model.roadnetwork.local._
 
 
-object SSSPLocalDijkstrasService extends ShortestPathService {
+object SSSPLocalDijkstrasService extends ShortestPathService with ShortestPathAlgorithm {
   type VertexId = String
   type EdgeId = String
   type RequestId = String

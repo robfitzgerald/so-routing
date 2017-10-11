@@ -16,8 +16,3 @@ trait GraphAlgorithm { algorithm =>
   type Path = Seq[PathSegment]
   type AlgorithmResult
 }
-
-trait GraphAlgorithmService { service =>
-  type LoggingClass
-  type ServiceResult <: { def logs: LoggingClass }
-}

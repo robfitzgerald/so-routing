@@ -1,8 +1,6 @@
 package cse.fitzgero.graph.algorithm
 
 import scala.collection.GenSeq
-import scala.concurrent.Future
-
 import cse.fitzgero.graph.util.KSPBounds
 
 trait KShortestPathsAlgorithm extends GraphAlgorithm {
@@ -23,13 +21,4 @@ trait KShortestPathsAlgorithm extends GraphAlgorithm {
     */
   def kspBounds: KSPBounds
   def runAlgorithm(g: Graph, od: ODPair): Option[KShortestPathsResult]
-}
-
-
-trait KShortestPathsService extends GraphAlgorithmService with KShortestPathsAlgorithm {
-  abstract class KShortestPathsServiceResult {
-    def logs: LoggingClass
-    def result: KShortestPathsResult
-  }
-  def runService(graph: Graph, oDPair: ODPair): Future[Option[KShortestPathsServiceResult]]
 }

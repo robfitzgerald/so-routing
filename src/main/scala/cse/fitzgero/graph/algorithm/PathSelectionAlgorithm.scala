@@ -1,5 +1,7 @@
 package cse.fitzgero.graph.algorithm
 
+import cse.fitzgero.graph.service.GraphAlgorithmService
+
 import scala.collection.GenSeq
 import scala.concurrent.Future
 
@@ -11,6 +13,7 @@ trait PathSelectionAlgorithm extends GraphAlgorithm {
   def runAlgorithm(g: Graph, paths: GenSeq[Path]): Option[PathSelectionResult]
 }
 
+// TODO: uncouple alg from svc
 trait PathSelectionService extends GraphAlgorithmService with PathSelectionAlgorithm {
   abstract class PathSelectionServiceResult {
     def logs: LoggingClass
