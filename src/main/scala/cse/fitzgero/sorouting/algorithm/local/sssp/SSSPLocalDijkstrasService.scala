@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.local.sssp
 
-import java.time.LocalTime
+import java.time.Instant
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -17,6 +17,7 @@ object SSSPLocalDijkstrasService extends ShortestPathService with ShortestPathAl
   type Graph = LocalGraph
   override type ODPair = LocalODPair
   override type LoggingClass = Map[String, Long]
+  case class PathSegment (e: EdgeId, cost: Option[Seq[Double]])
   case class AlgorithmResult(od: ODPair, path: Path) extends ShortestPathResult
   case class SSSPLocalDijkstrasServiceResult (result: AlgorithmResult, logs: LoggingClass) extends ShortestPathServiceResult
 
@@ -27,10 +28,10 @@ object SSSPLocalDijkstrasService extends ShortestPathService with ShortestPathAl
     * @return a shortest path and logging data, or nothing
     */
   override def runService(graph: Graph, oDPair: ODPair): Future[Option[SSSPLocalDijkstrasServiceResult]] = Future {
-    val startTime = LocalTime.now().getNano
+    val startTime = Instant.now.toEpochMilli
     runAlgorithm(graph, oDPair) match {
       case Some(result) =>
-        val runTime = LocalTime.now.minusNanos(startTime).toNanoOfDay
+        val runTime = Instant.now.minusNanos(startTime).toEpochMilli
         val log = Map(
           "algorithm.sssp.local.runtime" -> runTime,
           "algorithm.sssp.local.success" -> 1L

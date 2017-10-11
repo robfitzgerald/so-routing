@@ -12,7 +12,7 @@ trait GraphAlgorithm { algorithm =>
   }
   type RequestId
   type ODPair <: BasicODPair[VertexId]
-  case class PathSegment (e: EdgeId, cost: Option[Seq[Double]])
+  type PathSegment
   type Path = Seq[PathSegment]
   type AlgorithmResult
 }
