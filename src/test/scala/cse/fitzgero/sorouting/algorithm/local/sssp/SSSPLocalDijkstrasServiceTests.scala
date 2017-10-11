@@ -3,11 +3,11 @@ package cse.fitzgero.sorouting.algorithm.local.sssp
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
-class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
+class SSSPLocalDijkstrasServiceTests extends SORoutingUnitTestTemplate {
   "runAlgorithm" when {
     "called with a graph and an od pair" should {
       "result in an algorithm result with a correct shortest path" in new TestAssets.BackPropData with TestAssets.TwoPathsGraph {
-        SSSPLocalDijkstrasSearch.runAlgorithm(graph, LocalODPair("bobby", "1", "10")) match {
+        SSSPLocalDijkstrasService.runAlgorithm(graph, LocalODPair("bobby", "1", "10")) match {
           case None => fail()
           case Some(result) =>
             val one :: two :: three :: four :: Nil = result.path
@@ -23,7 +23,7 @@ class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
   "minSpanningDijkstras" when {
     "called with a small road network and an origin" should {
       "find the set of edges that are members of the minimum spanning tree" in new TestAssets.TriangleWorld {
-        SSSPLocalDijkstrasSearch.minSpanningDijkstras(graph, "1") match {
+        SSSPLocalDijkstrasService.minSpanningDijkstras(graph, "1") match {
           case None => fail()
           case Some(result) =>
             result.size should equal (3)
@@ -33,7 +33,7 @@ class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
     }
     "called with a k5 graph and an origin" should {
       "find the set of 5 edges that comprises its spanning tree" in new TestAssets.K5Graph {
-        SSSPLocalDijkstrasSearch.minSpanningDijkstras(graph, "1") match {
+        SSSPLocalDijkstrasService.minSpanningDijkstras(graph, "1") match {
           case None => fail()
           case Some(result) =>
             result.size should be (5)
@@ -52,7 +52,7 @@ class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
     }
     "called with a graph that has a dominant path and a request which includes a destination" should {
       "find the minimum spanning tree" in new TestAssets.TwoPathsGraph {
-        SSSPLocalDijkstrasSearch.minSpanningDijkstras(graph, "1", Some("10")) match {
+        SSSPLocalDijkstrasService.minSpanningDijkstras(graph, "1", Some("10")) match {
           case None => fail()
           case Some(result) =>
             // the longest path should be a distance of 4
@@ -63,10 +63,10 @@ class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
         }
       }
       "have a different result with and without a destination" in new TestAssets.TwoPathsGraph {
-        SSSPLocalDijkstrasSearch.minSpanningDijkstras(graph, "1") match {
+        SSSPLocalDijkstrasService.minSpanningDijkstras(graph, "1") match {
           case None => fail()
           case Some(spanningAll) =>
-            SSSPLocalDijkstrasSearch.minSpanningDijkstras(graph, "1", Some("6")) match {
+            SSSPLocalDijkstrasService.minSpanningDijkstras(graph, "1", Some("6")) match {
               case None => fail()
               case Some(spanningBounded) =>
                 // for the complete spanning tree
@@ -90,7 +90,7 @@ class SSSPLocalDijkstrasSearchTests extends SORoutingUnitTestTemplate {
   "backPropagate" when {
     "called with a minimum spanning tree of edges" should {
       "find the path back from a destination to the origin" in new TestAssets.BackPropData with TestAssets.TwoPathsGraph {
-        SSSPLocalDijkstrasSearch.backPropagate(graph, spanning, "10") match {
+        SSSPLocalDijkstrasService.backPropagate(graph, spanning, "10") match {
           case None => fail()
           case Some(result) =>
             val one :: two :: three :: four :: Nil = result

@@ -1,21 +1,44 @@
 package cse.fitzgero.sorouting.algorithm.local.sssp
 
-import cse.fitzgero.graph.algorithm.ShortestPathAlgorithm
-import cse.fitzgero.sorouting.model.roadnetwork.local._
+import java.time.LocalTime
 
 import scala.annotation.tailrec
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Single-sourced shortest path search built on Dijkstra's for building a spanning tree followed by a backpropagation method
-  */
-object SSSPLocalDijkstrasSearch extends ShortestPathAlgorithm {
+import cse.fitzgero.graph.algorithm.ShortestPathService
+import cse.fitzgero.sorouting.model.roadnetwork.local._
+
+
+object SSSPLocalDijkstrasService extends ShortestPathService {
   type VertexId = String
   type EdgeId = String
   type RequestId = String
   type Graph = LocalGraph
-  type ODPair = LocalODPair
-
+  override type ODPair = LocalODPair
+  override type LoggingClass = Map[String, Long]
   case class AlgorithmResult(od: ODPair, path: Path) extends ShortestPathResult
+  case class SSSPLocalDijkstrasServiceResult (result: AlgorithmResult, logs: LoggingClass) extends ShortestPathServiceResult
+
+  /**
+    * runs the concurrent shortest path service as a future and with details stored in a log
+    * @param graph the road network graph
+    * @param oDPair the origin and destination pair for this search
+    * @return a shortest path and logging data, or nothing
+    */
+  override def runService(graph: Graph, oDPair: ODPair): Future[Option[SSSPLocalDijkstrasServiceResult]] = Future {
+    val startTime = LocalTime.now().getNano
+    runAlgorithm(graph, oDPair) match {
+      case Some(result) =>
+        val runTime = LocalTime.now.minusNanos(startTime).toNanoOfDay
+        val log = Map(
+          "algorithm.sssp.local.runtime" -> runTime,
+          "algorithm.sssp.local.success" -> 1L
+        )
+        Some(SSSPLocalDijkstrasServiceResult(result, log))
+      case None => None
+    }
+  }
 
   /**
     * run a shortest path search
@@ -86,7 +109,7 @@ object SSSPLocalDijkstrasSearch extends ShortestPathAlgorithm {
 
         val solutionUpdate =
           if (!visited(shortestFrontier.edge.id) && !solution.isDefinedAt(shortestFrontier.edge.dst)) {
-//            val updatedDistance = solution(shortestFrontier.edge.src).d + shortestFrontier.cost
+            //            val updatedDistance = solution(shortestFrontier.edge.src).d + shortestFrontier.cost
             solution.updated(shortestFrontier.edge.dst, BackPropagateData(Some(shortestFrontier.edge.id), shortestFrontier.cost))
           } else
             solution
@@ -129,9 +152,9 @@ object SSSPLocalDijkstrasSearch extends ShortestPathAlgorithm {
   def backPropagate(g: Graph, spanningTree: Map[VertexId, BackPropagateData], destination: VertexId): Option[Path] = {
 
     @tailrec def _backPropagate (
-        currentVertex: VertexId,
-        result: Path = Seq()
-      ): Option[Path] = {
+      currentVertex: VertexId,
+      result: Path = Seq()
+    ): Option[Path] = {
       if (spanningTree.isDefinedAt(currentVertex)) {
         val currentNode: BackPropagateData = spanningTree(currentVertex)
         currentNode.π match {

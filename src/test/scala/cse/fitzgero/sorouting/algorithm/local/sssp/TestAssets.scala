@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.local.sssp
 
-import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasSearch.BackPropagateData
+import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasService._
 import cse.fitzgero.sorouting.model.roadnetwork.local._
 
 object TestAssets {
@@ -109,14 +109,14 @@ object TestAssets {
   }
   trait BackPropData {
     val spanning = Map(
-      "4" -> BackPropagateData(Some("204"),2.0),
-      "5"-> BackPropagateData(Some("305"),2.0),
-      "10"-> BackPropagateData(Some("610"),4.0),
-      "6"-> BackPropagateData(Some("406"),3.0),
       "1"-> BackPropagateData(None,0.0),
       "2"-> BackPropagateData(Some("102"),1.0),
+      "3"-> BackPropagateData(Some("103"),1.0),
+      "4" -> BackPropagateData(Some("204"),2.0),
+      "5"-> BackPropagateData(Some("305"),2.0),
+      "6"-> BackPropagateData(Some("406"),3.0),
       "7"-> BackPropagateData(Some("507"),3.0),
-      "3"-> BackPropagateData(Some("103"),1.0)
+      "10"-> BackPropagateData(Some("610"),4.0)
     )
   }
 }
