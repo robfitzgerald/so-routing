@@ -1,4 +1,4 @@
-package cse.fitzgero.graph.util
+package cse.fitzgero.graph.config
 
 /**
   * algorithm setting declaring how to end search for alternate paths

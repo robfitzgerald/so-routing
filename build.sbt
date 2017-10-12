@@ -31,10 +31,14 @@ libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"
 libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 
 
-// ~~~ ClassLogging - log service - using log4j instead
-//libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
-// ~~~ ClassLogging - logging wrapper
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2" // excludeAll(
-//  ExclusionRule(organization = "org.slf4j"),
-//  ExclusionRule(organization = "log4j")
-//)
+// ~~~ Logging Service (may remove this)
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2" 
+
+// ~~~ Monocle - Optics Library (nested immutable object manipulation
+val monocleVersion = "1.4.0" // 1.5.0-cats-M1 based on cats 1.0.0-MF
+
+libraryDependencies ++= Seq(
+  "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test"
+)

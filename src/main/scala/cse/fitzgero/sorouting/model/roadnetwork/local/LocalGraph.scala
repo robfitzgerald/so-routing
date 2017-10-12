@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.model.roadnetwork.local
 
 import cse.fitzgero.graph.propertygraph._
+import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
 
 import scala.collection.GenMap
 
@@ -9,14 +10,18 @@ class LocalGraph (
   adjList: GenMap[String, GenMap[String, String]],
   edgeList: GenMap[String, LocalEdge],
   vertexList: GenMap[String, LocalVertex]
-) extends PropertyGraph with PropertyGraphOps with PropertyGraphMutationOps[LocalGraph] {
+) extends PropertyGraph with PropertyGraphOps with PropertyGraphMutationOps[LocalGraph] { graph =>
 
   override type VertexId = String
   override type EdgeId = String
   override type Vertex = LocalVertex
   override type Edge = LocalEdge
 
-  override def updateEdge(e: String, a: LocalEdge): LocalGraph =
+  def adjacencies: GenMap[String, GenMap[String, String]] = adjList
+  def edges: GenMap[String, LocalEdge] = edgeList
+  def vertices: GenMap[String, LocalVertex] = vertexList
+
+  override def updateEdge(e: String, a: Edge): LocalGraph =
     if (adjList.isDefinedAt(a.src))
       new LocalGraph(
         adjList = adjList.updated(a.src, adjList(a.src).updated(e, a.dst)),
@@ -44,7 +49,7 @@ class LocalGraph (
         vertexList = vertexList.updated(v, a)
       )
 
-  override def edgeById(e: String): Option[LocalEdge] =
+  override def edgeById(e: String): Option[Edge] =
     if (edgeList.isDefinedAt(e)) Some(edgeList(e))
     else None
 
@@ -78,8 +83,8 @@ class LocalGraph (
 
   override def selectOutEdgeBy[A](
     v: String,
-    selectOp: (LocalEdge) => (String, A),
-    compareOp: ((String, A), (String, A)) => (String, A)): Option[LocalEdge] = {
+    selectOp: (Edge) => (String, A),
+    compareOp: ((String, A), (String, A)) => (String, A)): Option[Edge] = {
     if (adjList.isDefinedAt(v)) {
       val bestEdgeTuple =
         adjList(v)
@@ -89,6 +94,21 @@ class LocalGraph (
       Some(edgeList(bestEdgeTuple._1))
     } else None
   }
+
+  override def removeEdge(e: String): LocalGraph = {
+    edgeById(e) match {
+      case Some(edge) =>
+        new LocalGraph(
+          adjList = adjList.updated(edge.src, adjList(edge.src) - edge.id),
+          edgeList = edgeList - edge.id,
+          vertexList = vertexList
+        )
+      case None => graph
+    }
+  }
+
+  // remove the vertex from the vertex list and adjacency list, as well as any edges that touch it
+  override def removeVertex(v: String): LocalGraph = ???
 }
 
 object LocalGraph {

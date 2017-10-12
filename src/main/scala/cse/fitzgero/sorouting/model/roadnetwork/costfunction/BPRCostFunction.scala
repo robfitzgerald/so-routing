@@ -1,12 +1,14 @@
 package cse.fitzgero.sorouting.model.roadnetwork.costfunction
 
+object BPRCostFunctionType extends CostFunctionType
+
 /**
   * decorates an object with the latency function designed by the Bureau of Public Roads, taken from
   * U.S. Bureau of Public Roads. Traffic Assignment Manual. U.S. Department of Commerce, Washington, D.C (1964)
   */
 trait BPRCostFunction extends CostFunction {
   self: {
-    def fixedFlow: Option[Double]
+    def flow: Option[Double]
     def capacity: Option[Double]
     def freeFlowSpeed: Option[Double]
     def distance: Option[Double]
@@ -28,14 +30,15 @@ trait BPRCostFunction extends CostFunction {
 
   /**
     * calculates the link travel time, via S_a(v_a) = t_a(1 + 0.15(v_a/c_a)^4) = t_a + 0.15t_a(v_a/c_a)^4 = costTerm1 + costTerm2 * expTerm
-    * @param flow the current value for flow, which will be added to the fixed flow
+    *
+    * @param flowEvaluation the current value for flow, which will be added to the fixed flow
     * @return travel time cost
     */
-  def costFlow(flow: Double): Option[Double] = {
+  def costFlow(flowEvaluation: Double): Option[Double] = {
 
-    val allFlow: Double = fixedFlow match {
-      case Some(ff) => ff + flow
-      case None => flow
+    val allFlow: Double = flow match {
+      case Some(ff) => ff + flowEvaluation
+      case None => flowEvaluation
     }
 
     for {
@@ -47,4 +50,14 @@ trait BPRCostFunction extends CostFunction {
       c1 + c2 * e1
     }
   }
+
+  /**
+    * shorthand method for getting the cost flow of the current link flow
+    * @return
+    */
+  def linkCostFlow: Option[Double] =
+    flow match {
+      case Some(ff) => costFlow(ff)
+      case None => costFlow(0D)
+    }
 }

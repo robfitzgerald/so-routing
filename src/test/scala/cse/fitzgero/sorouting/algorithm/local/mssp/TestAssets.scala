@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.local.mssp
 
-import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdge, LocalEdgeAttributeBasic, LocalGraph, LocalVertex}
+import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BasicCostFunction
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdge, LocalEdgeAttribute, LocalGraph, LocalVertex}
 
 object TestAssets {
   // this graph has a few alternate paths between vertex 1 and 10, and then wraps around from 10 to 1
@@ -19,22 +20,22 @@ object TestAssets {
       "10" -> Map("10-1" -> "1")
     ),
     edgeList = Map[String, LocalEdge](
-      "102" -> LocalEdge("102", "1", "2", LocalEdgeAttributeBasic()),
-      "103" -> LocalEdge("103", "1", "3", LocalEdgeAttributeBasic()),
-      "201" -> LocalEdge("201", "2", "1", LocalEdgeAttributeBasic()),
-      "203" -> LocalEdge("203", "2", "3", LocalEdgeAttributeBasic()),
-      "204" -> LocalEdge("204", "2", "4", LocalEdgeAttributeBasic()),
-      "301" -> LocalEdge("301", "3", "1", LocalEdgeAttributeBasic()),
-      "302" -> LocalEdge("302", "3", "2", LocalEdgeAttributeBasic()),
-      "305" -> LocalEdge("305", "3", "5", LocalEdgeAttributeBasic()),
-      "406" -> LocalEdge("406", "4", "6", LocalEdgeAttributeBasic()),
-      "507" -> LocalEdge("507", "5", "7", LocalEdgeAttributeBasic()),
-      "608" -> LocalEdge("608", "6", "8", LocalEdgeAttributeBasic()),
-      "610" -> LocalEdge("610", "6", "10", LocalEdgeAttributeBasic()),
-      "709" -> LocalEdge("709", "7", "9", LocalEdgeAttributeBasic()),
-      "810" -> LocalEdge("810", "8", "10", LocalEdgeAttributeBasic()),
-      "910" -> LocalEdge("910", "9", "10", LocalEdgeAttributeBasic()),
-      "10-1" -> LocalEdge("10-1", "10", "1", LocalEdgeAttributeBasic())
+      "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute() with BasicCostFunction),
+      "103" -> LocalEdge("103", "1", "3", new LocalEdgeAttribute() with BasicCostFunction),
+      "201" -> LocalEdge("201", "2", "1", new LocalEdgeAttribute() with BasicCostFunction),
+      "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute() with BasicCostFunction),
+      "204" -> LocalEdge("204", "2", "4", new LocalEdgeAttribute() with BasicCostFunction),
+      "301" -> LocalEdge("301", "3", "1", new LocalEdgeAttribute() with BasicCostFunction),
+      "302" -> LocalEdge("302", "3", "2", new LocalEdgeAttribute() with BasicCostFunction),
+      "305" -> LocalEdge("305", "3", "5", new LocalEdgeAttribute() with BasicCostFunction),
+      "406" -> LocalEdge("406", "4", "6", new LocalEdgeAttribute() with BasicCostFunction),
+      "507" -> LocalEdge("507", "5", "7", new LocalEdgeAttribute() with BasicCostFunction),
+      "608" -> LocalEdge("608", "6", "8", new LocalEdgeAttribute() with BasicCostFunction),
+      "610" -> LocalEdge("610", "6", "10", new LocalEdgeAttribute() with BasicCostFunction),
+      "709" -> LocalEdge("709", "7", "9", new LocalEdgeAttribute() with BasicCostFunction),
+      "810" -> LocalEdge("810", "8", "10", new LocalEdgeAttribute() with BasicCostFunction),
+      "910" -> LocalEdge("910", "9", "10", new LocalEdgeAttribute() with BasicCostFunction),
+      "10-1" -> LocalEdge("10-1", "10", "1", new LocalEdgeAttribute() with BasicCostFunction)
     ),
     vertexList = Map[String, LocalVertex](
       "1" -> LocalVertex("1", -10, 0),

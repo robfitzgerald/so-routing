@@ -1,6 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.local.sssp
 
 import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasService._
+import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BasicCostFunction
 import cse.fitzgero.sorouting.model.roadnetwork.local._
 
 object TestAssets {
@@ -12,10 +13,10 @@ object TestAssets {
         "3" -> Map[String, String]("301" -> "1")
       ),
       edgeList = Map[String, LocalEdge](
-        "102" -> LocalEdge("102", "1", "2", LocalEdgeAttributeBasic()),
-        "103" -> LocalEdge("103", "1", "3", LocalEdgeAttributeBasic()),
-        "203" -> LocalEdge("203", "2", "3", LocalEdgeAttributeBasic()),
-        "301" -> LocalEdge("301", "3", "1", LocalEdgeAttributeBasic())
+        "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "103" -> LocalEdge("103", "1", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "301" -> LocalEdge("301", "3", "1", new LocalEdgeAttribute() with BasicCostFunction)
       ),
       vertexList = Map[String, LocalVertex](
         "1" -> LocalVertex("1", -10, 0),
@@ -34,26 +35,26 @@ object TestAssets {
         "5" -> Map[String, String]("501" -> "1", "502" -> "2", "503" -> "3", "504" -> "4")
       ),
       edgeList = Map[String, LocalEdge](
-        "102" -> LocalEdge("102", "1", "2", LocalEdgeAttributeBasic()),
-        "103" -> LocalEdge("103", "1", "3", LocalEdgeAttributeBasic()),
-        "104" -> LocalEdge("104", "1", "4", LocalEdgeAttributeBasic()),
-        "105" -> LocalEdge("105", "1", "5", LocalEdgeAttributeBasic()),
-        "201" -> LocalEdge("201", "2", "1", LocalEdgeAttributeBasic()),
-        "203" -> LocalEdge("203", "2", "3", LocalEdgeAttributeBasic()),
-        "204" -> LocalEdge("204", "2", "4", LocalEdgeAttributeBasic()),
-        "205" -> LocalEdge("205", "2", "5", LocalEdgeAttributeBasic()),
-        "301" -> LocalEdge("301", "3", "1", LocalEdgeAttributeBasic()),
-        "302" -> LocalEdge("302", "3", "2", LocalEdgeAttributeBasic()),
-        "304" -> LocalEdge("304", "3", "4", LocalEdgeAttributeBasic()),
-        "305" -> LocalEdge("305", "3", "5", LocalEdgeAttributeBasic()),
-        "401" -> LocalEdge("401", "4", "1", LocalEdgeAttributeBasic()),
-        "402" -> LocalEdge("402", "4", "2", LocalEdgeAttributeBasic()),
-        "403" -> LocalEdge("403", "4", "3", LocalEdgeAttributeBasic()),
-        "405" -> LocalEdge("405", "4", "5", LocalEdgeAttributeBasic()),
-        "501" -> LocalEdge("501", "5", "1", LocalEdgeAttributeBasic()),
-        "502" -> LocalEdge("502", "5", "2", LocalEdgeAttributeBasic()),
-        "503" -> LocalEdge("503", "5", "3", LocalEdgeAttributeBasic()),
-        "504" -> LocalEdge("504", "5", "4", LocalEdgeAttributeBasic())
+        "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "103" -> LocalEdge("103", "1", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "104" -> LocalEdge("104", "1", "4", new LocalEdgeAttribute() with BasicCostFunction),
+        "105" -> LocalEdge("105", "1", "5", new LocalEdgeAttribute() with BasicCostFunction),
+        "201" -> LocalEdge("201", "2", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "204" -> LocalEdge("204", "2", "4", new LocalEdgeAttribute() with BasicCostFunction),
+        "205" -> LocalEdge("205", "2", "5", new LocalEdgeAttribute() with BasicCostFunction),
+        "301" -> LocalEdge("301", "3", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "302" -> LocalEdge("302", "3", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "304" -> LocalEdge("304", "3", "4", new LocalEdgeAttribute() with BasicCostFunction),
+        "305" -> LocalEdge("305", "3", "5", new LocalEdgeAttribute() with BasicCostFunction),
+        "401" -> LocalEdge("401", "4", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "402" -> LocalEdge("402", "4", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "403" -> LocalEdge("403", "4", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "405" -> LocalEdge("405", "4", "5", new LocalEdgeAttribute() with BasicCostFunction),
+        "501" -> LocalEdge("501", "5", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "502" -> LocalEdge("502", "5", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "503" -> LocalEdge("503", "5", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "504" -> LocalEdge("504", "5", "4", new LocalEdgeAttribute() with BasicCostFunction)
       ),
       vertexList = Map[String, LocalVertex](
         "1" -> LocalVertex("1", -10, 0),
@@ -78,20 +79,20 @@ object TestAssets {
         "9" -> Map[String, String]("910" -> "10")
       ),
       edgeList = Map[String, LocalEdge](
-        "102" -> LocalEdge("102", "1", "2", LocalEdgeAttributeBasic()),
-        "103" -> LocalEdge("103", "1", "3", LocalEdgeAttributeBasic()),
-        "201" -> LocalEdge("201", "2", "1", LocalEdgeAttributeBasic()),
-        "203" -> LocalEdge("203", "2", "3", LocalEdgeAttributeBasic()),
-        "204" -> LocalEdge("204", "2", "4", LocalEdgeAttributeBasic()),
-        "301" -> LocalEdge("301", "3", "1", LocalEdgeAttributeBasic()),
-        "302" -> LocalEdge("302", "3", "2", LocalEdgeAttributeBasic()),
-        "305" -> LocalEdge("305", "3", "5", LocalEdgeAttributeBasic()),
-        "406" -> LocalEdge("406", "4", "6", LocalEdgeAttributeBasic()),
-        "507" -> LocalEdge("507", "5", "7", LocalEdgeAttributeBasic()),
-        "608" -> LocalEdge("608", "6", "8", LocalEdgeAttributeBasic()),
-        "610" -> LocalEdge("610", "6", "10", LocalEdgeAttributeBasic()),
-        "709" -> LocalEdge("709", "7", "9", LocalEdgeAttributeBasic()),
-        "910" -> LocalEdge("910", "9", "10", LocalEdgeAttributeBasic())
+        "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "103" -> LocalEdge("103", "1", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "201" -> LocalEdge("201", "2", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute() with BasicCostFunction),
+        "204" -> LocalEdge("204", "2", "4", new LocalEdgeAttribute() with BasicCostFunction),
+        "301" -> LocalEdge("301", "3", "1", new LocalEdgeAttribute() with BasicCostFunction),
+        "302" -> LocalEdge("302", "3", "2", new LocalEdgeAttribute() with BasicCostFunction),
+        "305" -> LocalEdge("305", "3", "5", new LocalEdgeAttribute() with BasicCostFunction),
+        "406" -> LocalEdge("406", "4", "6", new LocalEdgeAttribute() with BasicCostFunction),
+        "507" -> LocalEdge("507", "5", "7", new LocalEdgeAttribute() with BasicCostFunction),
+        "608" -> LocalEdge("608", "6", "8", new LocalEdgeAttribute() with BasicCostFunction),
+        "610" -> LocalEdge("610", "6", "10", new LocalEdgeAttribute() with BasicCostFunction),
+        "709" -> LocalEdge("709", "7", "9", new LocalEdgeAttribute() with BasicCostFunction),
+        "910" -> LocalEdge("910", "9", "10", new LocalEdgeAttribute() with BasicCostFunction)
       ),
       vertexList = Map[String, LocalVertex](
         "1" -> LocalVertex("1", -10, 0),
@@ -107,6 +108,9 @@ object TestAssets {
       )
     )
   }
+
+  import SSSPLocalDijkstrasAlgorithm.BackPropagateData
+
   trait BackPropData {
     val spanning = Map(
       "1"-> BackPropagateData(None,0.0),
