@@ -98,4 +98,5 @@ object LocalGraph {
     edgeList: GenMap[String, LocalEdge],
     vertexList: GenMap[String, LocalVertex]
   ): LocalGraph = new LocalGraph(adjList, edgeList, vertexList)
+  // TODO: add apply(edgeList, vertexList) that creates tuples that can be groupBy'd into an adjacency list
 }
