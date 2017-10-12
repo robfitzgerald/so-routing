@@ -19,7 +19,7 @@ object SSSPLocalDijkstrasService extends ShortestPathService with ShortestPathAl
   override type LoggingClass = Map[String, Long]
   case class PathSegment (e: EdgeId, cost: Option[Seq[Double]])
   case class AlgorithmResult(od: ODPair, path: Path) extends ShortestPathResult
-  case class SSSPLocalDijkstrasServiceResult (result: AlgorithmResult, logs: LoggingClass) extends ShortestPathServiceResult
+  case class ServiceResult (result: AlgorithmResult, logs: LoggingClass)
 
   /**
     * runs the concurrent shortest path service as a future and with details stored in a log
@@ -27,16 +27,14 @@ object SSSPLocalDijkstrasService extends ShortestPathService with ShortestPathAl
     * @param oDPair the origin and destination pair for this search
     * @return a shortest path and logging data, or nothing
     */
-  override def runService(graph: Graph, oDPair: ODPair): Future[Option[SSSPLocalDijkstrasServiceResult]] = Future {
-    val startTime = Instant.now.toEpochMilli
+  override def runService(graph: Graph, oDPair: ODPair): Future[Option[ServiceResult]] = Future {
     runAlgorithm(graph, oDPair) match {
       case Some(result) =>
-        val runTime = Instant.now.minusNanos(startTime).toEpochMilli
         val log = Map(
           "algorithm.sssp.local.runtime" -> runTime,
           "algorithm.sssp.local.success" -> 1L
         )
-        Some(SSSPLocalDijkstrasServiceResult(result, log))
+        Some(ServiceResult(result, log))
       case None => None
     }
   }

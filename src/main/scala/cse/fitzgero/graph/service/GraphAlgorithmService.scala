@@ -1,5 +1,7 @@
 package cse.fitzgero.graph.service
 
+import java.time.Instant
+
 import cse.fitzgero.graph.basicgraph.{BasicGraph, BasicODPair}
 
 trait GraphAlgorithmService { service =>
@@ -12,4 +14,6 @@ trait GraphAlgorithmService { service =>
   type ODPair <: BasicODPair[VertexId]
   type LoggingClass
   type ServiceResult <: { def logs: LoggingClass }
+  val startTime: Long = Instant.now.toEpochMilli
+  def runTime: Long = Instant.now.toEpochMilli - startTime
 }

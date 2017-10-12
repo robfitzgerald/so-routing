@@ -7,9 +7,6 @@ class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
   "runService" when {
     "called with a road network and a set of od pairs" should {
       "return a map from od pairs to their shortest paths" in {
-
-        // sometimes resolves with 9 instead of 10 paths
-
         val graph: LocalGraph = TestAssets.graph
         val random = scala.util.Random
         def nextV: String = (random.nextInt(10) + 1).toString
@@ -22,7 +19,15 @@ class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
           .runService(graph, odPairs) map {
             case Some(msspResult) =>
               val odPaths = msspResult.result
-              odPaths.foreach(println)
+
+              // the longest shortest path should be less than or equal to 7
+              odPaths.forall(od => {
+                val cost: Double = od._2.map(_.cost.get.sum).sum
+                cost <= 7
+              }) should be (true)
+
+              // we should have the same number of results as requests
+              // since any OD pair has a solution in this graph
               odPaths.size should equal (odPairs.size)
             case None => fail()
           }

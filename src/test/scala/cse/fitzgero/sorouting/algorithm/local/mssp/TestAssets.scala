@@ -3,6 +3,8 @@ package cse.fitzgero.sorouting.algorithm.local.mssp
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdge, LocalEdgeAttributeBasic, LocalGraph, LocalVertex}
 
 object TestAssets {
+  // this graph has a few alternate paths between vertex 1 and 10, and then wraps around from 10 to 1
+  //
   val graph = LocalGraph (
     adjList = Map(
       "1" -> Map[String, String]("102" -> "2", "103" -> "3"),
@@ -12,7 +14,7 @@ object TestAssets {
       "5" -> Map[String, String]("507" -> "7"),
       "6" -> Map[String, String]("608" -> "8", "610" -> "10"),
       "7" -> Map[String, String]("709" -> "9"),
-      "8" -> Map.empty[String, String],
+      "8" -> Map[String, String]("810" -> "10"),
       "9" -> Map[String, String]("910" -> "10"),
       "10" -> Map("10-1" -> "1")
     ),
@@ -30,6 +32,7 @@ object TestAssets {
       "608" -> LocalEdge("608", "6", "8", LocalEdgeAttributeBasic()),
       "610" -> LocalEdge("610", "6", "10", LocalEdgeAttributeBasic()),
       "709" -> LocalEdge("709", "7", "9", LocalEdgeAttributeBasic()),
+      "810" -> LocalEdge("810", "8", "10", LocalEdgeAttributeBasic()),
       "910" -> LocalEdge("910", "9", "10", LocalEdgeAttributeBasic()),
       "10-1" -> LocalEdge("10-1", "10", "1", LocalEdgeAttributeBasic())
     ),
