@@ -16,6 +16,7 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   type PathSegment = SSSPLocalDijkstrasAlgorithm.PathSegment
   type AlgorithmResult = KSPLocalDijkstrasAlgorithm.AlgorithmResult
 
+  // types for KSP service
   override type OD = LocalODPair
   override type LoggingClass = Map[String, Long]
   case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
@@ -26,7 +27,9 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
       case Some(result) =>
         val log = Map(
           "algorithm.ksp.local.runtime" -> runTime,
-          "algorithm.ksp.local.success" -> 1L
+          "algorithm.ksp.local.success" -> 1L,
+          "algorithm.ksp.local.k.requested" -> config.get.k,
+          "algorithm.ksp.local.k.produced" -> result.paths.size
         )
         Some(ServiceResult(result, log))
       case None => None

@@ -46,6 +46,8 @@ object MSSPLocalDijkstrasService extends GraphRoutingAlgorithmService { service 
 
     val log = Map(
       "algorithm.mssp.local.runtime.total" -> runTime,
+      "algorithm.mssp.local.batch.requested" -> request.ods.size,
+      "algorithm.mssp.local.batch.completed" -> result.size,
       "algorithm.mssp.local.success" -> 1L
     )
     Some(ServiceResult(log, result))
