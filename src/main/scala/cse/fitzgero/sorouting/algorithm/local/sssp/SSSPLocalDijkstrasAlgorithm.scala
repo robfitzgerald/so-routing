@@ -8,11 +8,10 @@ import cse.fitzgero.sorouting.model.roadnetwork.local._
 object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   type VertexId = String
   type EdgeId = String
-  type RequestId = String
   type Graph = LocalGraph
-  override type OD = LocalODPair
+  override type AlgorithmRequest = LocalODPair
   override type AlgorithmConfig = Any
-  case class AlgorithmResult(od: OD, path: Path)
+  case class AlgorithmResult(od: AlgorithmRequest, path: Path)
   case class PathSegment (e: EdgeId, cost: Option[Seq[Double]])
   /**
     * run a shortest path search
@@ -21,7 +20,7 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @param config (unused)
     * @return the shortest path
     */
-  override def runAlgorithm(g: Graph, od: OD, config: Option[Any] = None): Option[AlgorithmResult] = {
+  override def runAlgorithm(g: Graph, od: AlgorithmRequest, config: Option[Any] = None): Option[AlgorithmResult] = {
     minSpanningDijkstras(g, od.src, Some(od.dst)) match {
       case Some(spanningTree) =>
         backPropagate(g, spanningTree, od.dst) match {

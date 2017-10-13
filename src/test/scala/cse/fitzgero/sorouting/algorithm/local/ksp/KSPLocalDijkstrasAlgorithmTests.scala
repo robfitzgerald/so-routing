@@ -17,7 +17,7 @@ class KSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
       }
     }
     "called with a valid graph and od pair, requesting more alternates than what exists" should {
-      "produce two alternative paths of increasing cost" in new TestAssets.GraphWithAlternates {
+      "produce four alternative paths of increasing cost" in new TestAssets.GraphWithAlternates {
         KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, LocalODPair("fred", "1", "10"), Some(KSPLocalDijkstrasConfig(10))) match {
           case Some(result) =>
             result.paths.size should equal (4)
@@ -26,6 +26,17 @@ class KSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
               pair(0) should be <= (pair(1))
             })
 
+          case None => fail()
+        }
+      }
+    }
+    "called with a valid graph and od pair where origin == destination" should {
+      "return " in new TestAssets.GraphWithAlternates {
+        KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, LocalODPair("fred", "4", "4"), Some(KSPLocalDijkstrasConfig(10))) match {
+          case Some(result) =>
+            // a result with an empty path set
+            result.paths.size should equal (1)
+            result.paths.head.isEmpty should be (true)
           case None => fail()
         }
       }

@@ -15,12 +15,12 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   override type EdgeId = SSSPLocalDijkstrasAlgorithm.EdgeId
   override type Graph = SSSPLocalDijkstrasAlgorithm.Graph
   override type Path = SSSPLocalDijkstrasAlgorithm.Path
-  override type OD = LocalODPair
+  override type AlgorithmRequest = LocalODPair
   type PathSegment = SSSPLocalDijkstrasAlgorithm.PathSegment
   type SSSPAlgorithmResult = SSSPLocalDijkstrasAlgorithm.AlgorithmResult
   override type AlgorithmConfig = KSPLocalDijkstrasConfig
 
-  case class AlgorithmResult(od: OD, paths: GenSeq[Path])
+  case class AlgorithmResult(od: AlgorithmRequest, paths: GenSeq[Path])
 
   implicit val simpleKSPOrdering: Ordering[Path] =
     Ordering.by {
@@ -38,7 +38,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @param configOption the ksp configuration, such as the value 'k' and the search bounds
     * @return the optional algorithm result
     */
-  override def runAlgorithm(graph: LocalGraph, request: OD, configOption: Option[AlgorithmConfig] = Some(KSPLocalDijkstrasConfig())): Option[AlgorithmResult] = {
+  override def runAlgorithm(graph: LocalGraph, request: AlgorithmRequest, configOption: Option[AlgorithmConfig] = Some(KSPLocalDijkstrasConfig())): Option[AlgorithmResult] = {
     // setup
     val startTime = Instant.now.toEpochMilli
     val config = configOption.get
@@ -85,7 +85,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
             else {
               SSSPLocalDijkstrasAlgorithm.runAlgorithm(blockedGraph, LocalODPair(request.id, spurSourceVertex, request.dst)) match {
                 case None =>
-                  kShortestPaths(walkback, blockedGraph, iteration + 1)
+                  kShortestPaths(walkback.tail, blockedGraph, iteration + 1)
                 case Some(pathSpur) =>
 
                   // given a path spur, connect it to the remaining walkback to produce a path

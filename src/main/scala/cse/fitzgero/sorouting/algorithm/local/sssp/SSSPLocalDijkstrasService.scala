@@ -10,7 +10,7 @@ object SSSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   type EdgeId = String
   type RequestId = String
   type Graph = LocalGraph
-  override type OD = LocalODPair
+  override type ServiceRequest = LocalODPair
   override type LoggingClass = Map[String, Long]
   type AlgorithmResult = SSSPLocalDijkstrasAlgorithm.AlgorithmResult
   override type ServiceConfig = Any
@@ -24,7 +24,7 @@ object SSSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
     * @param config (ignored)
     * @return a shortest path and logging data, or nothing
     */
-  override def runService(graph: Graph, oDPair: OD, config: Option[Any] = None): Future[Option[ServiceResult]] = Future {
+  override def runService(graph: Graph, oDPair: ServiceRequest, config: Option[Any] = None): Future[Option[ServiceResult]] = Future {
     SSSPLocalDijkstrasAlgorithm.runAlgorithm(graph, oDPair) match {
       case Some(result) =>
         val log = Map(
