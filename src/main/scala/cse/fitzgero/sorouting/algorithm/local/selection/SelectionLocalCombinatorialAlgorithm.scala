@@ -10,7 +10,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
   override type EdgeId = KSPLocalDijkstrasAlgorithm.EdgeId
   override type Graph = KSPLocalDijkstrasAlgorithm.Graph
-  type Path = KSPLocalDijkstrasAlgorithm.Path
+  type Path = Seq[PathSegment]
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
   type PathSegment = KSPLocalDijkstrasAlgorithm.PathSegment
   type SSSPAlgorithmResult = KSPLocalDijkstrasAlgorithm.AlgorithmResult
@@ -56,10 +56,15 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
           // calculate cost of added flow for each named edge
           val addedCost: Double =
             edgesVisited.map(edgeAndFlow => {
-              val edge: graph.Edge = graph.edgeById(edgeAndFlow._1).get
-              edge.attribute
-                .costFlow(edgeAndFlow._2)
-                .getOrElse(DefaultFlowCost) // TODO: add policy for managing missing cost flow evaluation data (is zero the correct default value?)
+              graph.edgeById(edgeAndFlow._1) match {
+                case None =>
+                  println(s"Edge (id, flow): $edgeAndFlow does not correspond to an edge in the original graph")
+                  0D
+                case Some(edge) =>
+                  edge.attribute
+                    .costFlow(edgeAndFlow._2)
+                    .getOrElse(DefaultFlowCost) // TODO: add policy for managing missing cost flow evaluation data (is zero the correct default value?)
+              }
             }).sum
 
           // sum and return with a calculated cost as a single-item GenSeq[] with one tuple with one cost and a GenSeq[] as long as the # of buckets
@@ -81,8 +86,15 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
       }
     }
 
-    val someResult = minimalMultisetCombinationsOf(tagsAndPaths)
+    minimalMultisetCombinationsOf(tagsAndPaths) match {
+      case None => None
+      case Some(combination) =>
+        val result: GenMap[LocalODPair, Path] = combination
+          .map(tagAndPath => {
+            (personToODPair(tagAndPath._1.personId), tagAndPath._2)
+          }).toMap
 
-    None
+        Some(AlgorithmResult(result))
+    }
   }
 }

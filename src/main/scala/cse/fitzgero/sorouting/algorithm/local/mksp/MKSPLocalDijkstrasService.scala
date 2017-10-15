@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.local.mksp
 
 import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.ksp.{KSPLocalDijkstrasAlgorithm, KSPLocalDijkstrasConfig, KSPLocalDijkstrasService}
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODBatch
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalODBatch, LocalODPair}
 
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.duration._
@@ -22,7 +22,7 @@ object MKSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   // types for MKSP service
   override type ServiceRequest = LocalODBatch
   override type LoggingClass = Map[String, Long]
-  type KSPMap = GenMap[KSPLocalDijkstrasService.ServiceRequest, GenSeq[Path]]
+  type KSPMap = GenMap[LocalODPair, GenSeq[Path]]
   case class ServiceResult(result: KSPMap, logs: LoggingClass)
   override type ServiceConfig = KSPLocalDijkstrasConfig
 

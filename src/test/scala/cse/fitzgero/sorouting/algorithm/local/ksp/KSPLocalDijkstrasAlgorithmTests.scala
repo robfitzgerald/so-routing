@@ -20,6 +20,7 @@ class KSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
       "produce four alternative paths of increasing cost" in new TestAssets.GraphWithAlternates {
         KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, LocalODPair("fred", "1", "10"), Some(KSPLocalDijkstrasConfig(10))) match {
           case Some(result) =>
+            result.paths.foreach(println)
             result.paths.size should equal (4)
             // the paths should be ordered by cost
             result.paths.map(_.map(_.cost.get.sum).sum).iterator.sliding(2).foreach(pair => {

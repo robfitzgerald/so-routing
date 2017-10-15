@@ -28,17 +28,34 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
             case Some(mkspResult) =>
               val odPaths = mkspResult.result
 
+              odPaths.foreach(println)
+
+              // each solution should run from it's respective origin to it's destination (correctness)
+              odPaths.forall(kspResult => {
+                val src = kspResult._1.src
+                val dst = kspResult._1.dst
+                kspResult
+                  ._2.
+                  forall(
+                    _.foldLeft(src)((srcVertex, segment) => {
+                      val nextEdge = graph.edgeById(segment.e)
+                      nextEdge.get.src should equal (srcVertex)
+                      nextEdge.get.dst
+                    }) == dst
+                  )
+              }) should be (true)
+
               // each successive path result's cost should grow monotonically
-                odPaths.values.forall(setOfAlternates => {
-                  setOfAlternates.toList.sliding(2).forall(pair => {
-                    if (pair.size == 1) true
-                    else {
-                      val p1Cost: Double = pair(0).map(_.cost.get.sum).sum
-                      val p2Cost: Double = pair(1).map(_.cost.get.sum).sum
-                      p1Cost <= p2Cost
-                    }
-                  })
-                }) should be (true)
+              odPaths.values.forall(setOfAlternates => {
+                setOfAlternates.toList.sliding(2).forall(pair => {
+                  if (pair.size == 1) true
+                  else {
+                    val p1Cost: Double = pair(0).map(_.cost.get.sum).sum
+                    val p2Cost: Double = pair(1).map(_.cost.get.sum).sum
+                    p1Cost <= p2Cost
+                  }
+                })
+              }) should be (true)
 
               // no path should be longer than 7
               odPaths.values.forall(_.forall(_.map(_.cost.get.sum).sum <= 7)) should be (true)
@@ -49,6 +66,67 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
             case None => fail()
           }
+      }
+    }
+    "called with a bigger road network, a set of od pairs, and some ksp config" should {
+      "return a map from od pairs to their k-shortest paths" in {
+        val graph = TestAssets.BiggerGraph
+
+        // create batch of od pairs
+        val random = scala.util.Random
+        def nextV: String = (random.nextInt(25) + 1).toString
+        val pairs = (1 to 25).par.map(person => {
+          val (o, d) = (nextV, nextV)
+          LocalODPair(person.toString, o, d)
+        })
+        val odPairs = LocalODBatch(pairs)
+
+        // k shortest paths config
+        val config = KSPLocalDijkstrasConfig(3)
+
+        MKSPLocalDijkstrasService
+          .runService(graph, odPairs, Some(config)) map {
+          case Some(mkspResult) =>
+            val odPaths = mkspResult.result
+
+            odPaths.foreach(println)
+
+            // each solution should run from it's respective origin to it's destination (correctness)
+            odPaths.forall(kspResult => {
+              val src = kspResult._1.src
+              val dst = kspResult._1.dst
+              kspResult
+                ._2.
+                forall(
+                  _.foldLeft(src)((srcVertex, segment) => {
+                    val nextEdge = graph.edgeById(segment.e)
+                    nextEdge.get.src should equal (srcVertex)
+                    nextEdge.get.dst
+                  }) == dst
+                )
+            }) should be (true)
+
+            // each successive path result's cost should grow monotonically
+            odPaths.values.forall(setOfAlternates => {
+              setOfAlternates.toList.sliding(2).forall(pair => {
+                if (pair.size == 1) true
+                else {
+                  val p1Cost: Double = pair(0).map(_.cost.get.sum).sum
+                  val p2Cost: Double = pair(1).map(_.cost.get.sum).sum
+                  p1Cost <= p2Cost
+                }
+              })
+            }) should be (true)
+
+            // no path should be longer than 10
+            odPaths.values.forall(_.forall(_.map(_.cost.get.sum).sum <= 7)) should be (true)
+
+            // we should have the same number of results as requests
+            // since any OD pair has a solution in this graph
+            odPaths.size should equal (odPairs.ods.size)
+
+          case None => fail()
+        }
       }
     }
   }
