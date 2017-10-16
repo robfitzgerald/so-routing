@@ -18,7 +18,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
 
   val DefaultFlowCost: Double = 0D
 
-  case class AlgorithmResult(result: GenMap[LocalODPair, Path])
+  type AlgorithmResult = GenMap[LocalODPair, Path]
 
   override def runAlgorithm(graph: Graph, request: GenMap[LocalODPair, GenSeq[Path]], config: Option[Nothing] = None): Option[AlgorithmResult] = {
 
@@ -58,7 +58,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
             edgesVisited.map(edgeAndFlow => {
               graph.edgeById(edgeAndFlow._1) match {
                 case None =>
-                  println(s"Edge (id, flow): $edgeAndFlow does not correspond to an edge in the original graph")
+                  println(s"[SelectionLocal] Edge (id, flow): $edgeAndFlow does not correspond to an edge in the original graph")
                   0D
                 case Some(edge) =>
                   edge.attribute
@@ -94,7 +94,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
             (personToODPair(tagAndPath._1.personId), tagAndPath._2)
           }).toMap
 
-        Some(AlgorithmResult(result))
+        Some(result)
     }
   }
 }

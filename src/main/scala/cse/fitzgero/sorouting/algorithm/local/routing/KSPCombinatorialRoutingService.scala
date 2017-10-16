@@ -25,15 +25,10 @@ object KSPCombinatorialRoutingService extends GraphRoutingAlgorithmService {
   override def runService(graph: LocalGraph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
     val promise = Promise[Option[ServiceResult]]()
     MKSPLocalDijkstrasService.runService(graph, request, config) map {
-      case Some(kspResult) =>
-        SelectionLocalCombinatorialService.runService(graph, kspResult.result) map {
-          case Some(selectionResult) =>
-            // TODO: integrate logs
-            val log = Map[String, Long](
-              "algorithm.selection.local.runtime" -> runTime,
-              "algorithm.selection.local.success" -> 1L
-            )
-            promise.success(Some(ServiceResult(selectionResult.result, log)))
+      case Some(ksp) =>
+        SelectionLocalCombinatorialService.runService(graph, ksp.result) map {
+          case Some(selection) =>
+            promise.success(Some(ServiceResult(selection.result, ksp.logs ++ selection.logs)))
           case None =>
             promise.success(None)
         }

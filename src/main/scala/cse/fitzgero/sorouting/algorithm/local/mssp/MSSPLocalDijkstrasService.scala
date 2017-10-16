@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.algorithm.local.mssp
 
 
 import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithmService
-import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService}
+import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService, SSSPLocalDijkstsasAlgorithmOps}
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODBatch
 
 import scala.collection.GenMap
@@ -43,10 +43,13 @@ object MSSPLocalDijkstrasService extends GraphRoutingAlgorithmService { service 
       (r.result.od, r.result.path)
     }).toMap
 
+    val costEffect: Long = SSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
+
     val log = Map[String, Long](
       "algorithm.mssp.local.runtime.total" -> runTime,
-      "algorithm.mssp.local.batch.requested" -> request.ods.size,
+      "algorithm.mssp.local.batch.request.size" -> request.ods.size,
       "algorithm.mssp.local.batch.completed" -> result.size,
+      "algorithm.mssp.local.cost.effect" -> costEffect,
       "algorithm.mssp.local.success" -> 1L
     )
     Some(ServiceResult(result, log))

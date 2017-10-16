@@ -50,10 +50,11 @@ object MKSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
 
     val logs = Map[String, Long](
       "algorithm.mksp.local.runtime.total" -> runTime,
-      "algorithm.mksp.local.batch.requested" -> request.ods.size,
+      "algorithm.mksp.local.batch.request.size" -> request.ods.size,
       "algorithm.mksp.local.batch.completed" -> result.size,
-      "algorithm.ksp.local.k.requested" -> kRequested,
-      "algorithm.ksp.local.k.produced" -> kProduced,
+      "algorithm.mksp.local.k" -> config.get.k,
+      "algorithm.mksp.local.k.requested" -> kRequested,
+      "algorithm.mksp.local.k.produced" -> kProduced,
       "algorithm.mksp.local.success" -> 1L
     )
 

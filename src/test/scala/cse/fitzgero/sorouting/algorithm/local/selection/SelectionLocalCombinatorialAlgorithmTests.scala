@@ -8,7 +8,7 @@ class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplat
       "find the optimal combination" in new TestAssets.CombinationSet {
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(graph, kspResult) match {
           case Some(resultStuff) =>
-            resultStuff.result.foreach(println)
+            resultStuff.foreach(println)
             val joeResult = kspResult(joeRequest)
             val bobResult = kspResult(bobRequest)
 
@@ -24,8 +24,8 @@ class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplat
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult) match {
           case None => fail("there should be a result")
           case Some(result) =>
-            result.result.foreach(println)
-            println(s"total cost (minimal): ${result.result.values.map(_.map(_.cost.get.sum).sum).sum}")
+            result.foreach(println)
+            println(s"total cost (minimal): ${result.values.map(_.map(_.cost.get.sum).sum).sum}")
 
         }
       }

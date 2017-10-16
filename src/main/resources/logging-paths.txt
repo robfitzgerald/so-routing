@@ -1,0 +1,25 @@
+
+Multiple Source Shortest Paths
+
+"algorithm.mssp.local.runtime.total"
+"algorithm.mssp.local.batch.request.size"
+"algorithm.mssp.local.batch.completed"
+"algorithm.mssp.local.success"
+"algorithm.mssp.local.cost.effect"
+
+Multiple K Shortest Paths
+
+"algorithm.mksp.local.runtime.total"
+"algorithm.mksp.local.batch.request.size"
+"algorithm.mksp.local.batch.completed"
+"algorithm.mksp.local.k"
+"algorithm.mksp.local.k.requested"
+"algorithm.mksp.local.k.produced"
+"algorithm.mksp.local.success"
+
+Selection
+
+"algorithm.selection.local.runtime"
+"algorithm.selection.local.combinations"
+"algorithm.selection.local.cost.effect"
+"algorithm.selection.local.success"

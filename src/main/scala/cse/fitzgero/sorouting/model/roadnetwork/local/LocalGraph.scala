@@ -1,7 +1,6 @@
 package cse.fitzgero.sorouting.model.roadnetwork.local
 
 import cse.fitzgero.graph.propertygraph._
-import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
 
 import scala.collection.GenMap
 
