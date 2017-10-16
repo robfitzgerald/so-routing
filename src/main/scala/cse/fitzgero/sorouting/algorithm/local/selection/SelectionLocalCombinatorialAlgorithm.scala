@@ -20,6 +20,13 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
 
   type AlgorithmResult = GenMap[LocalODPair, Path]
 
+  /**
+    * run the naive combinatorial optimization algorithm, returning the optimal route combination for this set of alternates
+    * @param graph underlying graph structure
+    * @param request a map of request objects to their sets of alternate paths as found by an alternate paths solver
+    * @param config (unused)
+    * @return a map of request objects to their optimal paths, with one path per request
+    */
   override def runAlgorithm(graph: Graph, request: GenMap[LocalODPair, GenSeq[Path]], config: Option[Nothing] = None): Option[AlgorithmResult] = {
 
     case class Tag(personId: String, alternate: Int)

@@ -22,6 +22,9 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
   case class AlgorithmResult(od: AlgorithmRequest, paths: GenSeq[Path])
 
+  /**
+    * ordering for the priority queue used by the KSP algorithm to compare path alternatives
+    */
   implicit val simpleKSPOrdering: Ordering[Path] =
     Ordering.by {
       (odPath: Path) =>

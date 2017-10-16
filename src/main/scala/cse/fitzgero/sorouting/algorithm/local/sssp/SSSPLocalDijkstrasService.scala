@@ -18,7 +18,6 @@ object SSSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
 
   /**
     * runs the concurrent shortest path service as a future and with details stored in a log
-    *
     * @param graph  the road network graph
     * @param oDPair the origin and destination pair for this search
     * @param config (ignored)

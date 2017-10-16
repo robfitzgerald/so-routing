@@ -22,6 +22,13 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
   override type ServiceConfig = KSPLocalDijkstrasConfig
 
+  /**
+    * run the k-shortest paths algorithm as a concurrent service
+    * @param graph underlying graph structure
+    * @param request a single request
+    * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements
+    * @return a future resolving to an optional service result
+    */
   override def runService(graph: Graph, request: ServiceRequest, config: Option[KSPLocalDijkstrasConfig]): Future[Option[ServiceResult]] = Future {
     KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request, config) match {
       case Some(result) =>

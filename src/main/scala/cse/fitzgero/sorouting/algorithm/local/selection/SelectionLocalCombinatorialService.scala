@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.algorithm.local.selection
 
 import cse.fitzgero.graph.algorithm.GraphService
-import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstsasAlgorithmOps
+import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstsasAlgorithmOps
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
 import scala.collection.{GenMap, GenSeq}
@@ -22,12 +22,19 @@ object SelectionLocalCombinatorialService extends GraphService {
   case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
   override type ServiceConfig = Nothing
 
+  /**
+    * run the combinatorial selection algorithm as a concurrent service
+    * @param graph underlying graph structure
+    * @param request a map from requests to their sets of alternate paths as found by an alternate paths solver
+    * @param config (unused)
+    * @return a future resolving to an optional set of optimal paths
+    */
   override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = Future {
     SelectionLocalCombinatorialAlgorithm.runAlgorithm(graph, request) match {
       case Some(result) =>
 
         val combinationCount = request.map(_._2.size.toLong).product
-        val costEffect: Long = SSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
+        val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
 
         val log = Map[String, Long](
           "algorithm.selection.local.runtime" -> runTime,

@@ -1,8 +1,10 @@
-package cse.fitzgero.sorouting.algorithm.local.sssp
+package cse.fitzgero.sorouting.algorithm.local.mssp
+
+import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasAlgorithm
 
 import scala.collection.{GenIterable, GenMap}
 
-object SSSPLocalDijkstsasAlgorithmOps { ops =>
+object MSSPLocalDijkstsasAlgorithmOps { ops =>
   type EdgeId = String
   type VertexId = String
   type Path = SSSPLocalDijkstrasAlgorithm.Path
@@ -11,6 +13,12 @@ object SSSPLocalDijkstsasAlgorithmOps { ops =>
     type VertexId = ops.VertexId
   }
 
+  /**
+    * given a graph and a set of paths, calculate the cost that would be added to the network
+    * @param graph a road network
+    * @param paths a set of paths for each request in a batch-oriented path algorithm
+    * @return the difference between the previous graph link costs and the links when these paths are added
+    */
   def calculateAddedCost(graph: Graph, paths: GenIterable[Path]): Double = {
     val edgeIdAndFlow: GenMap[EdgeId, Int] =
       paths

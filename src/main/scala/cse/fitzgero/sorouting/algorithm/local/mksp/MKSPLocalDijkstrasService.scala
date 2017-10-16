@@ -27,7 +27,7 @@ object MKSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   override type ServiceConfig = KSPLocalDijkstrasConfig
 
   /**
-    *
+    * run multiple k-shortest paths algorithms as a batch service
     * @param graph underlying graph structure
     * @param request a batch request
     * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements

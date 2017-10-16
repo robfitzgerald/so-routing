@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 trait GraphRoutingAlgorithmService extends GraphService { service =>
   type ServiceRequest <: BasicOD
-//  override type ServiceRequest = OD
+
   /**
     * run the graph routing algorithm service as a future
     * @param graph underlying graph structure

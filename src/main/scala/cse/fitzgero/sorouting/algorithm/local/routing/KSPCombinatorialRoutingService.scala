@@ -22,6 +22,13 @@ object KSPCombinatorialRoutingService extends GraphRoutingAlgorithmService {
   case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
   override type ServiceConfig = KSPLocalDijkstrasConfig
 
+  /**
+    * run the combinatorial k-shortest-paths optimal routing algorithm as a concurrent service
+    * @param graph underlying graph structure
+    * @param request a single request or a batch request
+    * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements for the ksp algorithm
+    * @return a future resolving to a list of true optimal paths from a combinatorial search
+    */
   override def runService(graph: LocalGraph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
     val promise = Promise[Option[ServiceResult]]()
     MKSPLocalDijkstrasService.runService(graph, request, config) map {

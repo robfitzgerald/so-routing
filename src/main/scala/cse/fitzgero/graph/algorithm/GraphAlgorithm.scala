@@ -15,5 +15,12 @@ trait GraphAlgorithm { algorithm =>
   type AlgorithmResult
   type AlgorithmConfig <: Any
 
+  /**
+    * run a graph algorithm with a generic set of requirements
+    * @param graph underlying graph structure
+    * @param request user-defined request object
+    * @param config user-defined config object
+    * @return a user-defined result object
+    */
   def runAlgorithm(graph: Graph, request: AlgorithmRequest, config: Option[AlgorithmConfig]): Option[AlgorithmResult]
 }
