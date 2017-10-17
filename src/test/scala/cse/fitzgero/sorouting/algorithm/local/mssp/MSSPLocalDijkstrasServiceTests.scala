@@ -1,7 +1,10 @@
 package cse.fitzgero.sorouting.algorithm.local.mssp
 
+import java.time.LocalTime
+
 import cse.fitzgero.sorouting.SORoutingAsyncUnitTestTemplate
-import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODBatch, LocalODPair}
+import cse.fitzgero.sorouting.model.population.LocalRequest
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 
 class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
   "runService" when {
@@ -10,11 +13,10 @@ class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
         val graph: LocalGraph = TestAssets.graph
         val random = scala.util.Random
         def nextV: String = (random.nextInt(10) + 1).toString
-        val pairs = (1 to 10).par.map(person => {
+        val odPairs = (1 to 10).par.map(person => {
           val (o, d) = (nextV, nextV)
-          LocalODPair(person.toString, o, d)
+          LocalRequest(person.toString, LocalODPair(person.toString, o, d), LocalTime.now)
         })
-        val odPairs = LocalODBatch(pairs)
 
         MSSPLocalDijkstrasService
           .runService(graph, odPairs) map {
@@ -29,7 +31,7 @@ class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
               // we should have the same number of results as requests
               // since any OD pair has a solution in this graph
-              odPaths.size should equal (odPairs.ods.size)
+              odPaths.size should equal (odPairs.size)
 
             case None => fail()
           }

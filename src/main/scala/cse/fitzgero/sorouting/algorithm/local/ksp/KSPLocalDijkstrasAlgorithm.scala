@@ -79,7 +79,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
             // find the leading edge in the walkback and remove it from the graph, and
             // re-run a shortest paths algorithm to generate an alternate path spur
-            val thisEdgeId: EdgeId = walkback.head.e
+            val thisEdgeId: EdgeId = walkback.head.edgeId
             val spurPrefix: Path = walkback.tail.reverse
             val spurSourceVertex: VertexId = graph.edgeById(thisEdgeId).get.src
             val blockedGraph: Graph = previousGraph.removeEdge(thisEdgeId)
@@ -96,10 +96,10 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
                   val alternativePath: Path = spurPrefix ++ pathSpur.path
 
                   // test for dissimilarity from current solution paths
-                  val alternativePathLabels: Seq[EdgeId] = alternativePath.map(_.e)
+                  val alternativePathLabels: Seq[EdgeId] = alternativePath.map(_.edgeId)
                   val solutionLabels: GenSet[EdgeId] =
                     solution
-                      .flatMap(_.map(_.e))
+                      .flatMap(_.map(_.edgeId))
                       .toSet
                       .par
 
@@ -115,7 +115,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
                     (blockedGraph, walkback.tail)
                   } else {
                     if (pathSpur.path.nonEmpty)
-                      (blockedGraph.removeEdge(pathSpur.path.head.e), walkback)
+                      (blockedGraph.removeEdge(pathSpur.path.head.edgeId), walkback)
                     else
                       (blockedGraph, walkback)
                   }

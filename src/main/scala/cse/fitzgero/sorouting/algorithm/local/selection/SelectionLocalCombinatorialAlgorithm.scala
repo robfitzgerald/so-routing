@@ -2,6 +2,7 @@ package cse.fitzgero.sorouting.algorithm.local.selection
 
 import cse.fitzgero.graph.algorithm.GraphAlgorithm
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasAlgorithm
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
 import scala.collection.{GenMap, GenSeq}
@@ -10,9 +11,8 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
   override type EdgeId = KSPLocalDijkstrasAlgorithm.EdgeId
   override type Graph = KSPLocalDijkstrasAlgorithm.Graph
-  type Path = Seq[PathSegment]
+  type Path = List[SORoutingPathSegment]
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
-  type PathSegment = KSPLocalDijkstrasAlgorithm.PathSegment
   type SSSPAlgorithmResult = KSPLocalDijkstrasAlgorithm.AlgorithmResult
   override type AlgorithmConfig = Nothing
 
@@ -56,7 +56,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
           // take all edges out of this combination, attach flow count values
           val edgesVisited: GenMap[EdgeId, Int] =
             thisCombination
-              .flatMap(_._2.map(edge => (edge.e, 1)))
+              .flatMap(_._2.map(edge => (edge.edgeId, 1)))
               .groupBy(_._1)
               .mapValues(_.map(_._2).sum)
 

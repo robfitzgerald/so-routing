@@ -1,8 +1,11 @@
 package cse.fitzgero.sorouting.algorithm.local.routing
 
+import java.time.LocalTime
+
 import cse.fitzgero.sorouting.SORoutingAsyncUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasConfig
 import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstrasService
+import cse.fitzgero.sorouting.model.population.LocalRequest
 import cse.fitzgero.sorouting.model.roadnetwork.local._
 
 class KSPCombinatorialRoutingServiceTests extends SORoutingAsyncUnitTestTemplate {
@@ -15,11 +18,10 @@ class KSPCombinatorialRoutingServiceTests extends SORoutingAsyncUnitTestTemplate
         val requestCount: Int = 50
         val random = scala.util.Random
         def nextV: String = (random.nextInt(10) + 1).toString
-        val pairs = (1 to requestCount).par.map(person => {
+        val odPairs = (1 to 10).par.map(person => {
           val (o, d) = (nextV, nextV)
-          LocalODPair(person.toString, o, d)
+          LocalRequest(person.toString, LocalODPair(person.toString, o, d), LocalTime.now)
         })
-        val odPairs = LocalODBatch(pairs)
 
         // k shortest paths config
         val config = KSPLocalDijkstrasConfig(4)
@@ -46,11 +48,10 @@ class KSPCombinatorialRoutingServiceTests extends SORoutingAsyncUnitTestTemplate
         val requestCount: Int = 50
         val random = scala.util.Random
         def nextV: String = (random.nextInt(10) + 1).toString
-        val pairs = (1 to requestCount).par.map(person => {
+        val odPairs = (1 to 10).par.map(person => {
           val (o, d) = (nextV, nextV)
-          LocalODPair(person.toString, o, d)
+          LocalRequest(person.toString, LocalODPair(person.toString, o, d), LocalTime.now)
         })
-        val odPairs = LocalODBatch(pairs)
 
         // k shortest paths config
         val config = KSPLocalDijkstrasConfig(4)

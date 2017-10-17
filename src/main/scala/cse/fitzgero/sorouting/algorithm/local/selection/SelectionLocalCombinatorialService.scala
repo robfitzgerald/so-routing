@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.algorithm.local.selection
 
 import cse.fitzgero.graph.algorithm.GraphService
 import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstsasAlgorithmOps
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
+import cse.fitzgero.sorouting.model.population.{LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
 import scala.collection.{GenMap, GenSeq}
@@ -12,14 +14,13 @@ object SelectionLocalCombinatorialService extends GraphService {
   override type VertexId = SelectionLocalCombinatorialAlgorithm.VertexId
   override type EdgeId = SelectionLocalCombinatorialAlgorithm.EdgeId
   override type Graph = SelectionLocalCombinatorialAlgorithm.Graph
-  type Path = SelectionLocalCombinatorialAlgorithm.Path
-  type PathSegment = SelectionLocalCombinatorialAlgorithm.PathSegment
+  type Path = List[SORoutingPathSegment]
   type AlgorithmResult = SelectionLocalCombinatorialAlgorithm.AlgorithmResult
 
   // types for KSP service
-  override type ServiceRequest = GenMap[LocalODPair, GenSeq[Path]]
+  override type ServiceRequest = GenMap[LocalRequest, GenSeq[Path]]
   override type LoggingClass = Map[String, Long]
-  case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
+  case class ServiceResult(result: GenSeq[LocalResponse], logs: LoggingClass)
   override type ServiceConfig = Nothing
 
   /**
@@ -30,8 +31,17 @@ object SelectionLocalCombinatorialService extends GraphService {
     * @return a future resolving to an optional set of optimal paths
     */
   override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = Future {
-    SelectionLocalCombinatorialAlgorithm.runAlgorithm(graph, request) match {
+    val algRequest = request.map(req => (req._1.od, req._2))
+    SelectionLocalCombinatorialAlgorithm.runAlgorithm(graph, algRequest) match {
       case Some(result) =>
+
+        val repackagedResponses: GenSeq[LocalResponse] =
+          request.flatMap(req =>
+            if (result.isDefinedAt(req._1.od))
+              Some(LocalResponse(req._1, result(req._1.od)))
+            else
+              None
+          ).toSeq
 
         val combinationCount = request.map(_._2.size.toLong).product
         val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
@@ -42,7 +52,7 @@ object SelectionLocalCombinatorialService extends GraphService {
           "algorithm.selection.local.cost.effect" -> costEffect,
           "algorithm.selection.local.success" -> 1L
         )
-        Some(ServiceResult(result, log))
+        Some(ServiceResult(repackagedResponses, log))
       case None => None
     }
   }

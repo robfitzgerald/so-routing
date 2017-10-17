@@ -1,13 +1,14 @@
 package cse.fitzgero.sorouting.algorithm.local.mssp
 
 import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasAlgorithm
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 
 import scala.collection.{GenIterable, GenMap}
 
 object MSSPLocalDijkstsasAlgorithmOps { ops =>
   type EdgeId = String
   type VertexId = String
-  type Path = SSSPLocalDijkstrasAlgorithm.Path
+//  type Path = List[SORoutingPathSegment]
   type Graph = SSSPLocalDijkstrasAlgorithm.Graph {
     type EdgeId = ops.EdgeId
     type VertexId = ops.VertexId
@@ -19,10 +20,10 @@ object MSSPLocalDijkstsasAlgorithmOps { ops =>
     * @param paths a set of paths for each request in a batch-oriented path algorithm
     * @return the difference between the previous graph link costs and the links when these paths are added
     */
-  def calculateAddedCost(graph: Graph, paths: GenIterable[Path]): Double = {
+  def calculateAddedCost(graph: Graph, paths: GenIterable[List[SORoutingPathSegment]]): Double = {
     val edgeIdAndFlow: GenMap[EdgeId, Int] =
       paths
-        .flatMap(_.map(_.e))
+        .flatMap(_.map(_.edgeId))
         .groupBy(identity)
         .mapValues(_.size)
 

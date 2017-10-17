@@ -1,16 +1,16 @@
 package cse.fitzgero.sorouting.algorithm.local.mssp
 
 
-import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithmService
+import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService}
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODBatch
+import cse.fitzgero.sorouting.model.population.LocalRequest
 
-import scala.collection.GenMap
+import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-object MSSPLocalDijkstrasService extends GraphRoutingAlgorithmService { service =>
+object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { service =>
   // types taken from SSSP
   override type VertexId = SSSPLocalDijkstrasService.VertexId
   override type EdgeId = SSSPLocalDijkstrasService.EdgeId
@@ -20,10 +20,10 @@ object MSSPLocalDijkstrasService extends GraphRoutingAlgorithmService { service 
   type SSSPAlgorithmResult = SSSPLocalDijkstrasService.ServiceResult
   type MultipleShortestPathsResult = GenMap[SSSPLocalDijkstrasService.ServiceRequest, Path]
   // MSSP types
-  override type ServiceRequest = LocalODBatch
+  override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
   override type ServiceConfig = Any
-  case class ServiceResult(result: MultipleShortestPathsResult, logs: LoggingClass)
+  case class ServiceResult(request: ServiceRequest, result: MultipleShortestPathsResult, logs: LoggingClass)
 
 
   /**
@@ -36,22 +36,22 @@ object MSSPLocalDijkstrasService extends GraphRoutingAlgorithmService { service 
   override def runService(graph: Graph, request: ServiceRequest, config: Option[Any] = None): Future[Option[ServiceResult]] = Future {
 
     val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
-      Future.sequence(request.ods.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
+      Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
 
     val resolved = Await.result(future, 60 seconds)
     val result = resolved.flatten.map(r => {
-      (r.result.od, r.result.path)
+      (r.request, r.response.path)
     }).toMap
 
     val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
 
     val log = Map[String, Long](
       "algorithm.mssp.local.runtime.total" -> runTime,
-      "algorithm.mssp.local.batch.request.size" -> request.ods.size,
+      "algorithm.mssp.local.batch.request.size" -> request.size,
       "algorithm.mssp.local.batch.completed" -> result.size,
       "algorithm.mssp.local.cost.effect" -> costEffect,
       "algorithm.mssp.local.success" -> 1L
     )
-    Some(ServiceResult(result, log))
+    Some(ServiceResult(request, result, log))
   }
 }

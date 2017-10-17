@@ -2,10 +2,11 @@ package cse.fitzgero.graph.algorithm
 
 import cse.fitzgero.graph.population.BasicRequest
 
+import scala.collection.GenSeq
 import scala.concurrent.Future
 
-trait GraphRoutingAlgorithmService extends GraphService { service =>
-  type ServiceRequest <: BasicRequest
+trait GraphBatchRoutingAlgorithmService extends GraphService { service =>
+  type ServiceRequest <: GenSeq[BasicRequest]
 
   /**
     * run the graph routing algorithm service as a future

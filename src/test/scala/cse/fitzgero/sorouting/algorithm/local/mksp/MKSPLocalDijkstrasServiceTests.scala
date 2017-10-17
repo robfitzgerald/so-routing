@@ -1,9 +1,12 @@
 package cse.fitzgero.sorouting.algorithm.local.mksp
 
+import java.time.LocalTime
+
 import cse.fitzgero.graph.config.KSPBounds
 import cse.fitzgero.sorouting.SORoutingAsyncUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasConfig
-import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalODBatch, LocalODPair}
+import cse.fitzgero.sorouting.model.population.LocalRequest
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
 class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
   "runService" when {
@@ -14,11 +17,10 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
         // create batch of od pairs
         val random = scala.util.Random
         def nextV: String = (random.nextInt(10) + 1).toString
-        val pairs = (1 to 10).par.map(person => {
+        val odPairs = (1 to 10).par.map(person => {
           val (o, d) = (nextV, nextV)
-          LocalODPair(person.toString, o, d)
+          LocalRequest(person.toString, LocalODPair(person.toString, o, d), LocalTime.now)
         })
-        val odPairs = LocalODBatch(pairs)
 
         // k shortest paths config
         val config = KSPLocalDijkstrasConfig(3)
@@ -32,13 +34,13 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
               // each solution should run from it's respective origin to it's destination (correctness)
               odPaths.forall(kspResult => {
-                val src = kspResult._1.src
-                val dst = kspResult._1.dst
+                val src = kspResult._1.od.src
+                val dst = kspResult._1.od.dst
                 kspResult
                   ._2.
                   forall(
                     _.foldLeft(src)((srcVertex, segment) => {
-                      val nextEdge = graph.edgeById(segment.e)
+                      val nextEdge = graph.edgeById(segment.edgeId)
                       nextEdge.get.src should equal (srcVertex)
                       nextEdge.get.dst
                     }) == dst
@@ -57,12 +59,12 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
                 })
               }) should be (true)
 
-              // no path should be longer than 7
-              odPaths.values.forall(_.forall(_.map(_.cost.get.sum).sum <= 7)) should be (true)
-
               // we should have the same number of results as requests
               // since any OD pair has a solution in this graph
-              odPaths.size should equal (odPairs.ods.size)
+              odPaths.size should equal (odPairs.size)
+
+              // no path should be longer than 7
+              odPaths.values.forall(_.forall(_.map(_.cost.get.sum).sum <= 7)) should be (true)
 
             case None => fail()
           }
@@ -75,11 +77,10 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
         // create batch of od pairs
         val random = scala.util.Random
         def nextV: String = (random.nextInt(25) + 1).toString
-        val pairs = (1 to 25).par.map(person => {
+        val odPairs = (1 to 10).par.map(person => {
           val (o, d) = (nextV, nextV)
-          LocalODPair(person.toString, o, d)
+          LocalRequest(person.toString, LocalODPair(person.toString, o, d), LocalTime.now)
         })
-        val odPairs = LocalODBatch(pairs)
 
         // k shortest paths config
         val config = KSPLocalDijkstrasConfig(3)
@@ -93,13 +94,13 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
             // each solution should run from it's respective origin to it's destination (correctness)
             odPaths.forall(kspResult => {
-              val src = kspResult._1.src
-              val dst = kspResult._1.dst
+              val src = kspResult._1.od.src
+              val dst = kspResult._1.od.dst
               kspResult
                 ._2.
                 forall(
                   _.foldLeft(src)((srcVertex, segment) => {
-                    val nextEdge = graph.edgeById(segment.e)
+                    val nextEdge = graph.edgeById(segment.edgeId)
                     nextEdge.get.src should equal (srcVertex)
                     nextEdge.get.dst
                   }) == dst
@@ -123,7 +124,7 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
             // we should have the same number of results as requests
             // since any OD pair has a solution in this graph
-            odPaths.size should equal (odPairs.ods.size)
+            odPaths.size should equal (odPairs.size)
 
           case None => fail()
         }

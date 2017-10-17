@@ -12,14 +12,15 @@ class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplat
             val joeResult = kspResult(joeRequest)
             val bobResult = kspResult(bobRequest)
 
-            joeResult.head.map(_.e) should equal (Seq("102","204","406","610"))
-            bobResult.head.map(_.e) should equal (Seq("204", "406", "610"))
+            joeResult.head.map(_.edgeId) should equal (Seq("102","204","406","610"))
+            bobResult.head.map(_.edgeId) should equal (Seq("204", "406", "610"))
 
           case None => fail("there should be a result")
         }
       }
     }
-    "given a result of a bigger mksp search" should {
+    // this can take up to an hour
+    "given a result of a bigger mksp search" ignore {
       "find a minimal cost set" in new TestAssets.BiggerMap {
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult) match {
           case None => fail("there should be a result")

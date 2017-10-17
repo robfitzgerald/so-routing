@@ -1,15 +1,17 @@
 package cse.fitzgero.sorouting.algorithm.local.routing
 
-import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithmService
+import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.ksp._
 import cse.fitzgero.sorouting.algorithm.local.mksp._
 import cse.fitzgero.sorouting.algorithm.local.selection._
+import cse.fitzgero.sorouting.model.population.{LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.local._
 
-import scala.concurrent.{Future, Promise}
+import scala.collection.GenSeq
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
 
-object KSPCombinatorialRoutingService extends GraphRoutingAlgorithmService {
+object KSPCombinatorialRoutingService extends GraphBatchRoutingAlgorithmService {
   // types taken from SSSP
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
   override type EdgeId = KSPLocalDijkstrasAlgorithm.EdgeId
@@ -17,9 +19,9 @@ object KSPCombinatorialRoutingService extends GraphRoutingAlgorithmService {
   type AlgorithmResult = SelectionLocalCombinatorialAlgorithm.AlgorithmResult
 
   // types for Routing Service
-  override type ServiceRequest = LocalODBatch
+  override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
-  case class ServiceResult(result: AlgorithmResult, logs: LoggingClass)
+  case class ServiceResult(result: GenSeq[LocalResponse], logs: LoggingClass)
   override type ServiceConfig = KSPLocalDijkstrasConfig
 
   /**

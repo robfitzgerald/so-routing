@@ -42,3 +42,6 @@ libraryDependencies ++= Seq(
   "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test"
 )
+
+// ~~~ Spire - Numeric Library
+libraryDependencies += "org.typelevel" %% "spire" % "0.14.1"

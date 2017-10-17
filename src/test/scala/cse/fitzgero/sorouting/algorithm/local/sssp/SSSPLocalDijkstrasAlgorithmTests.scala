@@ -11,10 +11,10 @@ class SSSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
           case None => fail()
           case Some(result) =>
             val one :: two :: three :: four :: Nil = result.path
-            one.e should equal ("102")
-            two.e should equal ("204")
-            three.e should equal ("406")
-            four.e should equal ("610")
+            one.edgeId should equal ("102")
+            two.edgeId should equal ("204")
+            three.edgeId should equal ("406")
+            four.edgeId should equal ("610")
             result.path.map(_.cost.get.sum).sum should equal (4D)
         }
       }
@@ -94,10 +94,10 @@ class SSSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
           case None => fail()
           case Some(result) =>
             val one :: two :: three :: four :: Nil = result
-            one.e should equal ("102")
-            two.e should equal ("204")
-            three.e should equal ("406")
-            four.e should equal ("610")
+            one.edgeId should equal ("102")
+            two.edgeId should equal ("204")
+            three.edgeId should equal ("406")
+            four.edgeId should equal ("610")
             result.map(_.cost.get.sum).sum should equal (4D)
         }
       }

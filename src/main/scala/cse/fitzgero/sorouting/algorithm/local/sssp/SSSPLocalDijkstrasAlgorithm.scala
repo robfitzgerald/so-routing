@@ -1,9 +1,9 @@
 package cse.fitzgero.sorouting.algorithm.local.sssp
 
 import scala.annotation.tailrec
-
 import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithm
 import cse.fitzgero.sorouting.model.roadnetwork.local._
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 
 object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   type VertexId = String
@@ -11,8 +11,8 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   type Graph = LocalGraph
   override type AlgorithmRequest = LocalODPair
   override type AlgorithmConfig = Any
+  override type PathSegment = SORoutingPathSegment
   case class AlgorithmResult(od: AlgorithmRequest, path: Path)
-  case class PathSegment (e: EdgeId, cost: Option[Seq[Double]])
   /**
     * run a shortest path search
     * @param g the graph to search
@@ -127,7 +127,7 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
     @tailrec def _backPropagate (
       currentVertex: VertexId,
-      result: Path = Seq()
+      result: Path = List()
     ): Option[Path] = {
       if (spanningTree.isDefinedAt(currentVertex)) {
         val currentNode: BackPropagateData = spanningTree(currentVertex)
@@ -136,7 +136,7 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
           case Some(edgeId) =>
             val edge = g.edgeById(edgeId).get
             val cost = edge.attribute.linkCostFlow.get
-            _backPropagate(edge.src, result :+ PathSegment (edge.id, Some(Seq(cost))))
+            _backPropagate(edge.src, result :+ SORoutingPathSegment(edge.id, Some(Seq(cost))))
         }
       } else None
     }
