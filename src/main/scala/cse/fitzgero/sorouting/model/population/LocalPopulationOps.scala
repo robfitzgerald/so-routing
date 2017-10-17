@@ -1,0 +1,131 @@
+package cse.fitzgero.sorouting.model.population
+
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
+import cse.fitzgero.graph.population.BasicPopulationOps
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
+
+import scala.collection.{GenMap, GenSeq}
+import scala.util.Random
+
+object LocalPopulationOps extends BasicPopulationOps {
+  // graph types
+  override type EdgeId = String
+  override type VertexId = String
+  override type Graph = LocalGraph
+
+  // population types
+  override type Path = List[SORoutingPathSegment]
+  override type PopulationConfig = LocalPopulationConfig
+  override type Request = LocalRequest
+  override type Response = LocalResponse
+
+  case class LocalPopulationConfig(n: Int, meanDepartureTime: LocalTime, departureTimeRange: Option[LocalTime] = None, randomSeed: Option[Int] = None)
+
+  //
+  val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+  /**
+    * method to generate a collection of requests based on the graph topology
+    *
+    * @param graph  underlying graph structure
+    * @param config information to constrain the generated data
+    * @return a set of requests
+    */
+  override def generateRequests(graph: Graph, config: PopulationConfig): GenSeq[Request] = {
+
+    val random: Random = config.randomSeed match {
+      case Some(seed) => new Random(seed)
+      case None => new Random
+    }
+
+    val vertexIds: GenMap[Int, String] =
+      graph.vertices.keys
+        .zipWithIndex
+        .map(tup => tup._2 -> tup._1)
+        .toMap
+
+    val numVertices: Int = vertexIds.size
+
+    1 to config.n map (_ => {
+      val src: String = vertexIds(random.nextInt(numVertices))
+      val dst: String  = vertexIds(random.nextInt(numVertices))
+
+      // TODO: possible test for proximity here (comparison on graph reachability minimum)
+
+      val personId: String = s"$src#$dst"
+
+      val timeDepartureOffset = config.departureTimeRange match {
+        case Some(range) =>
+          val posRange: Int = range.toSecondOfDay
+          random.nextInt(2 * posRange) - posRange
+        case None => 0L
+      }
+
+      val time: LocalTime = config.meanDepartureTime.plusSeconds(timeDepartureOffset)
+
+      LocalRequest(personId, LocalODPair(personId, src, dst), time)
+    })
+  }
+
+
+
+  /**
+    * turns a request into its MATSim XML representation
+    *
+    * @param graph   underlying graph structure
+    * @param request request data
+    * @return request in xml format
+    */
+  override def generateXML(graph: Graph, request: Request): xml.Elem = {
+    val (srcX: String, srcY: String) = graph.vertexById(request.od.src) match {
+      case Some(v) => (v.x.toString, v.y.toString)
+      case None => ("0.0", "0.0")
+    }
+    val (dstX: String, dstY: String) = graph.vertexById(request.od.dst) match {
+      case Some(v) => (v.x.toString, v.y.toString)
+      case None => ("0.0", "0.0")
+    }
+
+    <person id={request.id}>
+      <plan selected="yes">
+        <activity type="home" x={srcX} y={srcY} end_time={request.requestTime.format(HHmmssFormat)}/>
+        <leg mode="car"></leg>
+        <activity type="work" x={dstX} y={dstY} end_time={request.requestTime.plusHours(9).toString}/>
+      </plan>
+    </person>
+  }
+
+  /**
+    * turns a response into its MATSim XML representation
+    *
+    * @param graph    underlying graph structure
+    * @param response response data
+    * @return response in xml format
+    */
+  override def generateXML(graph: Graph, response: Response): xml.Elem = {
+    // duplicating code since xml does not have good support for manipulation in Scala
+    val (srcX: String, srcY: String) = graph.vertexById(response.request.od.src) match {
+      case Some(v) => (v.x.toString, v.y.toString)
+      case None => ("0.0", "0.0")
+    }
+    val (dstX: String, dstY: String) = graph.vertexById(response.request.od.dst) match {
+      case Some(v) => (v.x.toString, v.y.toString)
+      case None => ("0.0", "0.0")
+    }
+
+    <person id={response.request.id}>
+      <plan selected="yes">
+        <activity type="home" x={srcX} y={srcY} end_time={response.request.requestTime.format(HHmmssFormat)}/>
+          <leg mode="car">
+            <route type="links">
+              {response.path.map(_.edgeId).mkString(" ")}
+            </route>
+          </leg>
+        <activity type="work" x={dstX} y={dstY} end_time={response.request.requestTime.plusHours(9).toString}/>
+      </plan>
+    </person>
+  }
+}
