@@ -22,10 +22,16 @@ object LocalPopulationOps extends BasicPopulationOps {
   override type Request = LocalRequest
   override type Response = LocalResponse
 
+  // helpers
   case class LocalPopulationConfig(n: Int, meanDepartureTime: LocalTime, departureTimeRange: Option[LocalTime] = None, randomSeed: Option[Int] = None)
-
-  //
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+
+  def generateXMLRequests(graph: Graph, requests: GenSeq[LocalRequest]): xml.Elem =
+    <population>{requests.map(req => generateXML(graph, req))}</population>
+
+  def generateXMLResponses(graph: Graph, responses: GenSeq[LocalResponse]): xml.Elem =
+    <population>{responses.map(req => generateXML(graph, req))}</population>
 
   /**
     * method to generate a collection of requests based on the graph topology
@@ -49,13 +55,13 @@ object LocalPopulationOps extends BasicPopulationOps {
 
     val numVertices: Int = vertexIds.size
 
-    1 to config.n map (_ => {
+    1 to config.n map (n => {
       val src: String = vertexIds(random.nextInt(numVertices))
       val dst: String  = vertexIds(random.nextInt(numVertices))
 
       // TODO: possible test for proximity here (comparison on graph reachability minimum)
 
-      val personId: String = s"$src#$dst"
+      val personId: String = s"$n-$src#$dst"
 
       val timeDepartureOffset = config.departureTimeRange match {
         case Some(range) =>
@@ -100,7 +106,6 @@ object LocalPopulationOps extends BasicPopulationOps {
 
   /**
     * turns a response into its MATSim XML representation
-    *
     * @param graph    underlying graph structure
     * @param response response data
     * @return response in xml format

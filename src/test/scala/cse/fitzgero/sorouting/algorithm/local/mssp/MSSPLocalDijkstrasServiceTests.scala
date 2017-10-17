@@ -25,7 +25,7 @@ class MSSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
 
               // the longest shortest path should be less than or equal to 7
               odPaths.forall(od => {
-                val cost: Double = od._2.map(_.cost.get.sum).sum
+                val cost: Double = od.path.map(_.cost.get.sum).sum
                 cost <= 7
               }) should be (true)
 

@@ -11,9 +11,11 @@ import scala.io.Source
 import scala.xml.dtd.{DocType, SystemID}
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
-
 import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.app._
+import cse.fitzgero.sorouting.model.population.LocalRequest
+
+import scala.collection.GenSeq
 
 
 /**
@@ -98,6 +100,35 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   }
 
   /**
+    * set up the directory for this snapshot run -- REFACTOR VERSION
+    * @param population the population which we wish to use in this MATSim snapshot run
+    * @param timeGroupStart start time of this timeGroup, which is also the end time of this MATSim Snapshot run
+    * @param timeGroupEnd end time for this timegroup
+    * @return
+    */
+  def scaffoldSnapshotRef(population: xml.Elem, timeGroupStart: LocalTime, timeGroupEnd: LocalTime): String = {
+    // creates a directory with the population and config files
+    val thisSnapGroup = timeGroupStart.format(HHmmssFormat)
+    val thisSnapDir = s"$snapshotsBaseDirectory/matsim-snapshot-run-$thisSnapGroup"
+    val matsimOutputDir = s"$thisSnapDir/matsim-output"
+    val popFilePath = s"$thisSnapDir/population-snapshot.xml"
+    val networkFilePath = s"$thisSnapDir/network-snapshot.xml"
+
+    Files.createDirectories(Paths.get(thisSnapDir)).toString
+    Files.createDirectories(Paths.get(matsimOutputDir)).toString
+
+    // TODO: pass timeGroupStart and timeGroupEnd into config file
+
+    val configSnapshot = modifyModuleValue("network", modifyModuleValue("plans", config, popFilePath), networkFilePath)
+
+    makeXmlFile(thisSnapDir, configDocType)("config-snapshot.xml", configSnapshot)
+    makeXmlFile(thisSnapDir, networkDocType)("network-snapshot.xml", network)
+    makeXmlFile(thisSnapDir, populationDocType)("population-snapshot.xml", population)
+
+    thisSnapDir
+  }
+
+  /**
     * snapshot files are temporary and can be removed after the successful run of the routing algorithm
     * @param timeGroupStart the start time of this group which doubles as the unique id of this group
     * @return name of deleted directory or error message (not worth stopping everything for)
@@ -120,6 +151,15 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
         XML.save(finalPopulationFilePath(expType), pop.toXml, "UTF-8", WriteXmlDeclaration, populationDocType)
       case CombinedUESOPopulation =>
         XML.save(finalPopulationFilePath(expType), pop.toXml, "UTF-8", WriteXmlDeclaration, populationDocType)
+    }
+
+  // TODO hit this shit
+  def savePopulationRef(pop: xml.Elem, expType: SORoutingExperimentType, popType: SORoutingPopulationType): Unit =
+    popType match {
+      case FullUEPopulation =>
+        XML.save(finalPopulationFilePath(expType), pop, "UTF-8", WriteXmlDeclaration, populationDocType)
+      case CombinedUESOPopulation =>
+        XML.save(finalPopulationFilePath(expType), pop, "UTF-8", WriteXmlDeclaration, populationDocType)
     }
 
 

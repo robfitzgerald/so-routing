@@ -44,7 +44,7 @@ object SelectionLocalCombinatorialService extends GraphService {
           ).toSeq
 
         val combinationCount = request.map(_._2.size.toLong).product
-        val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
+        val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, repackagedResponses).toLong
 
         val log = Map[String, Long](
           "algorithm.selection.local.runtime" -> runTime,

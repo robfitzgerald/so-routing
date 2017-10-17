@@ -15,6 +15,9 @@ case class LocalEdge (
 }
 
 object LocalEdge {
+
+  val MATSimFlowRate: Double = 3600D // distance units per hour
+
   def apply(
     id: String,
     src: String,
@@ -23,17 +26,20 @@ object LocalEdge {
     capacity: Option[Double] = None,
     freeFlowSpeed: Option[Double] = None,
     distance: Option[Double] = None,
-    costFunction: Option[CostFunctionType] = None): LocalEdge =
-      costFunction match {
-        case None =>
-          LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacity, freeFlowSpeed, distance) with BasicCostFunction)
-        case Some(cost) => cost match {
-          case BasicCostFunctionType =>
-            LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacity, freeFlowSpeed, distance) with BasicCostFunction)
-          case BPRCostFunctionType =>
-            LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacity, freeFlowSpeed, distance) with BPRCostFunction)
-        }
+    costFunction: Option[CostFunctionType] = None,
+    algorithmFlowRate: Double = 3600D): LocalEdge = {
+    val capacityScaled: Option[Double] = capacity.map(_ * (algorithmFlowRate / MATSimFlowRate))
+    costFunction match {
+      case None =>
+        LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
+      case Some(cost) => cost match {
+        case BasicCostFunctionType =>
+          LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
+        case BPRCostFunctionType =>
+          LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BPRCostFunction)
       }
+    }
+  }
 
   /**
     * helper function to allow flow updates without losing mixin information, that will treat unset flow values as 0.0D

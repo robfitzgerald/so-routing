@@ -30,7 +30,6 @@ class LocalPopulationOpsTests extends SORoutingUnitTestTemplate {
           val result = LocalPopulationOps.generateRequests(graph, config)
           result.foreach(_.requestTime should (be > expectedLowerBound and be < expectedUpperBound))
           result.size should equal (requestedPopulation)
-          result.foreach(println)
         }
       }
     }

@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.algorithm.local.mssp
 
 import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService}
-import cse.fitzgero.sorouting.model.population.LocalRequest
+import cse.fitzgero.sorouting.model.population.{LocalRequest, LocalResponse}
 
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,7 +18,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
   type Path = SSSPLocalDijkstrasAlgorithm.Path
   type PathSegment = SSSPLocalDijkstrasAlgorithm.PathSegment
   type SSSPAlgorithmResult = SSSPLocalDijkstrasService.ServiceResult
-  type MultipleShortestPathsResult = GenMap[SSSPLocalDijkstrasService.ServiceRequest, Path]
+  type MultipleShortestPathsResult = GenSeq[LocalResponse]
   // MSSP types
   override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
@@ -40,10 +40,10 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
 
     val resolved = Await.result(future, 60 seconds)
     val result = resolved.flatten.map(r => {
-      (r.request, r.response.path)
-    }).toMap
+      LocalResponse(r.request, r.response.path)
+    }).toSeq
 
-    val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result.values).toLong
+    val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
 
     val log = Map[String, Long](
       "algorithm.mssp.local.runtime.total" -> runTime,
