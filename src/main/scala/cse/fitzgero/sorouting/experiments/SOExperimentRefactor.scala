@@ -27,7 +27,7 @@ object SOExperimentRefactor extends App {
     networkFilePath = "data/rye/network.xml",
     outputDirectory = "result/newoutput",
     processes = AllProcs,
-    timeWindow = 10,
+    timeWindow = 30,
     k = 4,
     kspBounds = NoKSPBounds,
     fwBounds = IterationFWBounds(0),
@@ -50,8 +50,8 @@ object SOExperimentRefactor extends App {
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
-  val routingResultUE: GenSeq[LocalResponse] = LocalGraphRoutingUERefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
-  val ueXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultUE)
+  val routingResultUE: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUERefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+  val ueXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultUE._1)
   fileHelper.savePopulationRef(ueXml, FullUEExp, FullUEPopulation)
 
   MATSimSingleAnalyticSnapshotRunnerModule(
@@ -70,54 +70,50 @@ object SOExperimentRefactor extends App {
   //----------------------------------------------------------------------------------------------
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
-//  val (logs, routeCountUE, routeCountSO) = {
-//    val routingResult: LocalGraphRoutingModule03Result = LocalGraphRoutingUESOModule03.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
-//    fileHelper.savePopulation(routingResult.population, CombinedUESOExp, CombinedUESOPopulation)
-//
-//
-//    val analytics = routingResult.logs.analytic
-//    val algorithmLogger = AuxLogger.get("algorithm")
-//
-//    val totalRoutes = analytics.getOrZero("algorithm.global.totalroutes")
-//
-//    algorithmLogger.info("total routes (count)", totalRoutes)
-//
-//    (routingResult.logs, routingResult.routeCountUE, routingResult.routeCountSO)
-//  }
+  val routingResultSO: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUESORefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+  val soXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultSO._1)
+  fileHelper.savePopulationRef(soXml, CombinedUESOExp, CombinedUESOPopulation)
 
   //----------------------------------------------------------------------------------------------
   //  3. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
-//  MATSimSingleAnalyticSnapshotRunnerModule(
-//    MATSimRunnerConfig(
-//      fileHelper.finalConfigFilePath(CombinedUESOExp),
-//      fileHelper.experimentPath(CombinedUESOExp),
-//      conf.timeWindow,
-//      conf.startTime,
-//      conf.endTime,
-//      ArgsNotMissingValues
-//    ),
-//    networkData,
-//    BPRCostFunction
-//  )
+  MATSimSingleAnalyticSnapshotRunnerModule(
+    MATSimRunnerConfig(
+      fileHelper.finalConfigFilePath(CombinedUESOExp),
+      fileHelper.experimentPath(CombinedUESOExp),
+      conf.timeWindow,
+      conf.startTime,
+      conf.endTime,
+      ArgsNotMissingValues
+    ),
+    networkData,
+    BPRCostFunction
+  )
 
   //----------------------------------------------------------------------------------------------
   //  4. Analyze Results
   //----------------------------------------------------------------------------------------------
-//  fileHelper.appendToReportFile(PrintToResultFile(
-//    conf.populationSize,
-//    overallNumberOfTrips,
-//    routeCountUE,
-//    routeCountSO,
-//    (conf.routePercentage * 100).toInt,
-//    conf.timeWindow,
-//    List(0L), // runTimes.ksp,
-//    List(0L), // runTimes.fw,
-//    List(0L), // runTimes.selection,
-//    List(0L), // runTimes.overall,
-//    fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
-//    fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
-//    fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),
-//    fileHelper.getNetworkAvgTravelTime(CombinedUESOExp).getOrElse(-1D)
-//  ))
+
+  println("~~ Logs ~~")
+  println("~~~~~~~~~~")
+  println("~~ Selfish Routing ~~")
+  routingResultUE._2.foreach(println)
+  println("~~ Optimal Routing ~~")
+  routingResultSO._2.foreach(println)
+  fileHelper.appendToReportFile(PrintToResultFile(
+    conf.populationSize,
+    -1,
+    -1,
+    -1,
+    (conf.routePercentage * 100).toInt,
+    conf.timeWindow,
+    List(-1), // runTimes.ksp,
+    List(-1), // runTimes.fw,
+    List(-1), // runTimes.selection,
+    List(-1), // runTimes.overall,
+    fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
+    fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
+    fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),
+    fileHelper.getNetworkAvgTravelTime(CombinedUESOExp).getOrElse(-1D)
+  ))
 }

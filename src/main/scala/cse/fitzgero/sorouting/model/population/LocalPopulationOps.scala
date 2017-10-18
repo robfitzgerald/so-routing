@@ -7,6 +7,7 @@ import cse.fitzgero.graph.population.BasicPopulationOps
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 
+import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
 import scala.util.Random
 
@@ -42,33 +43,15 @@ object LocalPopulationOps extends BasicPopulationOps {
     */
   override def generateRequests(graph: Graph, config: PopulationConfig): GenSeq[Request] = {
 
-    val random: Random = config.randomSeed match {
-      case Some(seed) => new Random(seed)
-      case None => new Random
-    }
-
-    val vertexIds: GenMap[Int, String] =
-      graph.vertices.keys
-        .zipWithIndex
-        .map(tup => tup._2 -> tup._1)
-        .toMap
-
-    val numVertices: Int = vertexIds.size
+    val odPairGenerator = nonRepeatingVertexIdGenerator(graph, config.randomSeed)
+    val offsetGenerator = timeDepartureOffsetGenerator()
 
     1 to config.n map (n => {
-      val src: String = vertexIds(random.nextInt(numVertices))
-      val dst: String  = vertexIds(random.nextInt(numVertices))
-
-      // TODO: possible test for proximity here (comparison on graph reachability minimum)
+      val (src, dst) = odPairGenerator()
 
       val personId: String = s"$n-$src#$dst"
 
-      val timeDepartureOffset = config.departureTimeRange match {
-        case Some(range) =>
-          val posRange: Int = range.toSecondOfDay
-          random.nextInt(2 * posRange) - posRange
-        case None => 0L
-      }
+      val timeDepartureOffset = offsetGenerator(config.departureTimeRange)
 
       val time: LocalTime = config.meanDepartureTime.plusSeconds(timeDepartureOffset)
 
@@ -132,5 +115,54 @@ object LocalPopulationOps extends BasicPopulationOps {
         <activity type="work" x={dstX} y={dstY} end_time={response.request.requestTime.plusHours(9).toString}/>
       </plan>
     </person>
+  }
+
+  def timeDepartureOffsetGenerator(): (Option[LocalTime]) => Long = {
+
+    val random = new Random
+
+    (departureTimeOffset: Option[LocalTime]) => departureTimeOffset match {
+      case Some(range) =>
+        val posRange: Int = range.toSecondOfDay
+        random.nextInt(2 * posRange) - posRange
+      case None => 0L
+    }
+  }
+
+  /**
+    * creates a pair of vertex ids where src does not equal dst
+    * @param graph underlying graph
+    * @param randomSeed an optional random seed value
+    * @return
+    */
+  def nonRepeatingVertexIdGenerator(graph: Graph, randomSeed: Option[Int] = None): () => (String, String) = {
+
+    val vertexIds: GenMap[Int, String] =
+      graph.vertices.keys
+        .zipWithIndex
+        .map(tup => tup._2 -> tup._1)
+        .toMap
+
+    val numVertices: Int = vertexIds.size
+
+    val random: Random = randomSeed match {
+      case Some(seed) => new Random(seed)
+      case None => new Random
+    }
+
+    () => {
+      val src: String = vertexIds(random.nextInt(numVertices))
+
+      // TODO: possible test for proximity here (comparison on graph reachability minimum)
+      @tailrec def _findDestination(): String = {
+        val dst: String = vertexIds(random.nextInt(numVertices))
+        if (dst != src)
+          dst
+        else
+          _findDestination()
+      }
+
+      (src, _findDestination())
+    }
   }
 }
