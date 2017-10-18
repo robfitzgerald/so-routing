@@ -1,10 +1,12 @@
 package cse.fitzgero.sorouting.experiments
 
+import java.nio.file.{Files, Paths}
+
 import cse.fitzgero.sorouting.model.population.LocalRequest
 
 import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
-import scala.util.Random
+import scala.util.{Failure, Random, Success, Try}
 
 object ExperimentOps {
 
@@ -34,6 +36,22 @@ object ExperimentOps {
         .zipWithIndex
         .partition(_._2 < (routePercentage * population.size).toInt)
     (testGroupIndexed.map(_._1), controlGroupIndexed.map(_._1))
+  }
+
+  /**
+    * write a log to a file
+    * @param log a log
+    * @param filePath it's destination file path (absolute or relative)
+    */
+  def writeLog(log: Map[String, Long], filePath: String, name: String = "log.txt"): Unit = {
+    Try({
+      val fileData: String = log.map(tup => s"${tup._1} ${tup._2}").mkString("\n")
+
+      Files.write(Paths.get(s"$filePath/$name"), fileData.getBytes)
+    }) match {
+      case Success(_) =>
+      case Failure(e) => println(s"unable to write log to file $filePath: ${e.getMessage}")
+    }
   }
 }
 

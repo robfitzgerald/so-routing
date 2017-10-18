@@ -101,7 +101,7 @@ object SORoutingLocalGraphInlineApplication02 extends App with ClassLogging {
   //----------------------------------------------------------------------------------------------
   //  4. Analyze Results
   //----------------------------------------------------------------------------------------------
-  fileHelper.appendToReportFile(PrintToResultFile(
+  fileHelper.appendToReportFile(PrintToResultFile1(
     conf.populationSize,
     overallNumberOfTrips,
     routeCountUE,

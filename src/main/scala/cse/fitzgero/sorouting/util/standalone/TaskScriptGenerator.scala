@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
 import scala.util.{Failure, Success, Try}
 
-import cse.fitzgero.sorouting.util.{ClassLogging, PrintToResultFile}
+import cse.fitzgero.sorouting.util.{ClassLogging, PrintToResultFile1}
 
 
 object TaskScriptGenerator extends App with ClassLogging {
@@ -51,7 +51,7 @@ object TaskScriptGenerator extends App with ClassLogging {
 
   val createExperimentDirectory = Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/result/${conf.name()}")).toString
   logger.info(s"experiment directory created at $createExperimentDirectory")
-  val header = s"""echo "${PrintToResultFile.resultFileHeader}" >> result/${conf.name()}/result.csv"""
+  val header = s"""echo "${PrintToResultFile1.resultFileHeader}" >> result/${conf.name()}/result.csv"""
 
   val experimentsWithHeader = (header +: experiments).mkString("\n")
 

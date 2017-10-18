@@ -87,7 +87,7 @@ object LocalGraphRoutingUERefactor {
 
         val msspFuture = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRoute)
 
-        Await.result(msspFuture, 10 seconds) match {
+        Await.result(msspFuture, 10 minutes) match {
           case Some(serviceResult) =>
             val updatedRoutes = acc._1 ++ serviceResult.result
             val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(acc._2, serviceResult.logs)

@@ -47,6 +47,7 @@ object LocalPopulationOps extends BasicPopulationOps {
     val offsetGenerator = timeDepartureOffsetGenerator()
 
     1 to config.n map (n => {
+
       val (src, dst) = odPairGenerator()
 
       val personId: String = s"$n-$src#$dst"

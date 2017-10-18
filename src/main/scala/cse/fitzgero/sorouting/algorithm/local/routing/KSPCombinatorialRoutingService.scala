@@ -37,7 +37,12 @@ object KSPCombinatorialRoutingService extends GraphBatchRoutingAlgorithmService 
       case Some(ksp) =>
         SelectionLocalCombinatorialService.runService(graph, ksp.result) map {
           case Some(selection) =>
-            promise.success(Some(ServiceResult(selection.result, ksp.logs ++ selection.logs)))
+            val logs = Map[String, Long](
+              "algorithm.routing.local.success" -> 1L,
+              "algorithm.routing.local.batch.request.size" -> request.size,
+              "algorithm.routing.local.batch.completed" -> selection.result.size
+            )
+            promise.success(Some(ServiceResult(selection.result, logs ++ ksp.logs ++ selection.logs)))
           case None =>
             promise.success(None)
         }

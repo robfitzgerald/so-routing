@@ -5,17 +5,15 @@ import java.nio.file.{Files, _}
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, LocalTime}
 
-import scala.collection.JavaConverters._
-import scala.xml.XML
-import scala.io.Source
-import scala.xml.dtd.{DocType, SystemID}
-import scala.util.{Failure, Success, Try}
-import scala.util.matching.Regex
-import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 import cse.fitzgero.sorouting.app._
-import cse.fitzgero.sorouting.model.population.LocalRequest
+import cse.fitzgero.sorouting.matsimrunner.population.PopulationOneTrip
 
-import scala.collection.GenSeq
+import scala.collection.JavaConverters._
+import scala.io.Source
+import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
+import scala.xml.XML
+import scala.xml.dtd.{DocType, SystemID}
 
 
 /**
@@ -34,13 +32,15 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   private val config: xml.Elem = XML.loadFile(conf.configFilePath)
   private val network: xml.Elem = XML.loadFile(conf.networkFilePath)
   private val configHash: String = config.hashCode().toString
+  private val experimentName: String = s"$configHash-${conf.populationSize}ppl-${conf.timeWindow}win-${conf.routePercentage}rt"
   private val experimentTime: String = LocalDateTime.now().toString
 
 
   // Directory information for this experiment
   private val baseDir: String = if (conf.outputDirectory.head == '/') conf.outputDirectory else s"${Paths.get("").toAbsolutePath.toString}/${conf.outputDirectory}"
   private val resultFile: String = s"$baseDir/result.csv"
-  private val experimentDirectory: String = s"$baseDir/$configHash/$experimentTime"
+  private val experimentSubDir: String = s"$baseDir/$experimentName"
+  private val experimentDirectory: String = s"$experimentSubDir/$experimentTime"
   private val snapshotsBaseDirectory: String = s"$thisExperimentDirectory/snapshots"
   private val resultsDirectory: String = s"$thisExperimentDirectory/results"
   private val fullUEResultsDirectory: String = s"$resultsDirectory/$FullUEExp"
@@ -65,6 +65,7 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   // Public methods
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  def thisExperimentSubDir: String = experimentSubDir
   def thisExperimentDirectory: String = experimentDirectory
   def thisNetworkFilePath: String = networkFilePath
   def getNetwork: xml.Elem = network
@@ -168,25 +169,36 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     * @param expType  denotes the type of experiment associated with these results
     * @return
     */
-  def experimentPath(expType: SORoutingExperimentType): String =
-    s"$resultsDirectory/$expType"
+  def experimentPath(expType: SORoutingExperimentType): String = expType match {
+    case FullUEExp => s"$experimentSubDir/$FullUEExp"
+    case CombinedUESOExp => s"$resultsDirectory/$CombinedUESOExp"
+  }
 
+//  experimentSubDir
 
   /**
     * the path for the config files at the base directory of this experiment (the final versions)
     * @param expType set the type of experiment for this config file
     * @return
     */
-  def finalConfigFilePath(expType: SORoutingExperimentType): String =
-    s"$thisExperimentDirectory/config-$expType.xml"
+  def finalConfigFilePath(expType: SORoutingExperimentType): String = expType match {
+    case FullUEExp => s"${experimentPath(FullUEExp)}/config-$expType.xml"
+    case CombinedUESOExp => s"$thisExperimentDirectory/config-$expType.xml"
+  }
+
+
 
   /**
     * the path for the population files at the base directory of this experiment (the final versions)
     * @param expType set the type of experiment for this config file
     * @return
     */
-  def finalPopulationFilePath(expType: SORoutingExperimentType): String =
-    s"$thisExperimentDirectory/population-$expType.xml"
+  def finalPopulationFilePath(expType: SORoutingExperimentType): String = expType match {
+    case FullUEExp => s"${experimentPath(FullUEExp)}/population-$expType.xml"
+    case CombinedUESOExp => s"$thisExperimentDirectory/population-$expType.xml"
+  }
+
+
 
 
   /**
@@ -228,12 +240,19 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   // /network/global/@avgtraveltime
   // s"$resultsDirectory/$expType/snapshot/snapshot.xml"
   def getNetworkAvgTravelTime(expType: SORoutingExperimentType): Option[Double] = {
-    val path = s"$resultsDirectory/$expType/snapshot/snapshot.xml"
+    val path = expType match {
+      case FullUEExp => s"${experimentPath(FullUEExp)}/snapshot/snapshot.xml"
+      case CombinedUESOExp => s"$resultsDirectory/$expType/snapshot/snapshot.xml"
+    }
     Try({(XML.loadFile(path) \ "global" \ "@avgtraveltime").text.toDouble}) match {
       case Success(value) => Some(value)
       case Failure(e) => None
     }
   }
+
+
+  def needToRunUEExperiment: Boolean =
+    !Files.isDirectory(Paths.get(experimentPath(FullUEExp) + "/matsim"))
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,7 +265,11 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     * @param expType FullUE or CombinedUESO
     * @return file path
     */
-  private def tripDurationFile(expType: SORoutingExperimentType): String = s"$resultsDirectory/$expType/$relPathToMATSimTripDurationsFile"
+  private def tripDurationFile(expType: SORoutingExperimentType): String = expType match {
+    case FullUEExp => s"${experimentPath(FullUEExp)}/$relPathToMATSimTripDurationsFile"
+    case CombinedUESOExp =>
+      s"$resultsDirectory/$expType/$relPathToMATSimTripDurationsFile"
+  }
 
   /**
     * recursively delete files in directory.
@@ -276,9 +299,10 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     Files.createDirectories(Paths.get(snapshotsBaseDirectory)).toString,
     Files.createDirectories(Paths.get(fullUEResultsDirectory)).toString,
     Files.createDirectories(Paths.get(combinedUESOResultsDirectory)).toString,
+    Files.createDirectories(Paths.get(experimentPath(FullUEExp))).toString,
     makeNetworkXml(s"network.xml", network),
-    makeConfigXml(s"config-$FullUEExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(FullUEExp))),
-    makeConfigXml(s"config-$CombinedUESOExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(CombinedUESOExp)))
+    makeConfigXml(FullUEExp, s"config-$FullUEExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(FullUEExp))),
+    makeConfigXml(CombinedUESOExp, s"config-$CombinedUESOExp.xml", modifyModuleValue("plans", confWithNetwork, finalPopulationFilePath(CombinedUESOExp)))
     )
   }
 
@@ -325,7 +349,10 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     fileDestination
   }
 
-  private def makeConfigXml(fileName: String, elem: xml.Elem): String = makeXmlFile(thisExperimentDirectory, configDocType)(fileName, elem)
+  private def makeConfigXml(expType: SORoutingExperimentType, fileName: String, elem: xml.Elem): String = expType match {
+    case FullUEExp => makeXmlFile(experimentPath(FullUEExp), configDocType)(fileName, elem)
+    case CombinedUESOExp => makeXmlFile(thisExperimentDirectory, configDocType)(fileName, elem)
+  }
   private def makeNetworkXml(fileName: String, elem: xml.Elem): String = makeXmlFile(thisExperimentDirectory, networkDocType)(fileName, elem)
 
 }

@@ -15,6 +15,9 @@ object MSSPLocalDijkstsasAlgorithmOps { ops =>
     type VertexId = ops.VertexId
   }
 
+  // scale the cost difference values by 1000 so we don't lose precision information
+  val Scalar: Long = 1000L
+
   /**
     * given a graph and a set of paths, calculate the cost that would be added to the network
     * @param graph a road network
@@ -33,12 +36,19 @@ object MSSPLocalDijkstsasAlgorithmOps { ops =>
         .flatMap(eTup => {
           graph.edgeById(eTup._1) match {
             case Some(edge) =>
-              Some(edge.attribute.costFlow(eTup._2).getOrElse(0D) - edge.attribute.linkCostFlow.getOrElse(0D))
+              // TODO: something is screwy here. getting negative cost differences, which shouldn't be possible.
+              for {
+                costAfterAdding <- edge.attribute.costFlow(eTup._2)
+                costBeforeAdding <- edge.attribute.linkCostFlow
+                if costAfterAdding > costBeforeAdding
+              } yield {
+                costAfterAdding - costBeforeAdding
+              }
             case None => None
           }
         }).sum
 
-    Math.round(costDifference)
+    Math.round(costDifference * Scalar)
   }
 
 }

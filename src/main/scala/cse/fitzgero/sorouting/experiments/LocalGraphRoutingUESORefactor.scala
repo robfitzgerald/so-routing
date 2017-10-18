@@ -119,6 +119,13 @@ object LocalGraphRoutingUESORefactor extends ClassLogging {
         val updatedResult: GenSeq[LocalResponse] = acc._1 ++ resultUE._1 ++ resultSO._1
         val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(acc._2, resultUE._2), resultSO._2)
 
+        val combinations: Long =
+          if (resultSO._2.isDefinedAt("algorithm.selection.local.combinations"))
+            resultSO._2("algorithm.selection.local.combinations")
+          else 0L
+
+        println(s"${LocalTime.now} [UESO Router] routed group at time ${timeGroupStart.format(HHmmssFormat)} with ${resultSO._1.size} requests and $combinations combinations.")
+
         (updatedResult, updatedLogs)
       }
     })

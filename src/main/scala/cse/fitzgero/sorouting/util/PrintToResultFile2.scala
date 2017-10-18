@@ -1,21 +1,17 @@
 package cse.fitzgero.sorouting.util
 
-case class PrintToResultFile (
+case class PrintToResultFile2 (
   populationSize: Int,
   totRouteRequests: Int,
   ueRouteRequests: Int,
   soRouteRequests: Int,
   routePercent: Int,
   windowDur: Int,
-  kspRunTimes: List[Long],
-  fwRunTimes: List[Long],
-  selectionRunTimes: List[Long],
-  overallRunTimes: List[Long],
   popAvgTripUE: Double,
   popAvgTripUESO: Double,
   netAvgTripUE: Double,
   netAvgTripUESO: Double
-) {
+) extends PrintToResultFile {
 
   val popTravelTimeImprovement: Double = (popAvgTripUE - popAvgTripUESO) / popAvgTripUE
   val netTravelTimeImprovement: Double = (netAvgTripUE - netAvgTripUESO) / netAvgTripUE
@@ -28,10 +24,6 @@ case class PrintToResultFile (
   }
 
   override def toString: String = {
-    val kspRouteStats = quickStats(kspRunTimes)
-    val fwRouteStats = quickStats(fwRunTimes)
-    val selectionRouteStats = quickStats(selectionRunTimes)
-    val overallRouteStats = quickStats(overallRunTimes)
     // fullPop uePop soPop route% window totalAlgRunTime minRouteTime meanRouteTime maxRouteTime stdDevRouteTime avgTripUE avgTripUESO
     // fullPop: number of people
     // ueRouteRequests: number of route requests belonging to UE agents
@@ -43,10 +35,10 @@ case class PrintToResultFile (
     // avgTripUESO: MATSim-reported average travel time, drivers assigned via Dijkstra's and some % of the population routed via our SO routing algorithm
     // netAvgTripUE: for each link, the average time it took for a car to pass through it, averaged across the network, for the selfish drivers
     // netTripUESO: network avg travel time (as above), but for the mixed population
-    f"$populationSize,$totRouteRequests,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$kspRouteStats,$fwRouteStats,$selectionRouteStats,$overallRouteStats,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f,$popTravelTimeImprovement%.4f,$netTravelTimeImprovement%.4f"
+    f"$populationSize,$totRouteRequests,$ueRouteRequests,$soRouteRequests,$routePercent%%,$windowDur,$popAvgTripUE%.3f,$popAvgTripUESO%.3f,$netAvgTripUE%.3f,$netAvgTripUESO%.3f,$popTravelTimeImprovement%.4f,$netTravelTimeImprovement%.4f"
   }
 }
 
-object PrintToResultFile {
-  def resultFileHeader: String = "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,algKSPRuntime,minKSPRuntime,meanKSPRuntime,maxKSPRuntime,stdKSPRuntime,algFWRuntime,minFWRuntime,meanFWRuntime,maxFWRuntime,stdFWRuntime,algSelRuntime,minSelRuntime,meanSelRuntime,maxSelRuntime,stdSelRuntime,algORuntime,minORuntime,meanORuntime,maxORuntime,stdORuntime,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement"
+object PrintToResultFile2 {
+  def resultFileHeader: String = "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement"
 }
