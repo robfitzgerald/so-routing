@@ -26,7 +26,7 @@ object SOExperimentRefactor extends App {
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig (
     configFilePath = "data/rye/config.xml",
     networkFilePath = "data/rye/network.xml",
-    outputDirectory = "result/newoutput",
+    outputDirectory = "result/20171019",
     processes = AllProcs,
     timeWindow = 30,
     k = 4,
@@ -82,6 +82,7 @@ object SOExperimentRefactor extends App {
   val routingResultSO: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUESORefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
   val soXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultSO._1)
   fileHelper.savePopulationRef(soXml, CombinedUESOExp, CombinedUESOPopulation)
+  val soLogs = routingResultSO._2
 
   //----------------------------------------------------------------------------------------------
   //  3. Run 1-p% UE UNION p% SO Simulation, get overall congestion (measure?)
@@ -115,16 +116,18 @@ object SOExperimentRefactor extends App {
   fileHelper.appendToReportFile(PrintToResultFile2(
     conf.populationSize,
     populationFull.size,
-    routingResultSO._2("algorithm.mssp.local.batch.completed").toInt,
-    routingResultSO._2("algorithm.routing.local.batch.completed").toInt,
+    soLogs("algorithm.mssp.local.batch.completed").toInt,
+    soLogs("algorithm.routing.local.batch.completed").toInt,
     (conf.routePercentage * 100).toInt,
     conf.timeWindow,
+    soLogs("algorithm.selection.local.combinations").toInt,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(CombinedUESOExp).getOrElse(-1D)
   ))
 
-  ExperimentOps.writeLog(ueLogs, fileHelper.experimentPath(FullUEExp), "log-ue.txt")
+  if (fileHelper.needToRunUEExperiment)
+    ExperimentOps.writeLog(ueLogs, fileHelper.experimentPath(FullUEExp), "log-ue.txt")
   ExperimentOps.writeLog(routingResultSO._2, fileHelper.experimentPath(CombinedUESOExp), "log-so.txt")
 }

@@ -45,7 +45,7 @@ object ExperimentOps {
     */
   def writeLog(log: Map[String, Long], filePath: String, name: String = "log.txt"): Unit = {
     Try({
-      val fileData: String = log.map(tup => s"${tup._1} ${tup._2}").mkString("\n")
+      val fileData: String = log.toSeq.sortBy(_._1).map(tup => s"${tup._1} ${tup._2}").mkString("\n")
 
       Files.write(Paths.get(s"$filePath/$name"), fileData.getBytes)
     }) match {
