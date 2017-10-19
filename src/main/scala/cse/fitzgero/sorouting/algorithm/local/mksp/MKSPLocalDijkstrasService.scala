@@ -46,12 +46,13 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
 
     val kRequested: Long = resolved.map(_.logs("algorithm.ksp.local.k.requested")).sum
     val kProduced: Long = resolved.map(_.logs("algorithm.ksp.local.k.produced")).sum
+    val hasAlternates: Int = result.count(_._2.size > 1)
 
     val logs = Map[String, Long](
       "algorithm.mksp.local.runtime.total" -> runTime,
-      "algorithm.mksp.local.batch.request.size" -> request.size,
-      "algorithm.mksp.local.batch.completed" -> result.size,
-      "algorithm.mksp.local.k" -> config.get.k,
+      "algorithm.mksp.local.request.size" -> request.size,
+      "algorithm.mksp.local.result.size" -> result.size,
+      "algorithm.mksp.local.hasalternates" -> hasAlternates,
       "algorithm.mksp.local.k.requested" -> kRequested,
       "algorithm.mksp.local.k.produced" -> kProduced,
       "algorithm.mksp.local.success" -> 1L

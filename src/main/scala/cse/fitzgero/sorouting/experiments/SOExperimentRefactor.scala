@@ -51,7 +51,8 @@ object SOExperimentRefactor extends App {
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
   //----------------------------------------------------------------------------------------------
-  val ueLogs = if (fileHelper.needToRunUEExperiment) {
+  val runUEInThisExperiment: Boolean = fileHelper.needToRunUEExperiment
+  val ueLogs = if (runUEInThisExperiment) {
     val routingResultUE: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUERefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     val ueXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultUE._1)
     fileHelper.savePopulationRef(ueXml, FullUEExp, FullUEPopulation)
@@ -120,6 +121,7 @@ object SOExperimentRefactor extends App {
 
   val expectedSOCost: Long = soLogs("algorithm.selection.local.cost.effect") + soLogs("algorithm.mssp.local.cost.effect")
 
+
   // TODO: manually echo the header row to the result file. see PrintToResultFile2.resultFileHeader
 
   fileHelper.appendToReportFile(PrintToResultFile2(
@@ -130,6 +132,7 @@ object SOExperimentRefactor extends App {
     (conf.routePercentage * 100).toInt,
     conf.timeWindow,
     soLogs("algorithm.selection.local.combinations").toInt,
+    soLogs("algorithm.mksp.local.hasalternates").toInt,
     expectedUECost.toInt,
     expectedSOCost.toInt,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
@@ -138,7 +141,7 @@ object SOExperimentRefactor extends App {
     fileHelper.getNetworkAvgTravelTime(CombinedUESOExp).getOrElse(-1D)
   ))
 
-  if (fileHelper.needToRunUEExperiment)
+  if (runUEInThisExperiment)
     ExperimentOps.writeLog(ueLogs, fileHelper.experimentPath(FullUEExp), "log-ue.txt")
   ExperimentOps.writeLog(routingResultSO._2, fileHelper.experimentPath(CombinedUESOExp), "log-so.txt")
 }
