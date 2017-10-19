@@ -19,7 +19,9 @@ import scala.collection.GenSeq
 
 object SOExperimentRefactor extends App {
 
-  val pop = if (args.size > 0) args(0).toInt else 100
+  val pop: Int = if (args.size > 0) args(0).toInt else 100
+  val win: Int = if (args.size > 1) args(1).toInt else 10
+  val route: Double = if (args.size > 2) args(2).toDouble else 0.20D
 
   Logger.getRootLogger.setLevel(Level.WARN)
 
@@ -28,12 +30,12 @@ object SOExperimentRefactor extends App {
     networkFilePath = "data/rye/network.xml",
     outputDirectory = "result/20171019",
     processes = AllProcs,
-    timeWindow = 30,
+    timeWindow = win,
     k = 4,
     kspBounds = NoKSPBounds,
     fwBounds = IterationFWBounds(0),
     populationSize = pop,
-    routePercentage = 0.20D,
+    routePercentage = route,
     startTime = "08:25:00",
     endTime = "08:35:00"
   )
@@ -45,8 +47,6 @@ object SOExperimentRefactor extends App {
   val graph = LocalGraphOps.readMATSimXML(networkXml)
   val populationConfig: LocalPopulationConfig = LocalPopulationConfig(conf.populationSize, LocalTime.parse("08:30:00"), Some(LocalTime.parse("00:05:00")))
   val populationFull = LocalPopulationOps.generateRequests(graph, populationConfig)
-
-//  populationFull.foreach(println)
 
   //----------------------------------------------------------------------------------------------
   //  1. Run 100% UE Simulation, get overall congestion (measure?)
@@ -111,6 +111,15 @@ object SOExperimentRefactor extends App {
   println("~~ Optimal Routing ~~")
   routingResultSO._2.toSeq.sortBy(_._1).foreach(println)
 
+  // TODO: replace with a file-helper call to load this value from the log file if we didn't run UE experiment this time
+  val expectedUECost: Long =
+    if (fileHelper.needToRunUEExperiment)
+      soLogs("algorithm.mssp.local.cost.effect")
+    else
+      0L
+
+  val expectedSOCost: Long = soLogs("algorithm.selection.local.cost.effect") + soLogs("algorithm.mssp.local.cost.effect")
+
   // TODO: manually echo the header row to the result file. see PrintToResultFile2.resultFileHeader
 
   fileHelper.appendToReportFile(PrintToResultFile2(
@@ -121,6 +130,8 @@ object SOExperimentRefactor extends App {
     (conf.routePercentage * 100).toInt,
     conf.timeWindow,
     soLogs("algorithm.selection.local.combinations").toInt,
+    expectedUECost.toInt,
+    expectedSOCost.toInt,
     fileHelper.getPopulationAvgTravelTime(FullUEExp).getOrElse(-1D),
     fileHelper.getPopulationAvgTravelTime(CombinedUESOExp).getOrElse(-1D),
     fileHelper.getNetworkAvgTravelTime(FullUEExp).getOrElse(-1D),

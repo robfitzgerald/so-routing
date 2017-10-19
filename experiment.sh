@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "populationSize,possibleRouteRequests,routesUERequested,routesSORequested,routePercent,windowDuration,combinations,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement" >> result/20171019/result.csv
+echo "populationSize,totalRouteRequests,routeRequestsUE,routeRequestsSO,routePercent,windowDuration,combinations,expectedUECostEffect,expectedSOCostEffect,popAvgTripUE,popAvgTripUESO,netAvgTripUE,netAvgTripUESO,popTravelTimeImprovement,netTravelTimeImprovement" >> result/20171019/result.csv
 sbt -mem 12288 "run-main cse.fitzgero.sorouting.experiments.SOExperimentRefactor 157"
 sbt -mem 12288 "run-main cse.fitzgero.sorouting.experiments.SOExperimentRefactor 157"
 sbt -mem 12288 "run-main cse.fitzgero.sorouting.experiments.SOExperimentRefactor 157"
