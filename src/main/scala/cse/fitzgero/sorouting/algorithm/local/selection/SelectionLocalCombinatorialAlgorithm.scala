@@ -17,6 +17,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type AlgorithmConfig = Nothing
 
   val DefaultFlowCost: Double = 0D
+  val ParallelizationDepth: Int = 2 // produces k ^ ParallelizationDepth lightweight threads in this computation
 
   type AlgorithmResult = GenMap[LocalODPair, Path]
 
@@ -51,7 +52,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
     // combinatorial solver
     def minimalMultisetCombinationsOf(multiset: GenSeq[GenSeq[(Tag, Path)]]): Option[GenSeq[(Tag, Path)]] = {
 
-      def _mmC(subSet: GenSeq[GenSeq[(Tag, Path)]], thisCombination: GenSeq[(Tag, Path)] = GenSeq()): GenSeq[(Double, GenSeq[(Tag, Path)])] = {
+      def _mmC(subSet: GenSeq[GenSeq[(Tag, Path)]], thisCombination: GenSeq[(Tag, Path)] = GenSeq(), depth: Int = 1): GenSeq[(Double, GenSeq[(Tag, Path)])] = {
         if (subSet.isEmpty) {
           // take all edges out of this combination, attach flow count values
           val edgesVisited: GenMap[EdgeId, Int] =
@@ -78,9 +79,13 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
           GenSeq((addedCost, thisCombination))
 
         } else {
-          val thisBucket: GenSeq[(Tag, Path)] = subSet.head
-          thisBucket.par.map(item => {
-            val combinationsOnThisBranch = _mmC(subSet.tail, item +: thisCombination)
+          // parallelize subproblems up to a defined depth
+          val thisBucket: GenSeq[(Tag, Path)] =
+            if (depth <= ParallelizationDepth) subSet.head.par
+            else subSet.head
+
+          thisBucket.map(item => {
+            val combinationsOnThisBranch = _mmC(subSet.tail, item +: thisCombination, depth + 1)
             combinationsOnThisBranch.minBy(_._1)
           })
         }
@@ -88,7 +93,9 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
 
       if (multiset.isEmpty) None
       else {
-        val result = _mmC(multiset)
+        // sorting by descending order so we can better reason about the parallelization occurring
+        val sortedBySizeDescending = multiset.toVector.sortBy(-_.size)
+        val result = _mmC(sortedBySizeDescending)
         Some(result.minBy(_._1)._2)
       }
     }

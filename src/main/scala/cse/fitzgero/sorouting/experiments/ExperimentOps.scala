@@ -7,6 +7,7 @@ import cse.fitzgero.sorouting.model.population.LocalRequest
 import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
 import scala.util.{Failure, Random, Success, Try}
+import scala.io.Source
 
 object ExperimentOps {
 
@@ -51,6 +52,19 @@ object ExperimentOps {
     }) match {
       case Success(_) =>
       case Failure(e) => println(s"unable to write log to file $filePath: ${e.getMessage}")
+    }
+  }
+
+  def loadLog(path: String): Map[String, Long] = {
+    Try({
+      Source.fromFile(path)
+    }) match {
+      case Success(file) =>
+        val tokens = file.getLines.map(_.split(" "))
+        tokens.map(arr => arr(0) -> arr(1).toLong).toMap
+      case Failure(e) =>
+        println(s"[loadLog] unable to load $path: ${e.getMessage}")
+        Map.empty[String, Long]
     }
   }
 }

@@ -28,7 +28,7 @@ object SOExperimentRefactor extends App {
   val conf: SORoutingApplicationConfig = SORoutingApplicationConfig (
     configFilePath = "data/rye/config.xml",
     networkFilePath = "data/rye/network.xml",
-    outputDirectory = "result/20171019",
+    outputDirectory = "result/20171020",
     processes = AllProcs,
     timeWindow = win,
     k = 4,
@@ -36,8 +36,8 @@ object SOExperimentRefactor extends App {
     fwBounds = IterationFWBounds(0),
     populationSize = pop,
     routePercentage = route,
-    startTime = "08:25:00",
-    endTime = "08:35:00"
+    startTime = "08:15:00",
+    endTime = "09:00:00"
   )
 
   val fileHelper = SORoutingFilesHelper(conf)
@@ -45,7 +45,7 @@ object SOExperimentRefactor extends App {
 
   val networkXml: xml.Elem = fileHelper.getNetwork
   val graph = LocalGraphOps.readMATSimXML(networkXml)
-  val populationConfig: LocalPopulationConfig = LocalPopulationConfig(conf.populationSize, LocalTime.parse("08:30:00"), Some(LocalTime.parse("00:05:00")))
+  val populationConfig: LocalPopulationConfig = LocalPopulationConfig(conf.populationSize, LocalTime.parse("08:30:00"), Some(LocalTime.parse("00:15:00")))
   val populationFull = LocalPopulationOps.generateRequests(graph, populationConfig)
 
   //----------------------------------------------------------------------------------------------
@@ -53,7 +53,9 @@ object SOExperimentRefactor extends App {
   //----------------------------------------------------------------------------------------------
   val runUEInThisExperiment: Boolean = fileHelper.needToRunUEExperiment
   val ueLogs = if (runUEInThisExperiment) {
-    val routingResultUE: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUERefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+    println("running UE experiment")
+    val routingResultUE: (GenSeq[LocalResponse], Map[String, Long]) =
+      LocalGraphRoutingUERefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
     val ueXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultUE._1)
     fileHelper.savePopulationRef(ueXml, FullUEExp, FullUEPopulation)
 
@@ -72,15 +74,14 @@ object SOExperimentRefactor extends App {
     routingResultUE._2
   } else {
     println("selfish control experiment found (full-ue directory)")
-    Map.empty[String, Long]
+    ExperimentOps.loadLog(s"${fileHelper.experimentPath(FullUEExp)}/log-ue.txt")
   }
-
-
 
   //----------------------------------------------------------------------------------------------
   //  2. For each snapshot, load and run our algorithm
   //----------------------------------------------------------------------------------------------
-  val routingResultSO: (GenSeq[LocalResponse], Map[String, Long]) = LocalGraphRoutingUESORefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
+  val routingResultSO: (GenSeq[LocalResponse], Map[String, Long]) =
+    LocalGraphRoutingUESORefactor.routeAllRequestedTimeGroups(conf, fileHelper, populationFull)
   val soXml: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, routingResultSO._1)
   fileHelper.savePopulationRef(soXml, CombinedUESOExp, CombinedUESOPopulation)
   val soLogs = routingResultSO._2
@@ -114,10 +115,8 @@ object SOExperimentRefactor extends App {
 
   // TODO: replace with a file-helper call to load this value from the log file if we didn't run UE experiment this time
   val expectedUECost: Long =
-    if (fileHelper.needToRunUEExperiment)
-      soLogs("algorithm.mssp.local.cost.effect")
-    else
-      0L
+    if (fileHelper.needToRunUEExperiment) ueLogs("algorithm.mssp.local.cost.effect")
+    else 0L
 
   val expectedSOCost: Long = soLogs("algorithm.selection.local.cost.effect") + soLogs("algorithm.mssp.local.cost.effect")
 

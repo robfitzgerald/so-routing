@@ -38,7 +38,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
     val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
       Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
 
-    val resolved = Await.result(future, 60 seconds)
+    val resolved = Await.result(future, 1 hour)
     val result = resolved.flatten.map(r => {
       LocalResponse(r.request, r.response.path)
     }).toSeq

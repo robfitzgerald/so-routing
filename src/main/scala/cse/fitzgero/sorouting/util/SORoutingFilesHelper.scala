@@ -208,7 +208,6 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     */
   def getPopulationAvgTravelTime(expType: SORoutingExperimentType): Option[Double] = {
     val path = tripDurationFile(expType)
-//    println(s"checking $path")
     val regex: Regex = ".*average trip duration: (\\d+.\\d*).*".r
 
     Source
@@ -240,13 +239,13 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
   // /network/global/@avgtraveltime
   // s"$resultsDirectory/$expType/snapshot/snapshot.xml"
   def getNetworkAvgTravelTime(expType: SORoutingExperimentType): Option[Double] = {
-    val path = expType match {
-      case FullUEExp => s"${experimentPath(FullUEExp)}/snapshot/snapshot.xml"
-      case CombinedUESOExp => s"$resultsDirectory/$expType/snapshot/snapshot.xml"
-    }
+    val path = s"${experimentPath(expType)}/snapshot/snapshot.xml"
+
     Try({(XML.loadFile(path) \ "global" \ "@avgtraveltime").text.toDouble}) match {
-      case Success(value) => Some(value)
-      case Failure(e) => None
+      case Success(value) =>
+        Some(value)
+      case Failure(e) =>
+        None
     }
   }
 
@@ -265,11 +264,8 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     * @param expType FullUE or CombinedUESO
     * @return file path
     */
-  private def tripDurationFile(expType: SORoutingExperimentType): String = expType match {
-    case FullUEExp => s"${experimentPath(FullUEExp)}/$relPathToMATSimTripDurationsFile"
-    case CombinedUESOExp =>
-      s"$resultsDirectory/$expType/$relPathToMATSimTripDurationsFile"
-  }
+  private def tripDurationFile(expType: SORoutingExperimentType): String =
+    s"${experimentPath(expType)}/$relPathToMATSimTripDurationsFile"
 
   /**
     * recursively delete files in directory.
@@ -292,7 +288,6 @@ class SORoutingFilesHelper(val conf: SORoutingApplicationConfig) extends ClassLo
     */
   private def scaffoldFileRequirements(): Set[String] = {
     val confWithNetwork = modifyModuleValue("network", config, thisNetworkFilePath)
-    println(confWithNetwork.toString)
     Set(
     // directories
     Files.createDirectories(Paths.get(thisExperimentDirectory)).toString,
