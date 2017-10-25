@@ -5,11 +5,11 @@ import edu.ucdenver.fitzgero.lib.experiment.StepFailure
 
 import scala.io.Source
 
-class GenerateTextFileLogTests extends FileWriteSideEffectTestTemplate("GenerateTextFileLog") {
+class AllLogsToTextFileTests extends FileWriteSideEffectTestTemplate("GenerateTextFileLog") {
   "GenerateTextFileLog" when {
     "called with some data and a valid result path" should {
       "write that data to a test file" in {
-        case class Config(reportPath: String) extends GenerateTextFileLogConfig
+        case class Config(reportPath: String)
         val reportPath = s"$testRootPath/test.txt"
         val config = Config(reportPath)
         val category1 = "foo"
@@ -26,7 +26,7 @@ class GenerateTextFileLogTests extends FileWriteSideEffectTestTemplate("Generate
           key2 -> value2
           )
         )
-        GenerateTextFileLog(config, log)
+        AllLogsToTextFile(config, log)
         val result = Source.fromFile(reportPath).getLines.toVector
         result(0) should equal (category1)
         result(1) should equal (s"$key1: $value1")
@@ -36,7 +36,7 @@ class GenerateTextFileLogTests extends FileWriteSideEffectTestTemplate("Generate
     }
     "called with some data and a bad result path" should {
       "write that data to a test file" in {
-        case class Config(reportPath: String) extends GenerateTextFileLogConfig
+        case class Config(reportPath: String)
         val reportPath = "/tmp/var/tmp/local/bin/bar/bash/boodle/potempkin/hindenberg.txt"
         val config = Config(reportPath)
         val category = "foo"
@@ -47,10 +47,10 @@ class GenerateTextFileLogTests extends FileWriteSideEffectTestTemplate("Generate
             key -> value
           )
         )
-        val result = GenerateTextFileLog(config, log)
-        result._1 should equal (StepFailure(Some(reportPath)))
-        result._2.isDefinedAt("stack trace") should be (true)
-        result._2("stack trace").take(33).contains("java.nio.file.NoSuchFileException") should be (true)
+        val result = AllLogsToTextFile(config, log)
+        result.get._1 should equal (StepFailure(Some(reportPath)))
+        result.get._2.isDefinedAt("stack trace") should be (true)
+        result.get._2("stack trace").take(33).contains("java.nio.file.NoSuchFileException") should be (true)
       }
     }
   }

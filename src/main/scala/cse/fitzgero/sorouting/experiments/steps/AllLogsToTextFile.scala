@@ -3,20 +3,18 @@ package cse.fitzgero.sorouting.experiments.steps
 import java.io.{PrintWriter, StringWriter}
 import java.nio.file.{Files, Path, Paths}
 
+import cse.fitzgero.sorouting.experiments.ExperimentStepOps
 import edu.ucdenver.fitzgero.lib.experiment._
 
 import scala.util.{Failure, Success, Try}
 
-/**
-  * decorate a config object with the required data for this step
-  */
-trait GenerateTextFileLogConfig {
-  val reportPath: String
-}
 
-object GenerateTextFileLog {
+object AllLogsToTextFile extends SyncStep {
+  val name: String = "Generate Text File Log"
 
-  type Config = Any with GenerateTextFileLogConfig
+  type StepConfig = {
+    def reportPath: String
+  }
 
   /**
     * experiment step which will gather any data in logs and write it out to a file with a simple human-readable format
@@ -24,7 +22,7 @@ object GenerateTextFileLog {
     * @param log experiment log
     * @return success|failure tuples
     */
-  def apply(conf: Config, log: Map[String, Map[String, String]]): (StepStatus, Map[String, String]) = {
+  def apply(conf: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = {
     val outputData: Array[Byte] =
       log
         .map(
@@ -40,11 +38,10 @@ object GenerateTextFileLog {
       val path: Path = Paths.get(conf.reportPath)
       Files.write(path, outputData)
     }) match {
-      case Success(resultPath) => (StepSuccess(Some(resultPath.toString)), Map())
+      case Success(resultPath) => Some(StepSuccess(Some(resultPath.toString)), Map())
       case Failure(exception) =>
-        val exceptionString: StringWriter = new StringWriter
-        exception.printStackTrace(new PrintWriter(exceptionString))
-        (StepFailure(Some(exception.getMessage)), Map("stack trace" -> exceptionString.toString))
+        val e = ExperimentStepOps.extractExceptionData(exception)
+        ()
     }
   }
 }
