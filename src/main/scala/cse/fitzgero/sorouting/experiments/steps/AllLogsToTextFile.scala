@@ -1,16 +1,15 @@
 package cse.fitzgero.sorouting.experiments.steps
 
-import java.io.{PrintWriter, StringWriter}
 import java.nio.file.{Files, Path, Paths}
 
-import cse.fitzgero.sorouting.experiments.ExperimentStepOps
+import cse.fitzgero.sorouting.experiments.ops.ExperimentStepOps
 import edu.ucdenver.fitzgero.lib.experiment._
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 
 object AllLogsToTextFile extends SyncStep {
-  val name: String = "Generate Text File Log"
+  val name: String = "AllLogsToTextFile: Generate Text File Log"
 
   type StepConfig = {
     def reportPath: String
@@ -22,7 +21,8 @@ object AllLogsToTextFile extends SyncStep {
     * @param log experiment log
     * @return success|failure tuples
     */
-  def apply(conf: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = {
+  def apply(conf: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
+    val reportFileURI: String = s"${conf.reportPath}/report.txt"
     val outputData: Array[Byte] =
       log
         .map(
@@ -34,14 +34,13 @@ object AllLogsToTextFile extends SyncStep {
                 .mkString("\n")
             }").mkString("\n").getBytes
 
-    Try({
-      val path: Path = Paths.get(conf.reportPath)
-      Files.write(path, outputData)
-    }) match {
-      case Success(resultPath) => Some(StepSuccess(Some(resultPath.toString)), Map())
-      case Failure(exception) =>
-        val e = ExperimentStepOps.extractExceptionData(exception)
-        ()
-    }
+    val t: Try[Map[String, String]] =
+      Try({
+        val path: Path = Paths.get(reportFileURI)
+        Files.write(path, outputData)
+        Map("fs.text.report" -> path.toString)
+      })
+
+    ExperimentStepOps.resolveTry(t)
   }
 }

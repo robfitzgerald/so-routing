@@ -17,12 +17,12 @@ abstract class FileWriteSideEffectTestTemplate (testName: String) extends SORout
 
   private val fullPath: Path = Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath")
 
-  if (!Files.exists(fullPath))
-    Files.createDirectories(Paths.get(s"${Paths.get("").toAbsolutePath.toString}/$testRootPath"))
+  def createPath(): Unit = if (!Files.exists(fullPath)) Files.createDirectories(fullPath)
 
   private def clearTempData: Try[String]= {
     Try({
-      val file: File = new File(s"$testRootPath/*")
+//      Files.deleteIfExists(Paths.get(testRootPath))
+      val file: File = new File(s"$testRootPath")
       delete(file).filter(_._2).map(_._1).mkString("\n")
     })
   }
@@ -32,11 +32,12 @@ abstract class FileWriteSideEffectTestTemplate (testName: String) extends SORout
   }
 
   before {
-    clearTempData match {
-      case Success(deleteList) =>
-        if (deleteList.nonEmpty) println(s"~~ before test file cleanup ~~\n$deleteList")
-      case Failure(e) => println(s"~~ before test file cleanup FAILED ~~\n$e")
-    }
+    createPath()
+//    clearTempData match {
+//      case Success(deleteList) =>
+//        if (deleteList.nonEmpty) println(s"~~ before test file cleanup ~~\n$deleteList")
+//      case Failure(e) => println(s"~~ before test file cleanup FAILED ~~\n$e")
+//    }
   }
 
   after {

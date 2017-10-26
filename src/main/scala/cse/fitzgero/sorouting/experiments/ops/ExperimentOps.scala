@@ -1,13 +1,12 @@
-package cse.fitzgero.sorouting.experiments
+package cse.fitzgero.sorouting.experiments.ops
 
 import java.nio.file.{Files, Paths}
 
 import cse.fitzgero.sorouting.model.population.LocalRequest
 
-import scala.annotation.tailrec
-import scala.collection.{GenMap, GenSeq}
-import scala.util.{Failure, Random, Success, Try}
+import scala.collection.GenSeq
 import scala.io.Source
+import scala.util.{Failure, Random, Success, Try}
 
 object ExperimentOps {
 

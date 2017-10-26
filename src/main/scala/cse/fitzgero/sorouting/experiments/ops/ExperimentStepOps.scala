@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.experiments
+package cse.fitzgero.sorouting.experiments.ops
 
 import java.io.{PrintWriter, StringWriter}
 
@@ -15,12 +15,12 @@ object ExperimentStepOps {
     ExceptionData(e.getMessage, exceptionString.toString)
   }
 
-  def resolveTry(t: Try[Map[String, String]]): (StepStatus, Map[String, String]) = {
+  def resolveTry(t: Try[Map[String, String]], successMessage: Option[String] = None): (StepStatus, Map[String, String]) = {
     t match {
       case Success(log) =>
-        (StepSuccess(None), log)
-      case Failure(e) =>
-        val e = extractExceptionData(e)
+        (StepSuccess(successMessage), log)
+      case Failure(error) =>
+        val e = extractExceptionData(error)
         (StepFailure(Some(e.msg)), Map(e.msg -> e.stackTrace))
     }
   }
