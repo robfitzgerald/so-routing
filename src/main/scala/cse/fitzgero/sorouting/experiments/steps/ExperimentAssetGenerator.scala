@@ -3,14 +3,14 @@ package cse.fitzgero.sorouting.experiments.steps
 import java.nio.file.{Files, Paths}
 import java.time.LocalTime
 
-import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentStepOps}
+import scala.util.Try
+import scala.xml.XML
+
+import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentStepOps, MATSimOps}
 import cse.fitzgero.sorouting.model.population.LocalPopulationOps
 import cse.fitzgero.sorouting.model.population.LocalPopulationOps.LocalPopulationConfig
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps
 import edu.ucdenver.fitzgero.lib.experiment._
-
-import scala.util.{Failure, Success, Try}
-import scala.xml.XML
 
 /**
   * Experiment Steps related to Experiment scaffolding
@@ -66,7 +66,7 @@ object ExperimentAssetGenerator {
     override def apply(config: StepConfig, log: ExperimentGlobalLog = Map()): Option[(StepStatus, ExperimentStepLog)] = Some {
       val t: Try[Map[String, String]] =
         Try {
-          importExperimentConfig(config.experimentConfigDirectory, config.experimentInstanceDirectory)
+          MATSimOps.importExperimentConfig(config.experimentConfigDirectory, config.experimentInstanceDirectory)
           Map()
         }
       ExperimentStepOps.resolveTry(t, Some(name))
@@ -182,59 +182,6 @@ object ExperimentAssetGenerator {
     val populationConfig: LocalPopulationConfig = LocalPopulationConfig(popSize, departTime, timeDeviation)
     val requests = LocalPopulationOps.generateRequests(graph, populationConfig)
     LocalPopulationOps.generateXMLRequests(graph, requests)
-  }
-
-
-
-  private[ExperimentAssetGenerator]
-  def importExperimentConfig(experimentConfigDirectory: String, experimentInstanceDirectory: String): Unit = {
-    val thisInstanceAbsolutePath: String = Paths.get(experimentInstanceDirectory).toAbsolutePath.toString
-    val thisNetworkURI = s"$thisInstanceAbsolutePath/network.xml"
-    val thisPopulationURI = s"$thisInstanceAbsolutePath/population.xml"
-    Try {
-
-      val updatedConfigFile: xml.Elem =
-        List(
-          ("network", thisNetworkURI),
-          ("plans", thisPopulationURI)
-        ).foldLeft(XML.loadFile(s"$experimentConfigDirectory/config.xml"))((xml, updateData) =>
-          modifyModuleValue(xml, updateData._1, updateData._2)
-        )
-
-      Files.createDirectories(Paths.get(experimentInstanceDirectory))
-
-      XML.save(
-        s"$experimentInstanceDirectory/config.xml",
-        updatedConfigFile,
-        ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.ConfigDocType
-      )
-      XML.save(
-        s"$experimentInstanceDirectory/network.xml",
-        XML.loadFile(s"$experimentConfigDirectory/network.xml"),
-        ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.NetworkDocType
-      )
-    }
-    // unhandled Try block
-  }
-
-
-
-  /**
-    * dives into a MATSim config.xml file and alters all values it finds within a <param name="" value=""/> tag (should be one)
-    * @param matsimConfig MATSim config.xml file
-    * @param moduleName name of a module in the config file
-    * @param newFilePath substitute parameter value for the input file of this module
-    * @return
-    */
-  private[ExperimentAssetGenerator] def modifyModuleValue(matsimConfig: xml.Elem, moduleName: String, newFilePath: String): xml.Elem = {
-    val plans = matsimConfig \ "module" filter (_.attribute("name").head.text == moduleName)
-    val currentValue = (plans \ "param" \ "@value").text
-    if (currentValue.isEmpty) throw new IllegalArgumentException(s"due to the design of Scala's XML library, updates to XML properties is performed by string replacement. The $moduleName value was found to be the empty string, which cannot be used for string replacement.")
-    val updated: String = matsimConfig.toString.replace(currentValue, newFilePath)
-    Try({XML.loadString(updated)}) match {
-      case Success(xml) => xml
-      case Failure(e) => throw new IllegalArgumentException(s"XML file deserialization failed when modifying value $currentValue at key $moduleName: ${e.getMessage}")
-    }
   }
 }
 

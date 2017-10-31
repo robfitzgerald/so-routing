@@ -6,10 +6,11 @@ import java.time.format.DateTimeFormatter
 import cse.fitzgero.graph.population.BasicPopulationOps
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
-
 import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
 import scala.util.Random
+import scala.util.matching.Regex
+import scala.xml.XML
 
 object LocalPopulationOps extends BasicPopulationOps {
   // graph types
@@ -58,6 +59,42 @@ object LocalPopulationOps extends BasicPopulationOps {
 
       LocalRequest(personId, LocalODPair(personId, src, dst), time)
     })
+  }
+
+
+  /**
+    * transforms an xml population into a sequence of LocalRequests. invariant: IDs match the SrcDst Regex (See below)
+    * @param population an xml file of DocType http://www.matsim.org/files/dtd/population_v6.dtd
+    * @return a Scala Sequence collection of LocalRequest types
+    */
+  def fromXML(population: xml.Elem): GenSeq[LocalRequest] = {
+
+    def extractVertices(id: String): Option[(String, String)] = {
+      val SrcDst: Regex = "\\d+-(\\d+)#(\\d+)".r
+      id match {
+        case SrcDst(g1, g2) => Some((g1, g2))
+        case _ => None
+      }
+    }
+
+    (population \ "person").flatMap {person =>
+      person.attribute("id") match {
+        case None => None
+        case Some(idAttr) =>
+          extractVertices(idAttr.toString) match {
+            case None => None
+            case Some(vertices) =>
+              val (src, dst) = vertices
+              (person \ "plan" \ "activity").head.attribute("end_time") match {
+                case None => None
+                case Some(timeAttr) =>
+                  val id = idAttr.toString
+                  val requestTime = LocalTime.parse(timeAttr.toString)
+                  Some(LocalRequest(id, LocalODPair(id, src, dst), requestTime))
+              }
+          }
+      }
+    }
   }
 
 

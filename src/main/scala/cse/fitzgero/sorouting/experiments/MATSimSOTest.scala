@@ -2,23 +2,15 @@ package cse.fitzgero.sorouting.experiments
 
 import java.time.{LocalDateTime, LocalTime}
 
-import cse.fitzgero.sorouting.experiments.steps.{AllLogsToTextFile, ExperimentAssetGenerator, MATSimRunner}
+import cse.fitzgero.sorouting.experiments.steps.{ExperimentAssetGenerator, Reporting, SystemOptimalRouting}
+import cse.fitzgero.sorouting.matsimrunner.MATSimSimulator
 import edu.ucdenver.fitzgero.lib.experiment.Experiment
 
-// notes
-// 1. do we have a problem where drivers are starting on links, and therefore, our counts are off?
-//    do we need to add each driver's starting link position to our network count?
-//    or do we just need to ignore link removals when the count dips below 0?
-// 2. see the various TODOs on this page
-// 3. get UE Snapshot Runner running by tonight for weekend experiments
-//
+object MATSimSOTest extends Experiment with App with MATSimSimulator {
 
-
-object MATSimTest extends Experiment with App {
-
-  val pop: Int = if (args.size > 0) args(0).toInt else 500
-  val win: Int = if (args.size > 1) args(1).toInt else 15
-//  val route: Double = if (args.size > 2) args(2).toDouble else 0.20D
+  val pop: Int = if (args.size > 0) args(0).toInt else 100
+  val win: Int = if (args.size > 1) args(1).toInt else 60
+  val route: Double = if (args.size > 2) args(2).toDouble else 0.10D
 
   case class Config (
     sourceAssetsDirectory: String,
@@ -28,6 +20,7 @@ object MATSimTest extends Experiment with App {
     reportPath: String,
     populationSize: Int,
     timeWindow: Int,
+    routePercentage: Double,
     startTime: LocalTime,
     departTime: LocalTime,
     endTime: Option[LocalTime],
@@ -35,12 +28,13 @@ object MATSimTest extends Experiment with App {
   )
   val config = Config(
     "data/rye",
-    "result/20171030",
+    "result/20171031",
     "data/rye/network.xml",
-    s"result/20171030/${LocalDateTime.now.toString}",
-    "result/20171030",
+    s"result/20171031/${LocalDateTime.now.toString}",
+    "result/20171031",
     pop,
     win,
+    route,
     LocalTime.parse("08:00:00"),
     LocalTime.parse("08:15:00"),
     Some(LocalTime.parse("09:00:00")),
@@ -53,9 +47,8 @@ object MATSimTest extends Experiment with App {
     ExperimentAssetGenerator.SetupConfigDirectory,
     ExperimentAssetGenerator.SetupInstanceDirectory,
     ExperimentAssetGenerator.RepeatedPopulation,
-    MATSimRunner.AnalyticSnapshot, // TODO: command-line config; fix bug!
-    AllLogsToTextFile
-    // TODO: GetMATSimResultsUE, GetMATSimResultsSO (the same?)
+    SystemOptimalRouting.Incremental, // TODO: add SO experiment runner
+    Reporting.SelectedLogData
   ))
 }
 

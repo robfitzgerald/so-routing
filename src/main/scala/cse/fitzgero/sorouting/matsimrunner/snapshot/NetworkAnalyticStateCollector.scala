@@ -45,7 +45,7 @@ class NetworkAnalyticStateCollector private
     <global avgtraveltime={networkAverageTravelTime.toString}></global>
     <links>
       {networkState.map(link => {
-        <link id={link._1.toString}>
+          <link id={link._1.toString} flow={link._2.flow.toString}>
           {link._2.travelTimeXml}
           {link._2.congestionXml}
         </link>

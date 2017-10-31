@@ -1,14 +1,17 @@
 package cse.fitzgero.sorouting.experiments.ops
 
 import java.nio.file.{Files, Paths}
-
-import cse.fitzgero.sorouting.model.population.LocalRequest
+import java.time.LocalTime
 
 import scala.collection.GenSeq
 import scala.io.Source
 import scala.util.{Failure, Random, Success, Try}
 
+import cse.fitzgero.sorouting.model.population.LocalRequest
+
 object ExperimentOps {
+
+  case class TimeGroup (startRange: LocalTime, endRange: LocalTime)
 
   /**
     * combine logs by adding values where there are common keys
@@ -23,6 +26,24 @@ object ExperimentOps {
     val combineIntersection = intersection.map(i => i -> (a(i) + b(i))).toMap
     aExclusive ++ combineIntersection ++ bExclusive
   }
+
+
+  /**
+    * combine logs by adding values where there are common keys
+    * @param a a log
+    * @param b another log
+    * @return one log to rule them all
+    */
+  def combineNumericLogs (a: Map[String, String], b: Map[String, String]): Map[String, String] = {
+    val intersection = a.filter(t => b.isDefinedAt(t._1)).keySet
+    val aExclusive = a.filter(t => !intersection(t._1))
+    val bExclusive = b.filter(t => !intersection(t._1))
+    def combineAsRealNumbers(a: String, b: String): String =
+      (a.toDouble + b.toDouble).toString
+    val combineIntersection = intersection.map(i => i -> combineAsRealNumbers(a(i), b(i))).toMap
+    aExclusive ++ combineIntersection ++ bExclusive
+  }
+
 
   /**
     * splits the population by the route percentage, placing the group corresponding to the route percentage on the left-hand side
@@ -66,5 +87,17 @@ object ExperimentOps {
         Map.empty[String, Long]
     }
   }
+
+
+
+  /**
+    * predicate that identifies if this request belongs to this time group
+    * @param timeGroup the current time range for valid requests
+    * @param localRequest a request to test
+    * @return predicate result
+    */
+  def filterByTimeGroup(timeGroup: TimeGroup)(localRequest: LocalRequest): Boolean =
+    timeGroup.startRange.compareTo(localRequest.requestTime) <= 0 &&
+      localRequest.requestTime.compareTo(timeGroup.endRange) < 0
 }
 

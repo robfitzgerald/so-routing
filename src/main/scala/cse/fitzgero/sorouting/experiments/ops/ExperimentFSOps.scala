@@ -1,11 +1,13 @@
 package cse.fitzgero.sorouting.experiments.ops
 
+import java.io.File
 import java.nio.file.{Files, Paths}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
+import scala.xml.{Elem, XML}
 import scala.xml.dtd.{DocType, SystemID}
 
 object ExperimentFSOps {
@@ -24,6 +26,11 @@ object ExperimentFSOps {
   def optimalDirectory(path: String): String = s"$path/optimal"
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+  def saveXmlDocType(uri: String, xmlElement: Elem, docType: DocType): String = {
+    XML.save(uri, xmlElement, ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, docType)
+    uri
+  }
 
   /**
     * given the instance path of an experiment, test to find if a population.xml file exists in the most recent
@@ -55,4 +62,39 @@ object ExperimentFSOps {
     }
   }
 
+
+
+  /**
+    * recursive directory tree delete
+    * @param path the root of the tree to delete
+    * @return
+    */
+  def recursiveDelete(path: String): String= {
+    def delete(file: File): Array[(String, Boolean)] = {
+      Option(file.listFiles).map(_.flatMap(f => delete(f))).getOrElse(Array()) :+ (file.getPath -> file.delete)
+    }
+
+    Try({
+      //      Files.deleteIfExists(Paths.get(testRootPath))
+      val file: File = new File(path)
+      delete(file).filter(_._2).map(_._1).mkString("\n")
+    })
+  } match {
+    case Success(filesDeleted) => filesDeleted
+    case Failure(e) =>
+      println(s"recursive delete exiting with an error. $e")
+      e.getMessage
+  }
+
+
+
+  /**
+    * helper that creates a tmp directory and copies basic assets inside this instance directory
+    * @param experimentInstanceDirectory instance directory path
+    * @return temp directory path
+    */
+  def importAssetsToTempDirectory(experimentInstanceDirectory: String): String = {
+    MATSimOps.importExperimentConfig(experimentInstanceDirectory, s"$experimentInstanceDirectory/tmp")
+    s"$experimentInstanceDirectory/tmp"
+  }
 }

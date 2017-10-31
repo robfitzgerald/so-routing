@@ -4,6 +4,14 @@ import cse.fitzgero.sorouting.model.roadnetwork.costfunction._
 
 object LocalGraphOps {
 
+  /**
+    * loads a network.xml and optional snapshot.xml and produces a LocalGraph
+    * @param network
+    * @param snapshotXML
+    * @param costFunctionType
+    * @param algorithmFlowRate
+    * @return
+    */
   def readMATSimXML(network: xml.Elem, snapshotXML: Option[xml.Elem] = None, costFunctionType: CostFunctionType = BPRCostFunctionType, algorithmFlowRate: Double = 10D): LocalGraph = {
 
     // get (optional) flow data in xml snapshot format

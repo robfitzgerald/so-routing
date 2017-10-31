@@ -26,7 +26,7 @@ class AllLogsToTextFileTests extends FileWriteSideEffectTestTemplate("GenerateTe
           key2 -> value2
           )
         )
-        AllLogsToTextFile(config, log)
+        Reporting.AllLogsToTextFile(config, log)
         val result = Source.fromFile(reportPath).getLines.toVector
         result(0) should equal (category1)
         result(1) should equal (s"$key1: $value1")
@@ -47,7 +47,7 @@ class AllLogsToTextFileTests extends FileWriteSideEffectTestTemplate("GenerateTe
             key -> value
           )
         )
-        val result = AllLogsToTextFile(config, log)
+        val result = Reporting.AllLogsToTextFile(config, log)
         result.get._1 should equal (StepFailure(Some(reportPath)))
         result.get._2.isDefinedAt("stack trace") should be (true)
         result.get._2("stack trace").take(33).contains("java.nio.file.NoSuchFileException") should be (true)

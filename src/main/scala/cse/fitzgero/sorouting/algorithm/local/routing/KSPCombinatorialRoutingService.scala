@@ -42,6 +42,7 @@ object KSPCombinatorialRoutingService extends GraphBatchRoutingAlgorithmService 
               "algorithm.routing.local.batch.request.size" -> request.size,
               "algorithm.routing.local.batch.completed" -> selection.result.size
             )
+            println(s"[KSPCOMB] complete with ${selection.result.size} results")
             promise.success(Some(ServiceResult(selection.result, logs ++ ksp.logs ++ selection.logs)))
           case None =>
             promise.success(None)

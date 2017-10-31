@@ -25,14 +25,10 @@ import scala.xml.XML
 
 object LocalGraphRoutingUESORefactor extends ClassLogging {
 
-  val random = new Random
-
   val StartOfDay = 0
   val RoutingAlgorithmTimeout: Duration = 600 seconds
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
   case class TimeGroup (startRange: Int, endRange: Int)
-
-  val sssp = LocalGraphMATSimSSSP()
 
   /**
     * solves the routing over a provided network with a provided population
@@ -88,7 +84,6 @@ object LocalGraphRoutingUESORefactor extends ClassLogging {
         // ----------------------------------------------------------------------------------------
         // 2. run routing algorithm for the SO routed population for current time group, using snapshot
 
-        val networkFilePath: String = s"$snapshotDirectory/network-snapshot.xml"
         val snapshotFilePath: String = matsimSnapshotRun.filePath
 
         val snapshotXML: xml.Elem = XML.loadFile(snapshotFilePath)

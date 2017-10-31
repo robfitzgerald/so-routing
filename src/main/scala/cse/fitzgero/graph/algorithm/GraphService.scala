@@ -26,7 +26,9 @@ trait GraphService { service =>
   type LoggingClass
   type ServiceConfig <: Any
   type ServiceRequest
-  type ServiceResult <: { def logs: LoggingClass }
+  type ServiceResult <: {
+    def logs: LoggingClass
+  }
 
   /**
     * run a graph routing service as a future

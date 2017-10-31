@@ -24,12 +24,4 @@ object ExperimentStepOps {
         (StepFailure(Some(e.msg)), Map(e.msg -> e.stackTrace))
     }
   }
-
-//      match {
-//        case Success(result) =>
-//          Some((StepSuccess(Some("")), Map.empty[String, String]))
-//        case Failure(throwable) =>
-//          val e = ExperimentStepOps.extractExceptionData(throwable)
-//          Some((StepFailure(Some(e.msg)), Map.empty[String, String]))
-//      }
 }
