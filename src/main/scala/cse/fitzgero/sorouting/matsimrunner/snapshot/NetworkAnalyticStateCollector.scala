@@ -4,6 +4,7 @@ import java.io.{File, PrintWriter}
 
 import cse.fitzgero.sorouting.matsimrunner.network.Network
 import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata._
+import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunctionType
 import cse.fitzgero.sorouting.roadnetwork.costfunction._
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network.Link
@@ -56,15 +57,14 @@ class NetworkAnalyticStateCollector private
 }
 
 object NetworkAnalyticStateCollector {
-//  def apply(links: Iterable[Id[Link]]): NetworkAnalyticStateCollector = {
-//    new NetworkAnalyticStateCollector(
-//      links.aggregate(Map.empty[String, AnalyticLink])(
-//        (acc, linkId) => acc.updated(linkId.toString, AnalyticLink(TestCostFunction())),
-//        (a, b) => a ++ b
-//      )
-//    )
-//  }
 
+  /**
+    * the previous implementation
+    * @param network
+    * @param CostFunctionFactory
+    * @param algorithmFlowRate
+    * @return
+    */
   def apply(network: Network, CostFunctionFactory: CostFunctionFactory, algorithmFlowRate: Int): NetworkAnalyticStateCollector = {
     new NetworkAnalyticStateCollector(
       network.links.aggregate(Map.empty[String, AnalyticLink])(

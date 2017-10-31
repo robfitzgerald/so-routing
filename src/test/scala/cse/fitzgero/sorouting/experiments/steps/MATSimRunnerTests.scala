@@ -24,7 +24,7 @@ class MATSimRunnerTests extends FileWriteSideEffectTestTemplate("MATSimRunner"){
           val importConfig = ImportConfig(configDirectory, instanceDirectory)
           val matsimConfig = MATSimConfig(instanceDirectory, 60, startTime, Some(endTime))
 
-          ExperimentAssetGenerator.Unique(populationConfig) match {
+          ExperimentAssetGenerator.UniquePopulation(populationConfig) match {
             case None => fail("was unable to generate a population for this test")
             case Some(populationResult) =>
               populationResult._1 should not be a [StepFailure]

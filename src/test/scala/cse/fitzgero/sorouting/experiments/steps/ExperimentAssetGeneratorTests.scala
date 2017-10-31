@@ -4,7 +4,6 @@ import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, LocalTime}
 
 import cse.fitzgero.sorouting.FileWriteSideEffectTestTemplate
-import cse.fitzgero.sorouting.experiments.steps.ExperimentAssetGenerator
 
 import scala.xml.XML
 
@@ -54,7 +53,7 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
           case class Config(populationSize: Int, networkURI: String, startTime: LocalTime, endTime: Option[LocalTime], experimentConfigDirectory: String, experimentInstanceDirectory: String)
           val config = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), testRootPath, testRootPath)
 
-          ExperimentAssetGenerator.Repeated(config, Map.empty[String, Map[String, String]]) match {
+          ExperimentAssetGenerator.RepeatedPopulation(config, Map.empty[String, Map[String, String]]) match {
             case None => fail()
             case Some(result) =>
               val xml = XML.loadFile(s"$testRootPath/population.xml")
@@ -76,10 +75,10 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
           val firstConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), configDirectory, firstInstanceDirectory)
           val secondConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), configDirectory, secondInstanceDirectory)
 
-          ExperimentAssetGenerator.Repeated(firstConfig, Map.empty[String, Map[String, String]]) match {
+          ExperimentAssetGenerator.RepeatedPopulation(firstConfig, Map.empty[String, Map[String, String]]) match {
             case None => fail()
             case Some(result) =>
-              ExperimentAssetGenerator.Repeated(secondConfig, Map.empty[String, Map[String, String]]) match {
+              ExperimentAssetGenerator.RepeatedPopulation(secondConfig, Map.empty[String, Map[String, String]]) match {
                 case None => fail()
                 case Some(secondResult) =>
                   val firstXml = XML.loadFile(s"$firstInstanceDirectory/population.xml")
@@ -111,10 +110,10 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
           val firstConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), firstInstanceDirectory)
           val secondConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), secondInstanceDirectory)
 
-          ExperimentAssetGenerator.Unique(firstConfig, Map.empty[String, Map[String, String]]) match {
+          ExperimentAssetGenerator.UniquePopulation(firstConfig, Map.empty[String, Map[String, String]]) match {
             case None => fail()
             case Some(firstResult) =>
-              ExperimentAssetGenerator.Unique(secondConfig, Map.empty[String, Map[String, String]]) match {
+              ExperimentAssetGenerator.UniquePopulation(secondConfig, Map.empty[String, Map[String, String]]) match {
                 case None => fail()
                 case Some(secondResult) =>
                   val firstXml = XML.loadFile(s"$firstInstanceDirectory/population.xml")

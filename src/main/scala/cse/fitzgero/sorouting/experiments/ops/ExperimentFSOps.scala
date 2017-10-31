@@ -24,18 +24,35 @@ object ExperimentFSOps {
   def optimalDirectory(path: String): String = s"$path/optimal"
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-  def findDateTimeStrings(path: String): Seq[String] =
-    Files
+
+  /**
+    * given the instance path of an experiment, test to find if a population.xml file exists in the most recent
+    * previous instance
+    * @param path
+    * @return
+    */
+  def findPreviousPopulation(path: String): Option[String] = {
+    val found = Files
       .list(Paths.get(path))
       .iterator.asScala.toSeq
-//      .map(_.getFileName.toString)
       .filter(pathFound =>
-        Try(
-          LocalDateTime.parse(pathFound.getFileName.toString)
-        ) match {
-          case Success(_) => true
+        Try{
+          LocalDateTime.parse(pathFound.getFileName.toString) // blows up -> false
+          val populationFileFound = Files.exists(Paths.get(s"$pathFound/population.xml"))
+          populationFileFound
+        } match {
+          case Success(popFound) => popFound
           case Failure(_) => false
         }
-      ).map(_.toString)
+      )
+    found
+      .map(_.toString)
+      .sorted
+      .lastOption match {
+      case None => None
+      case Some(dir) =>
+        Some(s"$dir/population.xml")
+    }
+  }
 
 }

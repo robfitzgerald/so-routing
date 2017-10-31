@@ -12,20 +12,19 @@ import edu.ucdenver.fitzgero.lib.experiment._
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 
+/**
+  * Experiment Steps related to Experiment scaffolding
+  */
 object ExperimentAssetGenerator {
 
   type PopulationGeneratorConfig = {
     def populationSize: Int
     def networkURI: String
-    def startTime: LocalTime
+    def departTime: LocalTime
     def endTime: Option[LocalTime]
+    def timeDeviation: Option[LocalTime]
   }
 
-  type DirectoriesConfig = {
-    def experimentSetDirectory: String // sits above all configurations in a set of related tests
-    def experimentConfigDirectory: String // has the base config and a set of instance directories
-    def experimentInstanceDirectory: String // a date/time-named directory
-  }
 
 
   object SetupConfigDirectory extends SyncStep {
@@ -103,7 +102,7 @@ object ExperimentAssetGenerator {
 
 
 
-  object Repeated extends SyncStep {
+  object RepeatedPopulation extends SyncStep {
     val name: String = "Generate Population for repeated use"
     override type StepConfig = PopulationGeneratorConfig {
       def experimentConfigDirectory: String
@@ -122,23 +121,23 @@ object ExperimentAssetGenerator {
           val destinationPath = ExperimentFSOps.populationFileURI(config.experimentInstanceDirectory)
           // look for a previous instance in this experimentInstanceDirectory
           val previousInstance: Option[String] = ExperimentFSOps
-            .findDateTimeStrings(config.experimentConfigDirectory).sorted.lastOption
+            .findPreviousPopulation(config.experimentConfigDirectory)
 
           previousInstance match {
-            case Some(sourceInstanceDirectory: String) =>
+            case Some(previousPopulation: String) =>
               // if there is a previous instance directory, copy the previous population into this instance
-              val sourcePopPath = ExperimentFSOps.populationFileURI(sourceInstanceDirectory)
+//              val sourcePopPath = ExperimentFSOps.populationFileURI(sourceInstanceDirectory)
               Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
               XML.save(
                 destinationPath,
-                XML.loadFile(sourcePopPath),
+                XML.loadFile(previousPopulation),
                 ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
             case None =>
               // if there are no instance directories here, create a new population
               Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
               XML.save(
                 destinationPath,
-                generatePopulation(config.populationSize, config.networkURI, config.startTime, config.endTime),
+                generatePopulation(config.populationSize, config.networkURI, config.departTime, config.timeDeviation),
                 ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
           }
 
@@ -150,7 +149,7 @@ object ExperimentAssetGenerator {
 
 
 
-  object Unique extends SyncStep {
+  object UniquePopulation extends SyncStep {
     val name: String = "Generate unique Population on each call"
     override type StepConfig = PopulationGeneratorConfig {
       def experimentInstanceDirectory: String
@@ -164,7 +163,7 @@ object ExperimentAssetGenerator {
           Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
           XML.save(
             destinationPath,
-            generatePopulation(config.populationSize, config.networkURI, config.startTime, config.endTime),
+            generatePopulation(config.populationSize, config.networkURI, config.departTime, config.timeDeviation),
             ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
 
           Map("fs.xml.population" -> destinationPath)
@@ -175,15 +174,16 @@ object ExperimentAssetGenerator {
   }
 
 
-
+  // TODO: move helper functions into a helper object (an Ops object)
   private[ExperimentAssetGenerator]
-  def generatePopulation(popSize: Int, networkPath: String, startTime: LocalTime, endTime: Option[LocalTime]): xml.Elem = {
+  def generatePopulation(popSize: Int, networkPath: String, departTime: LocalTime, timeDeviation: Option[LocalTime]): xml.Elem = {
     val networkXml: xml.Elem = XML.loadFile(networkPath)
     val graph = LocalGraphOps.readMATSimXML(networkXml)
-    val populationConfig: LocalPopulationConfig = LocalPopulationConfig(popSize, startTime, endTime)
+    val populationConfig: LocalPopulationConfig = LocalPopulationConfig(popSize, departTime, timeDeviation)
     val requests = LocalPopulationOps.generateRequests(graph, populationConfig)
     LocalPopulationOps.generateXMLRequests(graph, requests)
   }
+
 
 
   private[ExperimentAssetGenerator]
@@ -216,6 +216,8 @@ object ExperimentAssetGenerator {
     }
     // unhandled Try block
   }
+
+
 
   /**
     * dives into a MATSim config.xml file and alters all values it finds within a <param name="" value=""/> tag (should be one)

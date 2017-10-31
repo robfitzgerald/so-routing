@@ -20,7 +20,7 @@ import scala.collection.GenSeq
 
 object SOExperimentRefactor extends App {
 
-  val pop: Int = if (args.size > 0) args(0).toInt else 100
+  val pop: Int = if (args.size > 0) args(0).toInt else 500
   val win: Int = if (args.size > 1) args(1).toInt else 10
   val route: Double = if (args.size > 2) args(2).toDouble else 0.20D
 

@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.matsimrunner.snapshot
 
 import java.io.{File, PrintWriter}
 
-import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata._
+import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata.{SimpleLinkData, _}
 import org.matsim.api.core.v01.Id
 import org.matsim.api.core.v01.network.Link
 import org.matsim.vehicles.Vehicle
@@ -29,11 +29,25 @@ class NetworkStateCollector private ( val networkState: Map[Id[Link], SimpleLink
 
   def update(e: SnapshotEventData): NetworkStateCollector = e match {
     case LinkEnterData(t, link, veh) =>
-      val thisLink: SimpleLinkData = networkState.getOrElse(link, EmptyLink)
-      new NetworkStateCollector(networkState.updated(link, thisLink.add(veh)))
+      networkState.get(link) match {
+        case None =>
+          println(s"network state collector is missing link $link")
+          this
+        case Some(thisLink) =>
+          new NetworkStateCollector(networkState.updated(link, thisLink.add(veh)))
+      }
+
     case LinkLeaveData(t, link, veh) =>
-      val thisLink: SimpleLinkData = networkState.getOrElse(link, EmptyLink)
-      new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
+      networkState.get(link) match {
+        case None =>
+          println(s"network state collector is missing link $link")
+          this
+        case Some(EmptyLink) =>
+          println(s"network state collector attempting to remove driver $veh from empty link $link")
+          this
+        case Some(thisLink: SimpleLinkData) =>
+          new NetworkStateCollector(networkState.updated(link, thisLink.remove(veh)))
+      }
     case other => throw new IllegalArgumentException(s"passed a ${other.getClass}, but update() only handles LinkEnterData and LinkLeaveData")
   }
 

@@ -4,7 +4,7 @@
 
 	<module name="global">
 		<!--<param name="randomSeed" value="4711" />-->
-		<param name="coordinateSystem" value="WGS84" />
+		<param name="coordinateSystem" value="Atlantis" />
 	</module>
 
 	<module name="network">

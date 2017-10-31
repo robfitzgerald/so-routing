@@ -1,8 +1,6 @@
 package cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata
 
 import cse.fitzgero.sorouting.roadnetwork.costfunction.CostFunction
-//import org.matsim.api.core.v01.Id
-//import org.matsim.vehicles.Vehicle
 
 case class AnalyticLinkDataUpdate(veh: String, t: Int)
 
