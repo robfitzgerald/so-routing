@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.experiments.steps
 
-import java.time.LocalTime
+import java.time.{LocalDateTime, LocalTime}
 import java.time.format.DateTimeFormatter
 
 import scala.collection.GenSeq
@@ -38,7 +38,7 @@ object SystemOptimalRouting {
   object Incremental extends SyncStep {
 
     override type StepConfig = SORoutingConfig
-    val name: String = "Incremental KSP Combinatorial Experiment for LocalGraph graphs"
+    val name: String = "[SystemOptimalRouting:Incremental] KSP Combinatorial Experiment for LocalGraph graphs with incremental (batch) evaluation"
 
     override def apply(config: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
       // setup instance directory has already occurred, so we have population.xml, config.xml, network.xml
@@ -151,15 +151,15 @@ object SystemOptimalRouting {
         val updatedResult: GenSeq[LocalResponse] = accumulator._1 ++ resultUE._1 ++ resultSO._1
         val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(accumulator._2, resultUE._2), resultSO._2)
 
-        println(s"merged logs at end of time group ${timeGroup.startRange}")
-        updatedLogs.foreach(println)
+//        println(s"merged logs at end of time group ${timeGroup.startRange}")
+//        updatedLogs.foreach(println)
 
         val combinations: Long =
           if (resultSO._2.isDefinedAt("algorithm.selection.local.combinations"))
             resultSO._2("algorithm.selection.local.combinations")
           else 0L
 
-        println(s"${LocalTime.now} [UESO Router] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultSO._1.size} requests and $combinations combinations.")
+        println(s"${LocalDateTime.now} [UESO Router] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests, ${resultSO._1.size} optimal requests, and $combinations combinations.")
 
         (updatedResult, updatedLogs)
       }

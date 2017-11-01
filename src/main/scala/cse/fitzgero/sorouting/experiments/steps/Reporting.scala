@@ -9,16 +9,17 @@ import scala.util.Try
 
 object Reporting {
 
-  object SelectedLogData extends SyncStep {
-    val name: String = "Log average trip costs and some performance stats to the report csv file"
+  object AppendToReportCSVFiles extends SyncStep {
+    val name: String = "[Reporting:AppendToReportCSV] Log average trip costs and some performance stats to the report csv file"
 
     type StepConfig = {
       def populationSize: Int
       def timeWindow: Int
       def routePercentage: Double
       def sourceAssetsDirectory: String
+      def experimentBaseDirectory: String
       def experimentInstanceDirectory: String
-      def reportPath: String
+      def experimentConfigDirectory: String
     }
 
     val header: Array[Byte] = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,combinations,has alternate paths\n".getBytes
@@ -30,7 +31,9 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val reportFileURI: String = s"${conf.reportPath}/report.csv"
+      val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
+      val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
+
       val log: Map[String, String] = categoryLog.flatMap(_._2)
       val safeLog = inspectLog(log)_
       val outputData: Array[Byte] = Seq(
@@ -51,22 +54,28 @@ object Reporting {
 
       val t: Try[Map[String, String]] =
         Try({
-          val path: Path = Paths.get(reportFileURI)
-          if (Files.notExists(path))
-            Files.write(path, header, StandardOpenOption.CREATE)
-          Files.write(path, outputData, StandardOpenOption.APPEND)
-          Map("fs.text.report" -> path.toString)
+          Map(
+            "fs.csv.report.base" -> writeLogToPath(outputData, Paths.get(baseReportFileURI)),
+            "fs.csv.report.config" -> writeLogToPath(outputData, Paths.get(configReportFileURI))
+          )
         })
 
       ExperimentStepOps.resolveTry(t)
     }
+
+    def writeLogToPath(outputData: Array[Byte], path: Path): String = {
+      if (Files.notExists(path))
+        Files.write(path, header, StandardOpenOption.CREATE)
+      Files.write(path, outputData, StandardOpenOption.APPEND)
+      path.toString
+    }
   }
 
   object AllLogsToTextFile extends SyncStep {
-    val name: String = "AllLogsToTextFile: Generate Text File Log"
+    val name: String = "[Reporting:AllLogsToTextFile] Generate Text File Log"
 
     type StepConfig = {
-      def reportPath: String
+      def experimentInstanceDirectory: String
     }
 
     /**
@@ -76,17 +85,16 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val reportFileURI: String = s"${conf.reportPath}/report.txt"
+      val reportFileURI: String = s"${conf.experimentInstanceDirectory}/report.txt"
       val outputData: Array[Byte] =
         log
           .map(
             cat =>
-              s"${cat._1}\n${
-                cat._2
-                  .map(tup =>
-                    s"${tup._1}: ${tup._2}")
-                  .mkString("\n")
-              }").mkString("\n").getBytes
+              s"${cat._1}\n${cat._2
+                              .map(tup => s"${tup._1}: ${tup._2}")
+                              .mkString("\n")}")
+          .mkString("\n\n")
+          .getBytes
 
       val t: Try[Map[String, String]] =
         Try({

@@ -18,7 +18,7 @@ object MATSimRunner {
 
 
   object AnalyticSnapshot extends SyncStep {
-    val name: String = "MATSim Simulation runner with snapshot data generation"
+    val name: String = "[AnalyticSnapshot] MATSim Simulation runner with snapshot data generation"
 
     type StepConfig = MATSimRunnerConfig
 

@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.experiments.steps
 import java.nio.file.{Files, Paths}
 import java.time.LocalTime
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentStepOps, MATSimOps}
@@ -19,7 +19,7 @@ object ExperimentAssetGenerator {
 
   type PopulationGeneratorConfig = {
     def populationSize: Int
-    def networkURI: String
+    def sourceAssetsDirectory: String
     def departTime: LocalTime
     def endTime: Option[LocalTime]
     def timeDeviation: Option[LocalTime]
@@ -28,7 +28,7 @@ object ExperimentAssetGenerator {
 
 
   object SetupConfigDirectory extends SyncStep {
-    val name: String = "Copy basic assets to the config directory of this set of experiments, unless they are already there"
+    val name: String = "[ExperimentAssetGenerator:SetupConfigDirectory] Copy basic assets to the config directory of this set of experiments, unless they are already there"
     override type StepConfig = {
       def sourceAssetsDirectory: String
       def experimentConfigDirectory: String
@@ -37,27 +37,43 @@ object ExperimentAssetGenerator {
     override def apply(config: StepConfig, log: ExperimentGlobalLog = Map()): Option[(StepStatus, ExperimentStepLog)] = Some {
       val t: Try[Map[String, String]] =
         Try {
-          XML.save(
-            s"${config.experimentConfigDirectory}/config.xml",
-            XML.loadFile(s"${config.sourceAssetsDirectory}/config.xml"),
-            ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.ConfigDocType
+          val sourceAssetsCopied: Boolean =
+            if (!configDirectoryHasAssets(config.experimentConfigDirectory)) {
+              Files.createDirectories(Paths.get(config.experimentConfigDirectory))
+              XML.save(
+                s"${config.experimentConfigDirectory}/config.xml",
+                XML.loadFile(s"${config.sourceAssetsDirectory}/config.xml"),
+                ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.ConfigDocType
+              )
+              XML.save(
+                s"${config.experimentConfigDirectory}/network.xml",
+                XML.loadFile(s"${config.sourceAssetsDirectory}/network.xml"),
+                ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.NetworkDocType
+              )
+              true
+            } else
+              false
+
+          Map(
+            "fs.ops.assets.copied" -> sourceAssetsCopied.toString,
+            "fs.dir.config" ->  config.experimentConfigDirectory,
+            "fs.xml.config" -> s"${config.experimentConfigDirectory}/config.xml",
+            "fs.xml.network" -> s"${config.experimentConfigDirectory}/network.xml"
           )
-          XML.save(
-            s"${config.experimentConfigDirectory}/network.xml",
-            XML.loadFile(s"${config.sourceAssetsDirectory}/network.xml"),
-            ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.NetworkDocType
-          )
-          Map("fs.xml.config" -> s"${config.experimentConfigDirectory}/config.xml",
-            "fs.xml.network" -> s"${config.experimentConfigDirectory}/network.xml")
         }
       ExperimentStepOps.resolveTry(t, Some(name))
+    }
+
+    def configDirectoryHasAssets(experimentConfigDirectory: String): Boolean = {
+      Files.exists(Paths.get(s"$experimentConfigDirectory/config.xml")) &&
+      Files.exists(Paths.get(s"$experimentConfigDirectory/network.xml"))
     }
   }
 
 
 
   object SetupInstanceDirectory extends SyncStep {
-    val name: String = "Import config and network files for MATSim, updating the URIs for dependencies of this config.xml file"
+    val name: String = "[ExperimentAssetGenerator:SetupInstanceDirectory] Import config and network files for MATSim, updating the URIs for dependencies of this config.xml file"
     override type StepConfig = {
       def experimentConfigDirectory: String
       def experimentInstanceDirectory: String
@@ -66,8 +82,11 @@ object ExperimentAssetGenerator {
     override def apply(config: StepConfig, log: ExperimentGlobalLog = Map()): Option[(StepStatus, ExperimentStepLog)] = Some {
       val t: Try[Map[String, String]] =
         Try {
-          MATSimOps.importExperimentConfig(config.experimentConfigDirectory, config.experimentInstanceDirectory)
-          Map()
+          MATSimOps.importExperimentConfig(config.experimentConfigDirectory, config.experimentInstanceDirectory) match {
+            case Success(_) =>
+              Map("fs.dir.instance" -> config.experimentInstanceDirectory)
+            case Failure(e) => throw e
+          }
         }
       ExperimentStepOps.resolveTry(t, Some(name))
     }
@@ -76,7 +95,7 @@ object ExperimentAssetGenerator {
 
 
   object LoadStoredPopulation extends SyncStep {
-    val name: String = "Load a stored Population for use in this experiment"
+    val name: String = "[ExperimentAssetGenerator:LoadStoredPopulation] Load a stored Population for use in this experiment"
     override type StepConfig = {
       def loadStoredPopulationPath: String
       def experimentInstanceDirectory: String
@@ -103,7 +122,7 @@ object ExperimentAssetGenerator {
 
 
   object RepeatedPopulation extends SyncStep {
-    val name: String = "Generate Population for repeated use"
+    val name: String = "[ExperimentAssetGenerator:RepeatedPopulation] Generate Population for repeated use, or find and repeat previously generated population"
     override type StepConfig = PopulationGeneratorConfig {
       def experimentConfigDirectory: String
       def experimentInstanceDirectory: String
@@ -137,7 +156,7 @@ object ExperimentAssetGenerator {
               Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
               XML.save(
                 destinationPath,
-                generatePopulation(config.populationSize, config.networkURI, config.departTime, config.timeDeviation),
+                generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation),
                 ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
           }
 
@@ -150,8 +169,9 @@ object ExperimentAssetGenerator {
 
 
   object UniquePopulation extends SyncStep {
-    val name: String = "Generate unique Population on each call"
+    val name: String = "[ExperimentAssetGenerator:UniquePopulation] Generate unique Population on each call"
     override type StepConfig = PopulationGeneratorConfig {
+      def experimentConfigDirectory: String
       def experimentInstanceDirectory: String
     }
 
@@ -163,7 +183,7 @@ object ExperimentAssetGenerator {
           Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
           XML.save(
             destinationPath,
-            generatePopulation(config.populationSize, config.networkURI, config.departTime, config.timeDeviation),
+            generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation),
             ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
 
           Map("fs.xml.population" -> destinationPath)

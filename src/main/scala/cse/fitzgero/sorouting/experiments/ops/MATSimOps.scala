@@ -83,7 +83,7 @@ object MATSimOps {
     * @param experimentConfigDirectory the source file directory
     * @param experimentInstanceDirectory the directory to (optionally) create and copy these assets into
     */
-  def importExperimentConfig(experimentConfigDirectory: String, experimentInstanceDirectory: String): Unit = {
+  def importExperimentConfig(experimentConfigDirectory: String, experimentInstanceDirectory: String): Try[Unit] = {
     val thisInstanceAbsolutePath: String = Paths.get(experimentInstanceDirectory).toAbsolutePath.toString
     val thisNetworkURI = s"$thisInstanceAbsolutePath/network.xml"
     val thisPopulationURI = s"$thisInstanceAbsolutePath/population.xml"
@@ -109,15 +109,7 @@ object MATSimOps {
         XML.loadFile(s"$experimentConfigDirectory/network.xml"),
         ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.NetworkDocType
       )
-//      if (Files.exists(Paths.get(s"$experimentConfigDirectory/population.xml"))) {
-//        XML.save(
-//          s"$experimentInstanceDirectory/population.xml",
-//          XML.loadFile(s"$experimentConfigDirectory/population.xml"),
-//          ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType
-//        )
-//      }
     }
-    // unhandled Try block
   }
 
 

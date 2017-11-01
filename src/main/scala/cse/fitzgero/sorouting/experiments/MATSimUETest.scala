@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.experiments
 
+import java.nio.file.Paths
 import java.time.{LocalDateTime, LocalTime}
 
 import cse.fitzgero.sorouting.experiments.steps.{ExperimentAssetGenerator, Reporting, UserEquilibriumRouting}
@@ -8,16 +9,19 @@ import edu.ucdenver.fitzgero.lib.experiment.Experiment
 
 object MATSimUETest extends Experiment with App with MATSimSimulator {
 
-  val pop: Int = if (args.size > 0) args(0).toInt else 500
-  val win: Int = if (args.size > 1) args(1).toInt else 15
-  val route: Double = if (args.size > 2) args(2).toDouble else 0.20D
-
+  val pop: Int = if (args.length > 0) args(0).toInt else 100
+  val win: Int = if (args.length > 1) args(1).toInt else `15
+  val route: Double = if (args.length > 2) args(2).toDouble else 0.20D
+  val name: String = if (args.length > 3) args(3) else "test"
+  val sourceAssetDirectory: String = if (args.length > 4) args(4) else "data/5x5"
+  val sourceAssetName: String = Paths.get(sourceAssetDirectory).getFileName.toString
+  val configLabel: String = s"$sourceAssetName-$pop-$win-$route"
+  
   case class Config (
     sourceAssetsDirectory: String,
+    experimentBaseDirectory: String,
     experimentConfigDirectory: String,
-    networkURI: String,
     experimentInstanceDirectory: String,
-    reportPath: String,
     populationSize: Int,
     timeWindow: Int,
     routePercentage: Double,
@@ -27,11 +31,10 @@ object MATSimUETest extends Experiment with App with MATSimSimulator {
     timeDeviation: Option[LocalTime]
   )
   val config = Config(
-    "data/rye",
-    "result/20171031",
-    "data/rye/network.xml",
-    s"result/20171031/${LocalDateTime.now.toString}",
-    "result/20171031",
+    sourceAssetDirectory,
+    s"result/$name",
+    s"result/$name/$configLabel",
+    s"result/$name/$configLabel/${LocalDateTime.now.toString}",
     pop,
     win,
     route,
@@ -48,11 +51,10 @@ object MATSimUETest extends Experiment with App with MATSimSimulator {
     ExperimentAssetGenerator.SetupInstanceDirectory,
     ExperimentAssetGenerator.RepeatedPopulation,
     UserEquilibriumRouting.Incremental,
-    Reporting.SelectedLogData
+    Reporting.AppendToReportCSVFiles,
+    Reporting.AllLogsToTextFile
   ))
 }
-
-// TODO: run selfish routing tests over weekend. compare unique to repeated populations
 
 //object foo {
 //  type DirectoriesConfig = {

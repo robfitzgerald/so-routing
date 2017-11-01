@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.experiments.steps
 
-import java.time.LocalTime
+import java.time.{LocalDateTime, LocalTime}
 import java.time.format.DateTimeFormatter
 
 import scala.collection.GenSeq
@@ -32,7 +32,7 @@ object UserEquilibriumRouting {
   val StartOfDay: LocalTime = LocalTime.MIN
 
   object Incremental extends SyncStep {
-    val name: String = "Run Selfish Routing Using MSSP and MATSim"
+    val name: String = "[UserEquilibriumRouting:Incremental] Run Selfish Routing Using MSSP and MATSim"
 
     type StepConfig = MATSimRunnerConfig
 
@@ -130,7 +130,7 @@ object UserEquilibriumRouting {
             val updatedResult: GenSeq[LocalResponse] = accumulator._1 ++ result.result
             val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(accumulator._2, result.logs)
 
-            println(s"${LocalTime.now} [UE Router] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${result.result.size} requests")
+            println(s"${LocalDateTime.now} [UE Router] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${result.result.size} requests")
 
             (updatedResult, updatedLogs)
           case None =>
