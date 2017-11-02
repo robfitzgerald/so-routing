@@ -37,7 +37,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
       p.map(_.cost.getOrElse(List[Double]()).sum).sum
 
     // a back-tracking map from personIds to their OD object
-    val personToODPair: GenMap[String, LocalODPair] =
+    val unTag: GenMap[String, LocalODPair] =
       request.keys.map(od => (od.id, od)).toMap
 
     // a multiset of path sets for each person
@@ -80,9 +80,12 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
 
         } else {
           // parallelize subproblems up to a defined depth
-          val thisBucket: GenSeq[(Tag, Path)] =
-            if (depth <= ParallelizationDepth) subSet.head.par
-            else subSet.head
+//          val thisBucket: GenSeq[(Tag, Path)] =
+//            if (depth <= ParallelizationDepth) subSet.head.par
+//            else subSet.head
+
+          // don't parallelize because we are losing child threads possibly due to max heap issues
+          val thisBucket: GenSeq[(Tag, Path)] = subSet.head
 
           thisBucket.map(item => {
             val combinationsOnThisBranch = _mmC(subSet.tail, item +: thisCombination, depth + 1)
@@ -103,10 +106,11 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
     minimalMultisetCombinationsOf(tagsAndPaths) match {
       case None => None
       case Some(combination) =>
-        val result: GenMap[LocalODPair, Path] = combination
-          .map(tagAndPath => {
-            (personToODPair(tagAndPath._1.personId), tagAndPath._2)
-          }).toMap
+        val result: GenMap[LocalODPair, Path] =
+          combination
+            .map(tagAndPath => {
+              (unTag(tagAndPath._1.personId), tagAndPath._2)
+            }).toMap
 
         Some(result)
     }

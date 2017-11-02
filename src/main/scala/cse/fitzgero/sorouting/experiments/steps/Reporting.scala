@@ -41,7 +41,7 @@ object Reporting {
         conf.sourceAssetsDirectory,
         conf.experimentInstanceDirectory,
         conf.populationSize,
-        (conf.populationSize * conf.routePercentage).toString,
+        (conf.populationSize * conf.routePercentage).toInt.toString,
         conf.routePercentage,
         conf.timeWindow,
         safeLog("experiment.result.traveltime.avg.network"),

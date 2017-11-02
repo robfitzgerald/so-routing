@@ -41,7 +41,7 @@ object MATSimSOTest extends Experiment with App with MATSimSimulator {
     LocalTime.parse("08:00:00"),
     LocalTime.parse("08:15:00"),
     Some(LocalTime.parse("09:00:00")),
-    Some(LocalTime.parse("00:10:00"))
+    Some(LocalTime.parse("00:15:00"))
   )
 
   // TODO: consolidate config requirements when common elements, parameterize relative paths for reports, populations

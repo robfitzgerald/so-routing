@@ -17,10 +17,10 @@ class MATSimRunnerTests extends FileWriteSideEffectTestTemplate("MATSimRunner"){
           Files.createDirectories(Paths.get(instanceDirectory))
           val startTime = LocalTime.parse("08:00:00")
           val endTime = LocalTime.parse("08:10:00")
-          case class PopulationConfig (networkURI: String, experimentInstanceDirectory: String, populationSize: Int, startTime: LocalTime, endTime: Option[LocalTime])
+          case class PopulationConfig(populationSize: Int, departTime: LocalTime, endTime: Option[LocalTime], timeDeviation: Option[LocalTime], sourceAssetsDirectory: String, experimentConfigDirectory: String, experimentInstanceDirectory: String)
           case class ImportConfig (experimentConfigDirectory: String, experimentInstanceDirectory: String)
           case class MATSimConfig(experimentInstanceDirectory: String, timeWindow: Int, startTime: LocalTime, endTime: Option[LocalTime])
-          val populationConfig = PopulationConfig(networkURI, instanceDirectory, 100, startTime, Some(endTime))
+          val populationConfig = PopulationConfig(100, startTime, Some(endTime), None, configDirectory, configDirectory, instanceDirectory)
           val importConfig = ImportConfig(configDirectory, instanceDirectory)
           val matsimConfig = MATSimConfig(instanceDirectory, 60, startTime, Some(endTime))
 

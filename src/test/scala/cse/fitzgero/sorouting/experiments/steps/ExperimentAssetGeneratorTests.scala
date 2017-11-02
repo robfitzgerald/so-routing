@@ -46,12 +46,12 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
       }
     }
     "Repeated" when {
+      case class Config(populationSize: Int, departTime: LocalTime, endTime: Option[LocalTime], timeDeviation: Option[LocalTime], sourceAssetsDirectory: String, experimentConfigDirectory: String, experimentInstanceDirectory: String)
       "called once" should {
         "generate a population file" in {
-          val networkURI: String = "src/test/resources/PopulationGeneratorTests/network.xml"
+          val srcDirectory: String = "src/test/resources/PopulationGeneratorTests"
           val populationSize: Int = 50
-          case class Config(populationSize: Int, networkURI: String, startTime: LocalTime, endTime: Option[LocalTime], experimentConfigDirectory: String, experimentInstanceDirectory: String)
-          val config = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), testRootPath, testRootPath)
+          val config = Config(populationSize, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), None, srcDirectory, testRootPath, testRootPath)
 
           ExperimentAssetGenerator.RepeatedPopulation(config, Map.empty[String, Map[String, String]]) match {
             case None => fail()
@@ -65,15 +65,14 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
       }
       "called twice" should {
         "generate a population file, then copy it on the next instance" in {
-          val networkURI: String = "src/test/resources/PopulationGeneratorTests/network.xml"
+          val srcDirectory: String = "src/test/resources/PopulationGeneratorTests"
           val populationSize: Int = 50
           val configDirectory: String = testRootPath
           val firstInstanceDirectory: String = s"$testRootPath/${LocalDateTime.now.toString}"
           val secondInstanceDirectory: String = s"$testRootPath/${LocalDateTime.now.toString}"
           require(firstInstanceDirectory != secondInstanceDirectory, "test should generate two different instance directories, but it's theoretically possible it runs too fast and generates a duplicate")
-          case class Config(populationSize: Int, networkURI: String, startTime: LocalTime, endTime: Option[LocalTime], experimentConfigDirectory: String, experimentInstanceDirectory: String)
-          val firstConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), configDirectory, firstInstanceDirectory)
-          val secondConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), configDirectory, secondInstanceDirectory)
+          val firstConfig = Config(populationSize, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), None, srcDirectory, configDirectory, firstInstanceDirectory)
+          val secondConfig = Config(populationSize, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), None, srcDirectory, configDirectory, secondInstanceDirectory)
 
           ExperimentAssetGenerator.RepeatedPopulation(firstConfig, Map.empty[String, Map[String, String]]) match {
             case None => fail()
@@ -98,17 +97,17 @@ class ExperimentAssetGeneratorTests extends FileWriteSideEffectTestTemplate("Exp
       }
     }
     "Unique" when {
+      case class Config(populationSize: Int, departTime: LocalTime, endTime: Option[LocalTime], timeDeviation: Option[LocalTime], sourceAssetsDirectory: String, experimentConfigDirectory: String, experimentInstanceDirectory: String)
       "called multiple times" should {
         "result in populations that are unique each time" in {
-          val networkURI: String = "src/test/resources/PopulationGeneratorTests/network.xml"
+          val srcDirectory: String = "src/test/resources/PopulationGeneratorTests"
           val populationSize: Int = 50
+          val configDirectory: String = testRootPath
           val firstInstanceDirectory: String = s"$testRootPath/${LocalDateTime.now.toString}"
-          Thread.sleep(10) // prevent duplicate directory name generation
           val secondInstanceDirectory: String = s"$testRootPath/${LocalDateTime.now.toString}"
           require(firstInstanceDirectory != secondInstanceDirectory, "test should generate two different instance directories, but it's theoretically possible it runs too fast and generates a duplicate")
-          case class Config(populationSize: Int, networkURI: String, startTime: LocalTime, endTime: Option[LocalTime], experimentInstanceDirectory: String)
-          val firstConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), firstInstanceDirectory)
-          val secondConfig = Config(populationSize, networkURI, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), secondInstanceDirectory)
+          val firstConfig = Config(populationSize, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), None, srcDirectory, configDirectory, firstInstanceDirectory)
+          val secondConfig = Config(populationSize, LocalTime.parse("08:00:00"), Some(LocalTime.parse("10:00:00")), None, srcDirectory, configDirectory, secondInstanceDirectory)
 
           ExperimentAssetGenerator.UniquePopulation(firstConfig, Map.empty[String, Map[String, String]]) match {
             case None => fail()

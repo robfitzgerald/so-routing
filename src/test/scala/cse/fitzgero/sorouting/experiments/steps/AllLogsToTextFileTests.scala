@@ -9,8 +9,8 @@ class AllLogsToTextFileTests extends FileWriteSideEffectTestTemplate("GenerateTe
   "GenerateTextFileLog" when {
     "called with some data and a valid result path" should {
       "write that data to a test file" in {
-        case class Config(reportPath: String)
-        val reportPath = s"$testRootPath/test.txt"
+        case class Config(experimentInstanceDirectory: String)
+        val reportPath = s"$testRootPath"
         val config = Config(reportPath)
         val category1 = "foo"
         val key1 = "bar"
@@ -36,8 +36,8 @@ class AllLogsToTextFileTests extends FileWriteSideEffectTestTemplate("GenerateTe
     }
     "called with some data and a bad result path" should {
       "write that data to a test file" in {
-        case class Config(reportPath: String)
-        val reportPath = "/tmp/var/tmp/local/bin/bar/bash/boodle/potempkin/hindenberg.txt"
+        case class Config(experimentInstanceDirectory: String)
+        val reportPath = "/tmp/var/tmp/local/bin/bar/bash/boodle/potempkin/hindenberg"
         val config = Config(reportPath)
         val category = "foo"
         val key = "bar"

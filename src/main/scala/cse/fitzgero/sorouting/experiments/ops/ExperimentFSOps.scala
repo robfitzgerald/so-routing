@@ -94,7 +94,9 @@ object ExperimentFSOps {
     * @return temp directory path
     */
   def importAssetsToTempDirectory(experimentInstanceDirectory: String): String = {
-    MATSimOps.importExperimentConfig(experimentInstanceDirectory, s"$experimentInstanceDirectory/tmp")
-    s"$experimentInstanceDirectory/tmp"
+    MATSimOps.importExperimentConfig(experimentInstanceDirectory, s"$experimentInstanceDirectory/tmp") match {
+      case Success(_) => s"$experimentInstanceDirectory/tmp"
+      case Failure(e) => throw e
+    }
   }
 }
