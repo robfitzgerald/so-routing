@@ -2,14 +2,15 @@ package cse.fitzgero.sorouting.algorithm.local.selection
 
 import scala.collection.{GenMap, GenSeq}
 
+import org.apache.spark.SparkContext
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
+
 import cse.fitzgero.graph.algorithm.GraphAlgorithm
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasAlgorithm
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeAttribute, LocalGraph, LocalODPair}
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 
 object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
@@ -31,28 +32,42 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
     config match {
       case None => None
       case Some(sc) =>
-        // a back-tracking map from personIds to their OD object
-        val unTag: GenMap[String, LocalODPair] =
-          request.keys.map(od => (od.id, od)).toMap
+        if (request.size == 1) {
+          // trivial selection
+          trivialCostSelection(request, graph) match {
+            case Some(result) => Some(Map(result._1 -> result._2))
+            case None => None
+          }
+        } else {
 
-        // a multiset of path sets for each person as a Spark RDD
-        val sequentialRequest: Seq[Seq[(Tag, Path)]] = tagRequests(request)
+          // a back-tracking map from personIds to their OD object
+          val unTag: GenMap[String, LocalODPair] =
+            request.keys.map(od => (od.id, od)).toMap
 
-        val result: Seq[(LocalODPair, Path)] = for {
-          minimal <- minimalCostCombination(sc)(generateAllCombinations(sc)(sequentialRequest), graph)
-        } yield {
-          (unTag(minimal._1.personId), minimal._2)
+          // a multiset of path sets for each person as a Spark RDD
+          val sequentialRequest: Seq[Seq[(Tag, Path)]] = tagRequests(request)
+
+          // generate all combinations and find the minimal cost combination
+          val combinations = generateAllCombinations(sc)(sequentialRequest)
+          minimalCostCombination(sc)(combinations, graph) match {
+            case None => None
+            case Some(minimalSet) =>
+              val result = minimalSet.map { minimal => (unTag(minimal._1.personId), minimal._2) }
+
+              println("finishing running SparkCombinatorial with request, response:")
+              request.foreach(req => println(s"${req._1} with ${req._2.size} alt paths"))
+              result.foreach(res => println(s"${res._1} with selected path ${res._2.map(_.edgeId).mkString("(","->",")")}"))
+              println()
+
+              Some(result.toMap)
+          }
         }
-
-        if (result.size == request.size)
-          Some(result.toMap)
-        else
-          None
     }
   }
 
 
   def generateAllCombinations(sc: SparkContext)(set: Seq[Seq[(Tag, Path)]]): RDD[Seq[(Tag, Path)]] = {
+
     def subCombinations(subSet: Seq[Seq[(Tag, Path)]], solution: Seq[(Tag, Path)]): Seq[Seq[(Tag, Path)]] = {
       if (subSet.isEmpty) Seq(solution)
       else {
@@ -63,15 +78,21 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
     if (set.isEmpty) sc.emptyRDD[Seq[(Tag, Path)]]
     else if (set.size == 1) sc.parallelize(set)
     else {
+
+      // TODO: remove this spark-ficiation here. redo it as sequential, then parallelize the 1x2 result below if needed (current solution is an over-engineering, isn't it?)
+
       // req1 and req2 should be as large as possible for uniform parallelism
       val sortedBySizeDescending = set.toVector.sortBy(-_.size)
-      val partitions: Int = sortedBySizeDescending(0).size * sortedBySizeDescending(1).size
+
+      // cartesian product to produce all combinations of the first two requests
       val req1 = sc.parallelize(sortedBySizeDescending(0))
       val req2 = sc.parallelize(sortedBySizeDescending(1))
       val combinations = req1.cartesian(req2).map { tup => Seq(tup._1, tup._2) } // TODO: .partitionBy(hashPartitioner(partitions)) ?
+
       if (set.size == 2) combinations
       else {
         val remaining: Seq[Seq[(Tag, Path)]] = set.tail.tail
+        // for each combination of 1 and 2, apply the recursive combinations solver
         combinations.flatMap {
           oneAndTwoCombination: Seq[(Tag, Path)] =>
             subCombinations(remaining, oneAndTwoCombination)
@@ -81,16 +102,16 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
   }
 
 
-  def minimalCostCombination(sc: SparkContext)(combinations: RDD[Seq[(Tag, Path)]], graph: LocalGraph): Seq[(Tag, Path)] = {
+  def minimalCostCombination(sc: SparkContext)(combinations: RDD[Seq[(Tag, Path)]], graph: LocalGraph): Option[Seq[(Tag, Path)]] = {
     // edge data by edge id stored as a Spark RDD
-    val edgeLookup: Broadcast[GenMap[String, LocalEdgeAttribute with CostFunction]] =
-      sc.broadcast(graph.edges.map(edgeRow => (edgeRow._1, edgeRow._2.attribute)))
+    val edgeCostLookup: Broadcast[GenMap[String, LocalEdgeAttribute with CostFunction]] =
+      sc.broadcast(edgeLookup(graph))
     val zero = Seq.empty[(Double, Seq[(Tag, Path)])]
     val minimum: Seq[(Double, Seq[(Tag, Path)])] =
       combinations
         .aggregate(zero)(
           (acc: Seq[(Double, Seq[(Tag, Path)])], elem: Seq[(Tag, Path)]) => {
-            val cost = costOfCombinationSet(edgeLookup.value)(edgesVisitedInSet(elem))
+            val cost = costOfCombinationSet(edgeCostLookup.value)(edgesVisitedInSet(elem))
             (cost, elem) +: acc
           },
           (a: Seq[(Double, Seq[(Tag, Path)])], b: Seq[(Double, Seq[(Tag, Path)])]) => {
@@ -102,8 +123,27 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
           }
         )
     if (minimum.nonEmpty)
-      minimum.head._2
-    else Seq()
+      Some(minimum.head._2)
+    else None
+  }
+
+
+  def trivialCostSelection(request: GenMap[LocalODPair, GenSeq[Path]], graph: LocalGraph): Option[(LocalODPair, Path)] = {
+    if (request.size != 1) None
+    else {
+      val edgeCostLookup = edgeLookup(graph)
+      val onlyPerson = request.head
+      val bestPath =
+        onlyPerson._2
+          .map{
+            path: Path =>
+              val cost = path.map(e => edgeCostLookup(e.edgeId).costFlow(1).getOrElse(0D)).sum
+              (path, cost)
+          }
+          .minBy(_._2)
+          ._1
+      Some((onlyPerson._1, bestPath))
+    }
   }
 
 
@@ -135,4 +175,8 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
           .costFlow(edgeAndFlow._2)
           .getOrElse(DefaultFlowCost) // TODO: add policy for managing missing cost flow evaluation data (is zero the correct default value?)
       }.sum
+
+
+  def edgeLookup(graph: LocalGraph): GenMap[String, LocalEdgeAttribute with CostFunction] =
+    graph.edges.map(edgeRow => (edgeRow._1, edgeRow._2.attribute))
 }

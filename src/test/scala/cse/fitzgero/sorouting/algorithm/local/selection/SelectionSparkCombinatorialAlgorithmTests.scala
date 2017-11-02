@@ -14,12 +14,12 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
           bobResult.head.map(_.edgeId) should equal (Seq("204", "406", "610"))
         }
       }
-      "called with a large graph and set of alternative paths" should {
-        "produce the minimal combination" in new TestAssets.BiggerMap {
-          val result = SelectionSparkCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult, Some(sc))
-          result.foreach(println)
-        }
-      }
+//      "called with a large graph and set of alternative paths" should {
+//        "produce the minimal combination" in new TestAssets.BiggerMap {
+//          val result = SelectionSparkCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult, Some(sc))
+//          result.foreach(println)
+//        }
+//      }
     }
     "generateAllCombinations" when {
       "called with a small set of tags and paths" should {
@@ -35,13 +35,26 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
           }
         }
       }
-      "called with a large set of tags and paths" should {
-        "produce all combinations" in new TestAssets.BiggerMap {
-          val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult)
+      "called with a set of 4 driver alternate paths" should {
+        "produce all combinations" in new TestAssets.CombinationSet {
+          val altBobAndJoe = kspResult.map { person =>
+            val newAlterEgo = person._1.copy(id = person._1.id + "boog")
+            (newAlterEgo, person._2)
+          }.toMap
+          val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult ++ altBobAndJoe)
           val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
-          result.foreach(println)
+//          result.foreach(res => println(res.map(_._1)))
+          // there should be 3 x 4 x 4 x 4 = 192 combinations for joe and bob
+          result.distinct.size should equal(192)
         }
       }
+//      "called with a large set of tags and paths" should {
+//        "produce all combinations" in new TestAssets.BiggerMap {
+//          val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult)
+//          val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
+//          result.foreach(println)
+//        }
+//      }
     }
   }
 }
