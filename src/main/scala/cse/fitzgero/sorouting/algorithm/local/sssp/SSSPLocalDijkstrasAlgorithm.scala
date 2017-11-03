@@ -10,7 +10,7 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   type EdgeId = String
   type Graph = LocalGraph
   override type AlgorithmRequest = LocalODPair
-  override type AlgorithmConfig = Any
+  override type AlgorithmConfig = Nothing
   override type PathSegment = SORoutingPathSegment
   case class AlgorithmResult(od: AlgorithmRequest, path: Path)
   /**
@@ -20,17 +20,19 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @param config (unused)
     * @return the shortest path
     */
-  override def runAlgorithm(g: Graph, od: AlgorithmRequest, config: Option[Any] = None): Option[AlgorithmResult] = {
-    minSpanningDijkstras(g, od.src, Some(od.dst)) match {
-      case Some(spanningTree) =>
-        backPropagate(g, spanningTree, od.dst) match {
-          case Some(path) =>
-            Some(AlgorithmResult(od, path))
-          case None =>
-            None
-        }
-      case None =>
-        None
+  override def runAlgorithm(g: Graph, od: AlgorithmRequest, config: Option[Nothing] = None): Option[AlgorithmResult] = {
+    if (od.src == od.dst) {
+      None
+    } else {
+      minSpanningDijkstras(g, od.src, Some(od.dst)) match {
+        case None => None // destination was never found
+        case Some(spanningTree) =>
+          backPropagate(g, spanningTree, od.dst) match {
+            case None => None //
+            case Some(path) =>
+              Some(AlgorithmResult(od, path))
+          }
+      }
     }
   }
 
@@ -79,14 +81,15 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
         if (destination.isDefined) None // never found the goal
         else Some(solution) // minimum spanning tree from origin, has no destination
       else {
-        val shortestFrontier = frontier.dequeue
+        val shortestFrontier: SearchData = frontier.dequeue
 
-        val solutionUpdate =
+        val solutionUpdate: Map[VertexId, BackPropagateData] =
           if (!visited(shortestFrontier.edge.id) && !solution.isDefinedAt(shortestFrontier.edge.dst)) {
             //            val updatedDistance = solution(shortestFrontier.edge.src).d + shortestFrontier.cost
             solution.updated(shortestFrontier.edge.dst, BackPropagateData(Some(shortestFrontier.edge.id), shortestFrontier.cost))
           } else
             solution
+
         if (destination.isDefined && shortestFrontier.edge.dst == destination.get) {
           Some(solutionUpdate) // return solution tree with origin, destination present
         } else {
@@ -117,7 +120,7 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   }
 
   /**
-    * find the path back from the destination to the origin via the spanning tree
+    * find the path back from the destination to the origin via the spanning tree. invariant is that the spanning tree contains both source and destination vertices.
     * @param g the original graph
     * @param spanningTree the map of vertices to the predecessor edges that should be taken in the tree
     * @param destination the destination vertex requested in the shortest path search

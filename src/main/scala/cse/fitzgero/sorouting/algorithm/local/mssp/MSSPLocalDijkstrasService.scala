@@ -22,7 +22,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
   // MSSP types
   override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
-  override type ServiceConfig = Any
+  override type ServiceConfig = Nothing
   case class ServiceResult(request: ServiceRequest, result: MultipleShortestPathsResult, logs: LoggingClass)
 
 
@@ -33,26 +33,30 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
     * @param config (ignored)
     * @return a map from od pair to it's resulting path
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[Any] = None): Future[Option[ServiceResult]] = Future {
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = Future {
 
-    val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
-      Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
+    if (request.isEmpty) {
+      None
+    } else {
+      val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
+        Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
 
-    val resolved = Await.result(future, 1 hour)
-    val result = resolved.flatten.map(r => {
-      LocalResponse(r.request, r.response.path)
-    }).toSeq
+      val resolved = Await.result(future, 1 hour)
+      val result = resolved.flatten.map(r => {
+        LocalResponse(r.request, r.response.path)
+      }).toSeq
 
-    val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
+      val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
 
-    val log = Map[String, Long](
-      "algorithm.mssp.local.runtime.total" -> runTime,
-      "algorithm.mssp.local.batch.request.size" -> request.size,
-      "algorithm.mssp.local.batch.completed" -> result.size,
-      "algorithm.mssp.local.cost.effect" -> costEffect,
-      "algorithm.mssp.local.success" -> 1L
-    )
-//    println(s"[MSSP] completed with ${result.size} results")
-    Some(ServiceResult(request, result, log))
+      val log = Map[String, Long](
+        "algorithm.mssp.local.runtime.total" -> runTime,
+        "algorithm.mssp.local.batch.request.size" -> request.size,
+        "algorithm.mssp.local.batch.completed" -> result.size,
+        "algorithm.mssp.local.cost.effect" -> costEffect,
+        "algorithm.mssp.local.success" -> 1L
+      )
+      //    println(s"[MSSP] completed with ${result.size} results")
+      Some(ServiceResult(request, result, log))
+    }
   }
 }

@@ -36,7 +36,7 @@ object KSPSparkCombinatorialRoutingService extends GraphBatchRoutingAlgorithmSer
   override def runService(graph: LocalGraph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
     val promise = Promise[Option[ServiceResult]]()
 //    println()
-    println(s"expecting selection of ${request.size} requests")
+//    println(s"expecting selection of ${request.size} requests")
     config match {
       case None => promise.success(None)
       case Some(conf) =>
@@ -53,7 +53,7 @@ object KSPSparkCombinatorialRoutingService extends GraphBatchRoutingAlgorithmSer
                 )
 
 
-                println(s"successful run of both services for ${request.size} requests and ${selection.result.size} results")
+//                println(s"successful run of both services for ${request.size} requests and ${selection.result.size} results")
 //                println(request)
 //                println(selection.result)
 //                println()

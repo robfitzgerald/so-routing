@@ -26,7 +26,7 @@ object UserEquilibriumRouting {
     def endTime: Option[LocalTime]
   }
 
-  val RoutingAlgorithmTimeout: Duration = 1 hour
+  val RoutingAlgorithmTimeout: Duration = 10 minutes
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
   val StartOfDay: LocalTime = LocalTime.MIN
@@ -37,13 +37,6 @@ object UserEquilibriumRouting {
     type StepConfig = MATSimRunnerConfig
 
     override def apply(config: StepConfig, log: ExperimentGlobalLog = Map()): Option[(StepStatus, ExperimentStepLog)] = Some {
-
-      val instanceDirectory: String = s"${config.experimentInstanceDirectory}"
-      val endtimeInterpretation: LocalTime = config.endTime match {
-        case Some(time) => time
-        case None => LocalTime.MAX
-      }
-
       val t: Try[Map[String, String]] =
         Try {
           // load population file, convert to LocalRequest, solve shortest path, save back to XML file
