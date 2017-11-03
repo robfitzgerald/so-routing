@@ -137,12 +137,11 @@ object SparkCombinationsSORouting {
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
 
         // TODO: parameterize the routesSO algorithm
-        val future = for {
-          routesUE <- MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
-          routesSO <- KSPSparkCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some((kspConfig, sparkContext)))
-        } yield (routesUE, routesSO)
+        val ueFuture = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
+        val soFuture =  KSPSparkCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some((kspConfig, sparkContext)))
 
-        val (resolvedUE, resolvedSO) = Await.result(future, RoutingAlgorithmTimeout)
+        val resolvedUE = Await.result(ueFuture, RoutingAlgorithmTimeout)
+        val resolvedSO = Await.result(soFuture, RoutingAlgorithmTimeout)
 
         // TODO: these should be encapsulated, but their base trait isn't designed correctly for a generalization on res.result
         val resultUE: (GenSeq[LocalResponse], Map[String, Long]) =

@@ -28,6 +28,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
           val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
           // there should be 3 x 4 = 12 combinations for joe and bob
           result.distinct.size should equal (12)
+          result.foreach(res => println(res.map(_._1)))
           result.foreach {
             pair =>
               pair.head._1.personId should equal (joeRequest.id)
@@ -43,9 +44,26 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
           }.toMap
           val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult ++ altBobAndJoe)
           val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
+          result.foreach(res => println(res.map(_._1)))
+          // there should be 3 x 4 x 3 x 4 = 144 combinations for joe and bob and their alter-egos
+          result.distinct.size should equal(144)
+        }
+      }
+      "called with a set of 6 driver alternate paths" should {
+        "produce all combinations" in new TestAssets.CombinationSet {
+          val altBobAndJoe = kspResult.map { person =>
+            val newAlterEgo = person._1.copy(id = person._1.id + "ert")
+            (newAlterEgo, person._2)
+          }.toMap
+          val moreBobAndJoeShow = kspResult.map { person =>
+            val newAlterEgo = person._1.copy(id = person._1.id + "burger")
+            (newAlterEgo, person._2)
+          }.toMap
+          val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult ++ altBobAndJoe ++ moreBobAndJoeShow)
+          val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
 //          result.foreach(res => println(res.map(_._1)))
-          // there should be 3 x 4 x 4 x 4 = 192 combinations for joe and bob
-          result.distinct.size should equal(192)
+          // there should be 3 x 4 x 3 x 4 x 3 x 4 = 1728 combinations for joe and bob and their alter-egos
+          result.distinct.size should equal(1728)
         }
       }
 //      "called with a large set of tags and paths" should {
@@ -55,6 +73,23 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
 //          result.foreach(println)
 //        }
 //      }
+    }
+    "minimalCostCombination" when {
+      "called with a set of combinations" should {
+        "return the minimum cost combination" in new TestAssets.CombinationSet {
+          val altBobAndJoe = kspResult.map { person =>
+            val newAlterEgo = person._1.copy(id = person._1.id + "ert")
+            (newAlterEgo, person._2)
+          }.toMap
+          val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult ++ altBobAndJoe)
+          val combinations = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req)
+          val expectedCombinations: Long = combinations.count()
+          expectedCombinations should be (144)
+          val result = SelectionSparkCombinatorialAlgorithm.minimalCostCombination(sc)(combinations, graph, expectedCombinations)
+          // TODO: i did not calculate the true minimal cost combination. test correctness!
+          println(result)
+        }
+      }
     }
   }
 }
