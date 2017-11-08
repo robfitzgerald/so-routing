@@ -1,4 +1,4 @@
-package cse.fitzgero.sorouting.util
+package cse.fitzgero.sorouting.matsimrunner.util
 
 import scala.util.{Try, Success, Failure}
 
@@ -70,10 +70,11 @@ object TimeStringConvert {
   private def stringsInBounds (hh: String, mm: String, ss: String): Try[Boolean] = {
     Try({
       TimeLowerBound <= hh.toInt && hh.toInt < HourBase &&
-      TimeLowerBound <= mm.toInt && mm.toInt < MinBase &&
-      TimeLowerBound <= ss.toInt && ss.toInt < SecBase
+        TimeLowerBound <= mm.toInt && mm.toInt < MinBase &&
+        TimeLowerBound <= ss.toInt && ss.toInt < SecBase
     })
   }
 
   private def intInBounds (i: Int): Boolean = (TimeLowerBound until TimeUpperBound).contains(i)
 }
+

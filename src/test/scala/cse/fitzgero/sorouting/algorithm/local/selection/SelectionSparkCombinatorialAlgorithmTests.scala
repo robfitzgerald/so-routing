@@ -31,8 +31,8 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
           result.foreach(res => println(res.map(_._1)))
           result.foreach {
             pair =>
-              pair.head._1.personId should equal (joeRequest.id)
-              pair.tail.head._1.personId should equal (bobRequest.id)
+              pair.head._1.personId should equal (bobRequest.id)
+              pair.tail.head._1.personId should equal (joeRequest.id)
           }
         }
       }

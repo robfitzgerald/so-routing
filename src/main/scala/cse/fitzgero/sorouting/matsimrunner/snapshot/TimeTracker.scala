@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.matsimrunner.snapshot
 
-import cse.fitzgero.sorouting.util.TimeStringConvert
+import cse.fitzgero.sorouting.matsimrunner.util.TimeStringConvert
 
 /**
   * tracks the current time delta for use with negotiating incoming new link events
