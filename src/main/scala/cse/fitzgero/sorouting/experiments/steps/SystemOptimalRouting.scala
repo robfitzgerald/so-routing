@@ -128,12 +128,16 @@ object SystemOptimalRouting {
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
 
         // TODO: parameterize the routesSO algorithm
-        val future = for {
-          routesUE <- MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
-          routesSO <- KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))
-        } yield (routesUE, routesSO)
+//        val future = for {
+//          routesUE <- MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
+//          routesSO <- KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))
+//        } yield (routesUE, routesSO)
+//        val (resolvedUE, resolvedSO) = Await.result(future, RoutingAlgorithmTimeout)
 
-        val (resolvedUE, resolvedSO) = Await.result(future, RoutingAlgorithmTimeout)
+        val routesUE = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
+        val routesSO = KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))
+        val resolvedUE = Await.result(routesUE, 1 hour)
+        val resolvedSO = Await.result(routesSO, 1 hour)
 
         // TODO: these should be encapsulated, but their base trait isn't designed correctly for a generalization on res.result
         val resultUE: (GenSeq[LocalResponse], Map[String, Long]) =

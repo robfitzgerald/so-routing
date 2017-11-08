@@ -31,7 +31,8 @@ object SparkCombinationsSORouting {
     def endTime: Option[LocalTime]
     def timeWindow: Int
     def routePercentage: Double
-    def sparkMaster: String
+//    def sparkMaster: String
+    def sparkContext: SparkContext
   }
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
@@ -47,9 +48,6 @@ object SparkCombinationsSORouting {
       // setup instance directory has already occurred, so we have population.xml, config.xml, network.xml
       val t: Try[ExperimentStepLog] =
         Try [ExperimentStepLog] {
-          // Spark setup
-          val sparkConf = new SparkConf().setAppName("SparkCombinationsSORouting").setMaster(config.sparkMaster)
-          val sparkContext = new SparkContext(sparkConf)
 
         // load population.xml as GenSeq[Request], split according to config.routePercentage
           val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
@@ -74,7 +72,7 @@ object SparkCombinationsSORouting {
           // run incremental phase for each time window
           val kspConfig = KSPLocalDijkstrasConfig(4, Some(Iteration(10)))
           val incrementalStep: ((GenSeq[LocalResponse], Map[String, Long]), TimeGroup) => (GenSeq[LocalResponse], Map[String, Long]) =
-            Incremental.incrementalLoopLocal(testGroup, controlGroup, config.experimentInstanceDirectory, config.timeWindow, kspConfig, sparkContext)
+            Incremental.incrementalLoopLocal(testGroup, controlGroup, config.experimentInstanceDirectory, config.timeWindow, kspConfig, config.sparkContext)
           val result = timeGroups.foldLeft((GenSeq.empty[LocalResponse], Map.empty[String, Long]))(incrementalStep)
 
           // save final population which is the combined UE/SO population
@@ -93,8 +91,6 @@ object SparkCombinationsSORouting {
             "experiment.result.traveltime.avg.population" -> populationTravelTime,
             "experiment.type" -> "System Optimal Incremental"
           )
-
-          sparkContext.stop()
 
           outputLog
         }

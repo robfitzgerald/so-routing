@@ -70,22 +70,22 @@ class LocalGraphFrankWolfeTests extends SORoutingUnitTestTemplate {
           inspectResult("22").assignedFlow should equal (100D)
         }
       }
-      "run on the MATSim equil network with 5000 od pairs in parallel with the same o/d" should {
-        "run faster than sequential" in {
-          val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(equilNetwork).get
-          val odPairsSeq: Seq[LocalGraphODPairByVertex] =
-            (0 until 5000)
-              .map(n => LocalGraphODPairByVertex("", 1, 15))
-          val odPairsPar: ParSeq[LocalGraphODPairByVertex] = odPairsSeq.par
-          val startSeq = System.currentTimeMillis
-          val resultSeq = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsSeq)
-          val seqDur = System.currentTimeMillis - startSeq
-          val startPar = System.currentTimeMillis
-          val resultPar = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsPar)
-          val parDur = System.currentTimeMillis - startPar
-          parDur should be < seqDur
-        }
-      }
+//      "run on the MATSim equil network with 5000 od pairs in parallel with the same o/d" should {
+//        "run faster than sequential" in {
+//          val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFile(equilNetwork).get
+//          val odPairsSeq: Seq[LocalGraphODPairByVertex] =
+//            (0 until 5000)
+//              .map(n => LocalGraphODPairByVertex("", 1, 15))
+//          val odPairsPar: ParSeq[LocalGraphODPairByVertex] = odPairsSeq.par
+//          val startSeq = System.currentTimeMillis
+//          val resultSeq = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsSeq)
+//          val seqDur = System.currentTimeMillis - startSeq
+//          val startPar = System.currentTimeMillis
+//          val resultPar = LocalGraphFrankWolfe.generateOracleGraph(graph, odPairsPar)
+//          val parDur = System.currentTimeMillis - startPar
+//          parDur should be < seqDur
+//        }
+//      }
       "on the MATSim equil network with 100 od pairs and with snapshot flows" should {
         "find an alternate route than the solution with no snapshot flows" in {
           val graph = LocalGraphMATSimFactory(BPRCostFunction, AlgorithmFlowRate = 10 /*minutes*/).fromFileAndSnapshot(equilNetwork, equilSnapshot).get

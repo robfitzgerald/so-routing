@@ -52,6 +52,7 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
     // combinatorial solver
     def minimalMultisetCombinationsOf(multiset: GenSeq[GenSeq[(Tag, Path)]]): Option[GenSeq[(Tag, Path)]] = {
 
+
       def _mmC(subSet: GenSeq[GenSeq[(Tag, Path)]], thisCombination: GenSeq[(Tag, Path)] = GenSeq(), depth: Int = 1): GenSeq[(Double, GenSeq[(Tag, Path)])] = {
         if (subSet.isEmpty) {
           // take all edges out of this combination, attach flow count values
