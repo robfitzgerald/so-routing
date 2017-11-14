@@ -1,9 +1,9 @@
 package cse.fitzgero.sorouting.algorithm.local.selection
 
-import java.time.LocalTime
+import java.time.{Instant, LocalTime}
 
 import scala.annotation.tailrec
-import scala.collection.{GenIterable, GenMap, GenSeq}
+import scala.collection.{GenIterable, GenMap, GenSeq, GenSet}
 import scala.util.Random
 
 import cse.fitzgero.graph.algorithm.GraphAlgorithm
@@ -66,11 +66,15 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
   type Path = List[SORoutingPathSegment]
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
   override type AlgorithmConfig = {
-    def coefficientCp: Double
+    def coefficientCp: Double // 0 means flat mon
+    def congestionRatioThreshold: Double
+    def computationalLimit: Long // ms.
   }
   override type AlgorithmResult = GenMap[LocalODPair, Path]
 
   val DefaultCp: Double = 1.2D
+  val DefaultCongestionRatioThreshold: Double = 1.5D
+  val DefaultComputationalLimit = 60000 // 60 seconds
   val random: Random = new Random
 
   /**
@@ -86,6 +90,19 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
       case None => DefaultCp
     }
 
+    val CongestionRatioThreshold: Double = config match {
+      case Some(conf) => conf.congestionRatioThreshold
+      case None => DefaultCongestionRatioThreshold
+    }
+
+    val ComputationalLimit: Long = config match {
+      case Some(conf) => conf.computationalLimit
+      case None => DefaultComputationalLimit
+    }
+
+    val endTime: Long = Instant.now.toEpochMilli + ComputationalLimit
+    def withinComputationalLimit: Boolean = Instant.now.toEpochMilli < endTime
+
     // the global list of alternate paths, where each alternate has it's Tag for back-tracking
     val globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]] =
       request.map {
@@ -96,6 +113,16 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
             .toMap
           (od._1.id, alts)
       }
+
+    val globalTags: Seq[MCTSAltPath] =
+      globalAlts
+        .flatMap {
+          person =>
+            person._2.map {
+              p =>
+                MCTSAltPath(p._1, p._2)
+            }
+        }.toList
 
     // backtrack from a tag to the associated od pair
     val untag: GenMap[Tag, (LocalODPair, Path)] =
@@ -115,15 +142,29 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
     }
 
     /**
-      * gives a reward value only if none of the costs increase by 1.5x with addition of this default policy result
+      * gives a reward value only if none of the costs increase by CongestionRatioThreshold
       * @param costs the edges paired with their starting costs and the costs from this group
       * @return 1 or 0
       */
     def basicEvaluation(costs: List[(String, Double, Double)]): Int = {
       val testResult = costs.forall {
         cost =>
-          (cost._3 / cost._2) < 1.5D
+          (cost._3 / cost._2) <= CongestionRatioThreshold
       }
+      if (testResult) 1 else 0
+    }
+
+    /**
+      * gives a reward value if the average of the costs do not exceed CongestionRatioThreshold
+      * @param costs the edges paired with their starting costs and the costs from this group
+      * @return 1 or 0
+      */
+    def meanCostDiff(costs: List[(String, Double, Double)]): Int = {
+      val avgCostDiff = costs.map {
+        tuple =>
+          tuple._3 / tuple._2
+      }.sum / costs.size
+      val testResult = avgCostDiff <= CongestionRatioThreshold
       if (testResult) 1 else 0
     }
 
@@ -148,7 +189,7 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
           .mapValues(node => () => node)
 
 
-      val originalRoot: MCTSTreeNode =
+      val root: MCTSTreeNode =
         MCTSTreeNode(
           visits = 0,
           reward = 0,
@@ -158,21 +199,34 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
           parent = () => None
         )
 
-      def remainingTags(usedTags: Seq[MCTSAltPath]): Seq[MCTSAltPath] = ???
+      def remainingTags(usedTags: Seq[MCTSAltPath]): Seq[MCTSAltPath] = {
+        val usedIds: Set[PersonID] = usedTags.map(_.tag.personId).toSet
+        globalTags.filter {
+          alt => !usedIds(alt.tag.personId)
+        }
+      }
 
       // TODO: a smarter computation bounds than (1 to 1000)
-      val finalTree: MCTSTreeNode =
-        (1 to 1000).foldLeft(originalRoot)((root, n) => {
+//      val finalTree: MCTSTreeNode =
+        while (withinComputationalLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
-          val ∆ = defaultPolicy(graph, v_t, globalAlts, basicEvaluation)
+          val ∆ = defaultPolicy(graph, v_t, globalAlts, meanCostDiff)
           backup(v_t, ∆)
-        })
+        }
+//        (1 to 50000).foldLeft(originalRoot)((root, n) => {
+//          val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
+//          val ∆ = defaultPolicy(graph, v_t, globalAlts, basicEvaluation)
+//          backup(v_t, ∆)
+//        })
 
-      MCTSTreeNode.bestChild(finalTree) match {
-        case None => None
-        case Some(node) =>
-          Some(node.state.map { s =>untag(s.tag) }.toMap)
+      println(root.toString)
+
+      val result = bestPath(root).map {
+        tag =>
+          untag(tag)
       }
+
+      Some(result.toMap)
     }
     // do work
     uctSearch()
@@ -208,13 +262,15 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
       edgesAndFlows.flatMap {
         e =>
           graph.edgeById(e._1) match {
+            case None => None
             case Some(edge) =>
               edge.attribute.linkCostFlow match {
+                case None => None
                 case Some(previousCost) =>
                   edge.attribute.costFlow(e._2) match {
+                    case None => None
                     case Some(updatedCost) =>
                       Some(e._1, previousCost, updatedCost)
-                    case None => None
                   }
               }
           }
@@ -289,18 +345,17 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
             }
           }
 
-        val updatedParent: MCTSTreeNode =
-          v.copy(children = Some(childrenOfParent.updated(selectedChild.tag, () => Some(newChild))))
-
-        lazy val newChild: MCTSTreeNode =
+        val newChild: MCTSTreeNode =
           MCTSTreeNode(
             0,
             0,
             newState,
             scaffoldGrandChildren,
             Some(selectedChild.tag),
-            () => Some(updatedParent)
+            () => Some(v)
           )
+
+        v.addChild(selectedChild.tag, newChild)
 
         newChild
     }
@@ -317,28 +372,51 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
     v.parent() match {
       case None =>
         // root node. update and return
-        v.update(delta)
+        v.updateReward(delta)
       case Some(parent) =>
         // v has a parent, so we want to update v and recurse on parent
-        val updated = v.update(delta)
-        parent.children match {
+        val updated = v.updateReward(delta)
+        backup(parent, delta)
+//        parent.children match {
+//          case None =>
+//            // somehow v is a child of parent, but parent isn't a parent of v
+//            // TODO: some kind of tree recovery here
+//            backup(parent, delta)
+//          case Some(children) =>
+//            v.action match {
+//              case None =>
+//                // somehow we have a relation between v and its parent, but the action is undefined. tree recovery?
+//                backup(parent, delta)
+//              case Some(tag) =>
+//                val relationUpdated = v.copy(children = Some(children.updated(tag, () => Some(updated))))
+//                backup(relationUpdated, delta)
+//            }
+//        }
+    }
+
+  @tailrec
+  def bestPath(v: MCTSTreeNode, solution: Seq[Tag] = Seq()): Seq[Tag] = {
+    v.children match {
+      case None =>
+        // hit the leaf. finish recurse and return
+        v.action match {
           case None =>
-            // somehow v is a child of parent, but parent isn't a parent of v
-            // TODO: some kind of tree recovery here
-            backup(parent, delta)
-          case Some(children) =>
-            v.action match {
-              case None =>
-                // somehow we have a relation between v and its parent, but the action is undefined. tree recovery?
-                backup(parent, delta)
+            Seq()
+          case Some(tag) =>
+            tag +: solution
+        }
+      case Some(childrenExist) =>
+        MCTSTreeNode.bestChild(v) match {
+          case None => solution // a partial solution
+          case Some(bestChild) =>
+            bestChild.action match {
+              case None => Seq()
               case Some(tag) =>
-                val relationUpdated = v.copy(children = Some(children.updated(tag, () => Some(updated))))
-                backup(relationUpdated, delta)
+                bestPath(bestChild, tag +: solution)
             }
         }
     }
-
-
+  }
 
   type PersonID = String
 
@@ -346,15 +424,40 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
 
   case class MCTSAltPath(tag: Tag, edges: Seq[String])
 
-  case class MCTSTreeNode(visits: Int, reward: Int, state: Seq[MCTSAltPath], children: Option[GenMap[Tag, () => Option[MCTSTreeNode]]], action: Option[Tag], parent: () => Option[MCTSTreeNode]) {
+  // MCTSTreeNode must be a mutable tree structure
+  // https://stackoverflow.com/questions/8042356/why-no-immutable-double-linked-list-in-scala-collections
+  class MCTSTreeNode(
+    var visits: Int,
+    var reward: Int,
+    val state: Seq[MCTSAltPath],
+    var children: Option[GenMap[Tag, () => Option[MCTSTreeNode]]],
+    val action: Option[Tag],
+    val parent: () => Option[MCTSTreeNode]) {
 
-    /**
-      * update reward and visit data points during backtracking function
-      * @param reward the reward resulted from the simulation
-      * @return this node with updated statistics
-      */
-    def update(reward: Int): MCTSTreeNode =
-      this.copy(visits = this.visits + 1, reward = this.reward + reward)
+    // mutable operations
+    def updateReward(rewardUpdate: Int): MCTSTreeNode = {
+      reward = reward + rewardUpdate
+      visits += 1
+      this
+    }
+
+    def addChild(tag: Tag, node: MCTSTreeNode): MCTSTreeNode = {
+      children match {
+        case None => this
+        case Some(childrenToUpdate) =>
+          children = Some(childrenToUpdate.updated(tag, () => Some(node)))
+          this
+      }
+    }
+    // everything else is handled by mutability
+
+//    /**
+//      * update reward and visit data points during backtracking function
+//      * @param reward the reward resulted from the simulation
+//      * @return this node with updated statistics
+//      */
+//    def update(reward: Int): MCTSTreeNode =
+//      this.copy(visits = this.visits + 1, reward = this.reward + reward)
 
     /**
       * Upper Confidence Bound For Trees
@@ -365,7 +468,9 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
     def evaluateUCT(Cp: Double, parentVisits: Int): Double = {
       val exploitation: Double = reward / visits
       val exploration: Double =
-        if (visits == 0)
+        if (Cp == 0)
+          0D
+      else if (visits == 0)
           Double.MaxValue
         else
           2 * Cp * math.sqrt(
@@ -373,94 +478,82 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
               visits
           )
 
+
       exploitation + exploration
+    }
+
+//    override def toString: String = {
+//      def depth: String = (for { i <- state.indices } yield "-").mkString("")
+//      children match {
+//        case None => action match {
+//          case None => ""
+//          case Some(tag) => s"$depth${tag.personId}#${tag.alternate} - $visits visits, $reward reward\n"
+//        }
+//        case Some(childrenToPrint) =>
+//          childrenToPrint.map {
+//            child =>
+//              child._2() match {
+//                case None => ""
+//                case Some(childNode) =>
+//                  action match {
+//                    case None =>
+//                      s"${depth}root - $visits visits, $reward reward\n${childNode.toString}"
+//                    case Some(tag) =>
+//                      s"$depth${tag.personId}#${tag.alternate} - $visits visits, $reward reward\n${childNode.toString}"
+//                  }
+//              }
+//          }.mkString("")
+//      }
+//    }
+
+    override def toString: String = {
+      def depth: String = (for { i <- state.indices } yield "-").mkString("")
+      parent() match {
+        case None => // root node
+          children match {
+            case None => // root with no children
+              s"root - $visits visits, $reward reward\n"
+            case Some(childrenToPrint) =>
+              val recurseResult: String =
+                childrenToPrint
+                  .map {
+                    child =>
+                      child._2() match {
+                        case None => "" // unexplored child
+                        case Some(childToPrint) =>
+                          childToPrint.toString
+                      }
+                  }.mkString("")
+              s"root - $visits visits, $reward reward\n$recurseResult"
+          }
+        case Some(_p) =>
+          val tagData: String = action match {
+            case None => ""
+            case Some(tag) => s"${tag.personId}#${tag.alternate}"
+          }
+          children match {
+            case None => // root with no children
+              s"$depth$tagData - $visits visits, $reward reward\n"
+            case Some(childrenToPrint) =>
+              val recurseResult: String =
+                childrenToPrint.map {
+                  child =>
+                    child._2() match {
+                      case None => "" // unexplored child
+                      case Some(childToPrint) =>
+                        childToPrint.toString
+                    }
+                }.mkString("")
+              s"$depth$tagData - $visits visits, $reward reward\n$recurseResult"
+          }
+      }
     }
   }
 
   object MCTSTreeNode {
-    /**
-      * updates a node based on an optional mutation function, and returns the updated node
-      * @param mutationFunction a function that mutates a node
-      * @param node the node in question
-      * @return the updated node
-      */
-    private def updateNode(mutationFunction: Option[(MCTSTreeNode) => MCTSTreeNode], node: MCTSTreeNode): MCTSTreeNode =
-      mutationFunction match {
-        case None => node
-        case Some(fn) =>
-          fn(node)
-      }
 
-    /**
-      * updates a closure-wrapped node based on an optional mutation function, and returns the updated closure-wrapped node. closure-wrapped nodes are used because they prevent cyclic references in the bidirectional tree
-      * @param mutationFunction a function that mutates a node
-      * @param nodeClosure the node in question, wrapped in a closure
-      * @return the updated node, wrapped in a closure
-      */
-    private def updateNode(mutationFunction: Option[(MCTSTreeNode) => MCTSTreeNode], nodeClosure: () => Option[MCTSTreeNode]): () => Option[MCTSTreeNode] =
-      nodeClosure() match {
-        case None =>
-          () => None
-        case Some(node) =>
-          () => Some(updateNode(mutationFunction, node))
-      }
-
-    /**
-      * given a node, apply an
-      * @param mutationFunction a function that mutates a node
-      * @param node the parent node, whose children will be mutated
-      * @return the parent node
-      */
-    private def updateChildren(mutationFunction: Option[(MCTSTreeNode) => MCTSTreeNode], node: MCTSTreeNode): MCTSTreeNode = {
-      node.children match {
-        case None => node
-        case Some(childrenToUpdate) =>
-          val updatedChildren = childrenToUpdate.map(tup => (tup._1, updateNode(mutationFunction, tup._2)))
-          node.copy(children = Some(updatedChildren))
-      }
-    }
-
-    /**
-      * adds a child to a parent node. invariant: the tag for the action associated with this child should already exist in the parent's children list.
-      * @param parent the parent node
-      * @param child the new child node
-      * @return the updated parent node
-      */
-    private def addNewChild(parent: MCTSTreeNode, child: MCTSTreeNode): MCTSTreeNode = {
-      child.action match {
-        case None =>
-          println("attempting to add child to monte carlo tree which has no action (transition) associated with it")
-          parent
-        case Some(tag) =>
-          parent.children match {
-            case None =>
-              println("attempting to add child to a parent where the action was not known as an option to the parent")
-              parent
-            case Some(childrenToUpdate) =>
-              val updatedChildren = childrenToUpdate.updated(tag, () => Some(child))
-              parent.copy(children = Some(updatedChildren))
-          }
-      }
-    }
-
-//    private def updateChildren(parentNode: MCTSTreeNode, mutationFunction: (MCTSTreeNode) => MCTSTreeNode): MCTSTreeNode =
-//      parentNode.children match {
-//        case None =>
-//          parentNode
-//        case Some(childrenToUpdate) =>
-//          val updatedChildren: Option[GenMap[Tag, () => Option[MCTSTreeNode]]] = Some {
-//            childrenToUpdate.map {
-//              childMeta =>
-//                val childTag: Tag = childMeta._1
-//                childMeta._2() match {
-//                  case None => (childTag, () => None)
-//                  case Some(child) =>
-//                    (childTag, () => Some(mutationFunction(child)))
-//                }
-//            }
-//          }
-//          parentNode.copy(children = updatedChildren)
-//      }
+    def apply(visits: Int, reward: Int, state: Seq[MCTSAltPath], children: Option[GenMap[Tag, () => Option[MCTSTreeNode]]], action: Option[Tag], parent: () => Option[MCTSTreeNode]): MCTSTreeNode =
+      new MCTSTreeNode(visits,reward,state,children,action,parent)
 
     /**
       * find the best child of a parent node based on the selection policy of this MCTS algorithm
@@ -478,9 +571,13 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
           } else {
             val bestChild: MCTSTreeNode =
               children
-                .map(child => (child.evaluateUCT(Cp, parent.visits), child))
+                .map {
+                  child =>
+                    (child.evaluateUCT(Cp, parent.visits), child)
+                }
                 .maxBy(_._1)
                 ._2
+
             Some(bestChild)
           }
       }

@@ -7,32 +7,29 @@ import cse.fitzgero.sorouting.algorithm.local.selection.SelectionMCTSAlgorithm.{
 
 class SelectionMCTSAlgorithmTests extends SORoutingUnitTestTemplate {
   "SelectionMCTSAlgorithm" when {
-    "MCTSTreeNode" when {
-      "addToTree" when {
-//        "called with child and a simple tree" should {
-//          "add that child to the tree" in new MCTSTestAssets.SimpleTree {
-//            val result: MCTSTreeNode = MCTSTreeNode.addToTree(grandChild, child, Some((node: MCTSTreeNode) => {
-//              node.update(10)
-//            }))
-//            println(result)
-//            result.children match {
-//              case Some(childNodes) =>
-//                childNodes.foreach(cn => {
-//                  println(s"${cn._1} ${cn._2()}")
-//                  cn._2() match {
-//                    case Some(actualChild) =>
-//                      actualChild.children match {
-//                        case Some(grandChildNodes) =>
-//                          grandChildNodes.foreach(gcn => {
-//                            println(s"${gcn._1} ${gcn._2()}")
-//                          })
-//                      }
-//                  }
-//                })
-//
-//            }
-//          }
-//        }
+    "runAlgorithm" when {
+      "called with a small graph and two small sets of alternate paths" should {
+        "find the optimal combination" in new CombinatorialTestAssets.CombinationSet {
+          case class Config(coefficientCp: Double, congestionRatioThreshold: Double, computationalLimit: Long)
+          val config = Config(0.7071D, 3D, 5000)
+          SelectionMCTSAlgorithm.runAlgorithm(graph, kspResult, Some(config)) match {
+            case None => fail()
+            case Some(result) =>
+              println(result)
+          }
+        }
+      }
+      "called with a bigger graph and set of alternate paths" should {
+        "find the optimal combination" in new CombinatorialTestAssets.BiggerMap {
+          case class Config(coefficientCp: Double, congestionRatioThreshold: Double, computationalLimit: Long)
+          val config = Config(0, 3.14D, 5000)
+          SelectionMCTSAlgorithm.runAlgorithm(bigGraph, kspResult, Some(config)) match {
+            case None => fail()
+            case Some(result) =>
+              println(result)
+              println(s"request size ${kspResult.size} result size ${result.size}")
+          }
+        }
       }
     }
   }
