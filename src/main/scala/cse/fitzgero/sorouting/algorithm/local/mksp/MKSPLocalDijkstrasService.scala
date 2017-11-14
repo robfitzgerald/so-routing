@@ -3,11 +3,12 @@ package cse.fitzgero.sorouting.algorithm.local.mksp
 import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.ksp.{KSPLocalDijkstrasAlgorithm, KSPLocalDijkstrasConfig, KSPLocalDijkstrasService}
 import cse.fitzgero.sorouting.model.population.LocalRequest
-
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
+import cse.fitzgero.graph.config.KSPBounds
 
 object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   // KSP Algorithm Types
@@ -23,7 +24,11 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   override type LoggingClass = Map[String, Long]
   type KSPMap = GenMap[LocalRequest, GenSeq[Path]]
   case class ServiceResult(request: ServiceRequest, result: KSPMap, logs: LoggingClass)
-  override type ServiceConfig = KSPLocalDijkstrasConfig
+  override type ServiceConfig = {
+    def k: Int
+    def kSPBounds: Option[KSPBounds]
+    def overlapThreshold: Double
+  }
 
   /**
     * run multiple k-shortest paths algorithms as a batch service
@@ -32,7 +37,7 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
     * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements
     * @return a future resolving to an optional service result
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[KSPLocalDijkstrasConfig]): Future[Option[ServiceResult]] = Future {
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = Future {
     val future: Future[Iterator[Option[KSPResult]]] =
       Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config)))
 

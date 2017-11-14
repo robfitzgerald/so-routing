@@ -59,7 +59,7 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 // - uncongested edges remain uncongested; congested edges only increase by a bounded delta / % increase
 
 
-object SelectionMCTSAlgorithm extends GraphAlgorithm {
+object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
   override type EdgeId = KSPLocalDijkstrasAlgorithm.EdgeId
   override type Graph = KSPLocalDijkstrasAlgorithm.Graph
@@ -85,151 +85,158 @@ object SelectionMCTSAlgorithm extends GraphAlgorithm {
     * @return a user-defined result object
     */
   override def runAlgorithm(graph: LocalGraph, request: AlgorithmRequest, config: Option[AlgorithmConfig]): Option[AlgorithmResult] = {
-    val Cp: Double = config match {
-      case Some(conf) => conf.coefficientCp
-      case None => DefaultCp
-    }
-
-    val CongestionRatioThreshold: Double = config match {
-      case Some(conf) => conf.congestionRatioThreshold
-      case None => DefaultCongestionRatioThreshold
-    }
-
-    val ComputationalLimit: Long = config match {
-      case Some(conf) => conf.computationalLimit
-      case None => DefaultComputationalLimit
-    }
-
-    val endTime: Long = Instant.now.toEpochMilli + ComputationalLimit
-    def withinComputationalLimit: Boolean = Instant.now.toEpochMilli < endTime
-
-    // the global list of alternate paths, where each alternate has it's Tag for back-tracking
-    val globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]] =
-      request.map {
-        od =>
-          val alts = od._2
-            .zipWithIndex
-            .map(tup => (Tag(od._1.id, tup._2), tup._1.map(_.edgeId)))
-            .toMap
-          (od._1.id, alts)
+    if (request.isEmpty) None
+    else {
+      val Cp: Double = config match {
+        case Some(conf) => conf.coefficientCp
+        case None => DefaultCp
       }
 
-    val globalTags: Seq[MCTSAltPath] =
-      globalAlts
-        .flatMap {
-          person =>
-            person._2.map {
-              p =>
-                MCTSAltPath(p._1, p._2)
-            }
-        }.toList
-
-    // backtrack from a tag to the associated od pair
-    val untag: GenMap[Tag, (LocalODPair, Path)] =
-      request.flatMap {
-        od =>
-          od._2
-            .zipWithIndex
-            .map {
-              tup => (Tag(od._1.id, tup._2), (od._1, tup._1))
-            }
+      val CongestionRatioThreshold: Double = config match {
+        case Some(conf) => conf.congestionRatioThreshold
+        case None => DefaultCongestionRatioThreshold
       }
 
-    // backtrack from a tag to the associated (Tag, EdgeList)
-    def getAltPathFrom(tag: Tag): MCTSAltPath = {
-      val edges = globalAlts(tag.personId)(tag)
-      MCTSAltPath(tag, edges)
-    }
-
-    /**
-      * gives a reward value only if none of the costs increase by CongestionRatioThreshold
-      * @param costs the edges paired with their starting costs and the costs from this group
-      * @return 1 or 0
-      */
-    def basicEvaluation(costs: List[(String, Double, Double)]): Int = {
-      val testResult = costs.forall {
-        cost =>
-          (cost._3 / cost._2) <= CongestionRatioThreshold
+      val ComputationalLimit: Long = config match {
+        case Some(conf) => conf.computationalLimit
+        case None => DefaultComputationalLimit
       }
-      if (testResult) 1 else 0
-    }
 
-    /**
-      * gives a reward value if the average of the costs do not exceed CongestionRatioThreshold
-      * @param costs the edges paired with their starting costs and the costs from this group
-      * @return 1 or 0
-      */
-    def meanCostDiff(costs: List[(String, Double, Double)]): Int = {
-      val avgCostDiff = costs.map {
-        tuple =>
-          tuple._3 / tuple._2
-      }.sum / costs.size
-      val testResult = avgCostDiff <= CongestionRatioThreshold
-      if (testResult) 1 else 0
-    }
+      val endTime: Long = Instant.now.toEpochMilli + ComputationalLimit
+      def withinComputationalLimit: Boolean = Instant.now.toEpochMilli < endTime
 
-    // a helper that selects a random child in the Expand step
-    def selectionMethod(children: GenMap[Tag, () => Option[MCTSTreeNode]]): MCTSAltPath = {
-      val remainingAlts = children.filter(_._2().isEmpty).keys.map(getAltPathFrom).toVector
-      remainingAlts(random.nextInt(remainingAlts.size))
-    }
+      // the global list of alternate paths, where each alternate has it's Tag for back-tracking
+      val globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]] =
+        request.map {
+          od =>
+            val alts = od._2
+              .zipWithIndex
+              .map(tup => (Tag(od._1.id, tup._2), tup._1.map(_.edgeId)))
+              .toMap
+            (od._1.id, alts)
+        }
 
-    /**
-      * main method for running MCTS
-      * @return a solution
-      */
-    def uctSearch(): Option[AlgorithmResult] = {
-      val rootChildren: GenMap[Tag, Option[MCTSTreeNode]] =
-        for {
-          person <- globalAlts
-          alt <- person._2
-        } yield (alt._1, None)
-      val rootChildrenClosure: GenMap[Tag, () => Option[MCTSTreeNode]] =
-        rootChildren
-          .mapValues(node => () => node)
+      val globalTags: Seq[MCTSAltPath] =
+        globalAlts
+          .flatMap {
+            person =>
+              person._2.map {
+                p =>
+                  MCTSAltPath(p._1, p._2)
+              }
+          }.toList
 
+      // backtrack from a tag to the associated od pair
+      val untag: GenMap[Tag, (LocalODPair, Path)] =
+        request.flatMap {
+          od =>
+            od._2
+              .zipWithIndex
+              .map {
+                tup => (Tag(od._1.id, tup._2), (od._1, tup._1))
+              }
+        }
 
-      val root: MCTSTreeNode =
-        MCTSTreeNode(
-          visits = 0,
-          reward = 0,
-          state = Seq(),
-          children = Some(rootChildrenClosure),
-          action = None,
-          parent = () => None
-        )
+      // backtrack from a tag to the associated (Tag, EdgeList)
+      def getAltPathFrom(tag: Tag): MCTSAltPath = {
+        val edges = globalAlts(tag.personId)(tag)
+        MCTSAltPath(tag, edges)
+      }
 
-      def remainingTags(usedTags: Seq[MCTSAltPath]): Seq[MCTSAltPath] = {
-        val usedIds: Set[PersonID] = usedTags.map(_.tag.personId).toSet
-        globalTags.filter {
-          alt => !usedIds(alt.tag.personId)
+      /**
+        * gives a reward value only if none of the costs increase by CongestionRatioThreshold
+        * @param costs the edges paired with their starting costs and the costs from this group
+        * @return 1 or 0
+        */
+      def basicEvaluation(costs: List[(String, Double, Double)]): Int = {
+        val testResult = costs.forall {
+          cost =>
+            (cost._3 / cost._2) <= CongestionRatioThreshold
+        }
+        if (testResult) 1 else 0
+      }
+
+      /**
+        * gives a reward value if the average of the costs do not exceed CongestionRatioThreshold
+        * @param costs the edges paired with their starting costs and the costs from this group
+        * @return 1 or 0
+        */
+      def meanCostDiff(costs: List[(String, Double, Double)]): Int = {
+        if (costs.isEmpty) {
+          1
+        } else {
+          val avgCostDiff = costs.map {
+            tuple =>
+              tuple._3 / tuple._2
+          }.sum / costs.size
+          val testResult = avgCostDiff <= CongestionRatioThreshold
+          if (testResult) 1 else 0
         }
       }
 
-      // TODO: a smarter computation bounds than (1 to 1000)
-//      val finalTree: MCTSTreeNode =
+      // a helper that selects a random child in the Expand step
+      def selectionMethod(children: GenMap[Tag, () => Option[MCTSTreeNode]]): MCTSAltPath = {
+        val remainingAlts = children.filter(_._2().isEmpty).keys.map(getAltPathFrom).toVector
+        remainingAlts(random.nextInt(remainingAlts.size))
+      }
+
+      /**
+        * main method for running MCTS
+        * @return a solution
+        */
+      def uctSearch(): Option[AlgorithmResult] = {
+        val rootChildren: GenMap[Tag, Option[MCTSTreeNode]] =
+          for {
+            person <- globalAlts
+            alt <- person._2
+          } yield (alt._1, None)
+        val rootChildrenClosure: GenMap[Tag, () => Option[MCTSTreeNode]] =
+          rootChildren
+            .mapValues(node => () => node)
+
+
+        val root: MCTSTreeNode =
+          MCTSTreeNode(
+            visits = 0,
+            reward = 0,
+            state = Seq(),
+            children = Some(rootChildrenClosure),
+            action = None,
+            parent = () => None
+          )
+
+        def remainingTags(usedTags: Seq[MCTSAltPath]): Seq[MCTSAltPath] = {
+          val usedIds: Set[PersonID] = usedTags.map(_.tag.personId).toSet
+          globalTags.filter {
+            alt => !usedIds(alt.tag.personId)
+          }
+        }
+
+        // TODO: a smarter computation bounds than (1 to 1000)
+        //      val finalTree: MCTSTreeNode =
         while (withinComputationalLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
           val ∆ = defaultPolicy(graph, v_t, globalAlts, meanCostDiff)
           backup(v_t, ∆)
         }
-//        (1 to 50000).foldLeft(originalRoot)((root, n) => {
-//          val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
-//          val ∆ = defaultPolicy(graph, v_t, globalAlts, basicEvaluation)
-//          backup(v_t, ∆)
-//        })
+        //        (1 to 50000).foldLeft(originalRoot)((root, n) => {
+        //          val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
+        //          val ∆ = defaultPolicy(graph, v_t, globalAlts, basicEvaluation)
+        //          backup(v_t, ∆)
+        //        })
 
-      println(root.toString)
+        //      println(root.toString)
 
-      val result = bestPath(root).map {
-        tag =>
-          untag(tag)
+        val result = bestPath(root).map {
+          tag =>
+            untag(tag)
+        }
+
+        Some(result.toMap)
       }
-
-      Some(result.toMap)
+      // do work
+      uctSearch()
     }
-    // do work
-    uctSearch()
   }
 
   /**

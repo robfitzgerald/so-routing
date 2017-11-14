@@ -3,9 +3,10 @@ package cse.fitzgero.sorouting.algorithm.local.ksp
 import cse.fitzgero.graph.algorithm.GraphRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.sssp.SSSPLocalDijkstrasAlgorithm
 import cse.fitzgero.sorouting.model.population.LocalRequest
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
+import cse.fitzgero.graph.config.KSPBounds
 
 object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   // types taken from SSSP
@@ -17,7 +18,11 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   override type ServiceRequest = LocalRequest
   override type LoggingClass = Map[String, Long]
   case class ServiceResult(request: LocalRequest, response: KSPLocalDijkstrasAlgorithm.AlgorithmResult, logs: LoggingClass)
-  override type ServiceConfig = KSPLocalDijkstrasConfig
+  override type ServiceConfig = {
+    def k: Int
+    def kSPBounds: Option[KSPBounds]
+    def overlapThreshold: Double
+  }
 
   /**
     * run the k-shortest paths algorithm as a concurrent service
@@ -26,7 +31,7 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
     * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements
     * @return a future resolving to an optional service result
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[KSPLocalDijkstrasConfig]): Future[Option[ServiceResult]] = Future {
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = Future {
     KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request.od, config) match {
       case Some(result) =>
         val log = Map[String, Long](

@@ -18,7 +18,11 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   override type AlgorithmRequest = LocalODPair
   type PathSegment = SSSPLocalDijkstrasAlgorithm.PathSegment
   type SSSPAlgorithmResult = SSSPLocalDijkstrasAlgorithm.AlgorithmResult
-  override type AlgorithmConfig = KSPLocalDijkstrasConfig
+  override type AlgorithmConfig = {
+    def k: Int
+    def kSPBounds: Option[KSPBounds]
+    def overlapThreshold: Double
+  }
 
   case class AlgorithmResult(od: AlgorithmRequest, paths: GenSeq[Path])
 
