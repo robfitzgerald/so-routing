@@ -6,7 +6,7 @@ import cse.fitzgero.sorouting.model.roadnetwork.local._
 
 import scala.collection.parallel.ParMap
 
-object TestAssets {
+object CombinatorialTestAssets {
   trait CombinationSet {
     val joeRequest = LocalODPair("joe", "1", "10")
     val bobRequest = LocalODPair("bob", "2", "10")

@@ -5,7 +5,7 @@ import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplate {
   "SelectionLocalCombinatorialAlgorithm" when {
     "called with a set of possible alternate paths" should {
-      "find the optimal combination" in new TestAssets.CombinationSet {
+      "find the optimal combination" in new CombinatorialTestAssets.CombinationSet {
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(graph, kspResult) match {
           case Some(resultStuff) =>
             resultStuff.foreach(println)
@@ -21,7 +21,7 @@ class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplat
     }
     // this can take up to an hour
     "given a result of a bigger mksp search" ignore {
-      "find a minimal cost set" in new TestAssets.BiggerMap {
+      "find a minimal cost set" in new CombinatorialTestAssets.BiggerMap {
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult) match {
           case None => fail("there should be a result")
           case Some(result) =>

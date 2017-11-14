@@ -35,7 +35,7 @@ class KSPLocalDijkstrasAlgorithmTests extends SORoutingUnitTestTemplate {
       "produce None" in new TestAssets.GraphWithAlternates {
         KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, LocalODPair("fred", "4", "4"), Some(KSPLocalDijkstrasConfig(10))) match {
           case Some(result) => fail()
-          case None => succeed()
+          case None => succeed
         }
       }
     }

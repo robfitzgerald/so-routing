@@ -13,7 +13,6 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type Graph = KSPLocalDijkstrasAlgorithm.Graph
   type Path = List[SORoutingPathSegment]
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
-  type SSSPAlgorithmResult = KSPLocalDijkstrasAlgorithm.AlgorithmResult
   override type AlgorithmConfig = Nothing
 
   val DefaultFlowCost: Double = 0D

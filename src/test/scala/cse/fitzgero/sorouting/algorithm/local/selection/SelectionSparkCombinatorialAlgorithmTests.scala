@@ -6,7 +6,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
   "SelectionLocalCombinatorialAlgorithm" when {
     "runAlgorithm" when {
       "called with a small graph and set of alternative paths" should {
-        "produce the minimal combination" in new TestAssets.CombinationSet {
+        "produce the minimal combination" in new CombinatorialTestAssets.CombinationSet {
           val result = SelectionSparkCombinatorialAlgorithm.runAlgorithm(graph, kspResult, Some(sc))
           val joeResult = kspResult(joeRequest)
           val bobResult = kspResult(bobRequest)
@@ -23,7 +23,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
     }
     "generateAllCombinations" when {
       "called with a small set of tags and paths" should {
-        "produce all combinations" in new TestAssets.CombinationSet {
+        "produce all combinations" in new CombinatorialTestAssets.CombinationSet {
           val req = SelectionSparkCombinatorialAlgorithm.tagRequests(kspResult)
           val result = SelectionSparkCombinatorialAlgorithm.generateAllCombinations(sc)(req).collect
           // there should be 3 x 4 = 12 combinations for joe and bob
@@ -37,7 +37,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
         }
       }
       "called with a set of 4 driver alternate paths" should {
-        "produce all combinations" in new TestAssets.CombinationSet {
+        "produce all combinations" in new CombinatorialTestAssets.CombinationSet {
           val altBobAndJoe = kspResult.map { person =>
             val newAlterEgo = person._1.copy(id = person._1.id + "boog")
             (newAlterEgo, person._2)
@@ -50,7 +50,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
         }
       }
       "called with a set of 6 driver alternate paths" should {
-        "produce all combinations" in new TestAssets.CombinationSet {
+        "produce all combinations" in new CombinatorialTestAssets.CombinationSet {
           val altBobAndJoe = kspResult.map { person =>
             val newAlterEgo = person._1.copy(id = person._1.id + "ert")
             (newAlterEgo, person._2)
@@ -76,7 +76,7 @@ class SelectionSparkCombinatorialAlgorithmTests extends SparkUnitTestTemplate("S
     }
     "minimalCostCombination" when {
       "called with a set of combinations" should {
-        "return the minimum cost combination" in new TestAssets.CombinationSet {
+        "return the minimum cost combination" in new CombinatorialTestAssets.CombinationSet {
           val altBobAndJoe = kspResult.map { person =>
             val newAlterEgo = person._1.copy(id = person._1.id + "ert")
             (newAlterEgo, person._2)

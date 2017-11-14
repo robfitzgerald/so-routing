@@ -11,8 +11,8 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 
 // ~~~ Spark
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.2.0"// % "provided" /*exclude("ch.qos.logback", "*")*/
-libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.2.0"// % "provided" /*exclude("ch.qos.logback", "*")*/
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.2.0" // % "provided" /*exclude("ch.qos.logback", "*")*/
+libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.2.0" // % "provided" /*exclude("ch.qos.logback", "*")*/
 
 
 // ~~~ MATSim
@@ -24,7 +24,7 @@ libraryDependencies += "org.matsim" % "matsim" % "0.9.0" // exclude("com.google.
 
 
 // ~~~ Scallop
-libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"
+//libraryDependencies += "org.rogach" %% "scallop" % "3.1.0"
 
 
 // ~~~ TypeSafe Config
@@ -32,7 +32,7 @@ libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 
 
 // ~~~ Logging Service (may remove this)
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2" 
+//libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2"
 
 // ~~~ Monocle - Optics Library (nested immutable object manipulation
 //val monocleVersion = "1.4.0" // 1.5.0-cats-M1 based on cats 1.0.0-MF
