@@ -1,14 +1,14 @@
 package cse.fitzgero.sorouting.algorithm.local.mksp
 
-import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
-import cse.fitzgero.sorouting.algorithm.local.ksp.{KSPLocalDijkstrasAlgorithm, KSPLocalDijkstrasConfig, KSPLocalDijkstrasService}
-import cse.fitzgero.sorouting.model.population.LocalRequest
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
 
+import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.graph.config.KSPBounds
+import cse.fitzgero.sorouting.algorithm.local.ksp.{KSPLocalDijkstrasAlgorithm, KSPLocalDijkstrasService}
+import cse.fitzgero.sorouting.model.population.LocalRequest
 
 object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   // KSP Algorithm Types
@@ -26,7 +26,7 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   case class ServiceResult(request: ServiceRequest, result: KSPMap, logs: LoggingClass)
   override type ServiceConfig = {
     def k: Int
-    def kSPBounds: Option[KSPBounds]
+    def kspBounds: Option[KSPBounds]
     def overlapThreshold: Double
   }
 
@@ -37,32 +37,45 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
     * @param config an object that states the number of alternate paths, the stopping criteria, and any dissimilarity requirements
     * @return a future resolving to an optional service result
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = Future {
-    val future: Future[Iterator[Option[KSPResult]]] =
-      Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config)))
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
+    if (request.isEmpty)
+      Future{ None }
+    else {
+      val p: Promise[Option[ServiceResult]] = Promise()
+      val future: Future[Iterator[Option[KSPResult]]] =
+        Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config)))
+      println(s"[MKSP] running ${request.size} KSP services")
 
-    val resolved: Seq[KSPResult] = Await.result(future, 60 seconds).flatten.toSeq
+      future onComplete {
+        case Success(mkspResult) =>
+          val resolved = mkspResult.flatten.toSeq
+          val result: KSPMap =
+            resolved
+              .map(kspResult => {
+                (kspResult.request, kspResult.response.paths)
+              }).toMap
 
-    val result: KSPMap =
-      resolved
-        .map(kspResult => {
-          (kspResult.request, kspResult.response.paths)
-        }).toMap
+          val kRequested: Long = resolved.map(_.logs("algorithm.ksp.local.k.requested")).sum
+          val kProduced: Long = resolved.map(_.logs("algorithm.ksp.local.k.produced")).sum
+          val hasAlternates: Int = result.count(_._2.size > 1)
 
-    val kRequested: Long = resolved.map(_.logs("algorithm.ksp.local.k.requested")).sum
-    val kProduced: Long = resolved.map(_.logs("algorithm.ksp.local.k.produced")).sum
-    val hasAlternates: Int = result.count(_._2.size > 1)
-
-    val logs = Map[String, Long](
-      "algorithm.mksp.local.runtime.total" -> runTime,
-      "algorithm.mksp.local.request.size" -> request.size,
-      "algorithm.mksp.local.result.size" -> result.size,
-      "algorithm.mksp.local.hasalternates" -> hasAlternates,
-      "algorithm.mksp.local.k.requested" -> kRequested,
-      "algorithm.mksp.local.k.produced" -> kProduced,
-      "algorithm.mksp.local.success" -> 1L
-    )
-
-    Some(ServiceResult(request, result, logs))
+          val logs = Map[String, Long](
+            "algorithm.mksp.local.runtime.total" -> runTime,
+            "algorithm.mksp.local.request.size" -> request.size,
+            "algorithm.mksp.local.result.size" -> result.size,
+            "algorithm.mksp.local.hasalternates" -> hasAlternates,
+            "algorithm.mksp.local.k.requested" -> kRequested,
+            "algorithm.mksp.local.k.produced" -> kProduced,
+            "algorithm.mksp.local.success" -> 1L
+          )
+          println(s"[MKSP] completed and requests.size == result.size is ${request.size == result.size}")
+//          Some(ServiceResult(request, result, logs))
+          p.success(Some(ServiceResult(request, result, logs)))
+        case Failure(e) =>
+          println(s"[MKSP] failure due to: ${e.getMessage}")
+          p.failure(e)
+      }
+      p.future
+    }
   }
 }

@@ -55,7 +55,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
         "algorithm.mssp.local.cost.effect" -> costEffect,
         "algorithm.mssp.local.success" -> 1L
       )
-      //    println(s"[MSSP] completed with ${result.size} results")
+      println(s"[MSSP] completed and requests.size == result.size is ${request.size == result.size}")
       Some(ServiceResult(request, result, log))
     }
   }

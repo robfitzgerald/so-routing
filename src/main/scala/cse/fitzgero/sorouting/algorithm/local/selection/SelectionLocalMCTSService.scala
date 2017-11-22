@@ -45,9 +45,11 @@ object SelectionLocalMCTSService extends GraphService {
         val response: AlgorithmResult =
           if (result.size == request.size) {
             // we got to a terminal node and we have a complete result
+            println(s"[MCTS] completed and requests.size == result.size is true")
             result
           } else {
             // we didn't get to a terminal node; we need to fill in the remaining requests with shortest paths
+            println(s"[MCTS] completed and requests.size == result.size is false: calling MSSP for remaining")
             // for each edge, the contribution from the mcts group in edge flows
             val edgesAndFlows: GenMap[String, Int] =
               result.flatMap {
@@ -73,6 +75,7 @@ object SelectionLocalMCTSService extends GraphService {
             val future = MSSPLocalDijkstrasService.runService(updatedGraph, remaining.toSeq.map{ req => req._1 })
             val extrasResult = Await.result(future, MSSPComputationalLimit)
 
+            println(s"[MCTS] MSSP completed for remaining ${remaining.size} unrouted vehicles")
             // merge and return
             // result: GenMap[LocalODPair, Path]
             // extrasResult: case class ServiceResult(request: ServiceRequest, result: GenSeq[LocalResponse], logs: LoggingClass)
@@ -102,7 +105,6 @@ object SelectionLocalMCTSService extends GraphService {
           "algorithm.selection.local.success" -> 1L,
           "algorithm.selection.local.mcts.solution.complete" -> completeSolutionFromMCTS
         )
-
         Some(ServiceResult(repackagedResponses, log))
       case None => None
     }

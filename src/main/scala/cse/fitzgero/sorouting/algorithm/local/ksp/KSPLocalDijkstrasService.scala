@@ -20,7 +20,7 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
   case class ServiceResult(request: LocalRequest, response: KSPLocalDijkstrasAlgorithm.AlgorithmResult, logs: LoggingClass)
   override type ServiceConfig = {
     def k: Int
-    def kSPBounds: Option[KSPBounds]
+    def kspBounds: Option[KSPBounds]
     def overlapThreshold: Double
   }
 
@@ -32,16 +32,21 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
     * @return a future resolving to an optional service result
     */
   override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = Future {
+    println("[KSP] ksp service calling inner algorithm")
     KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request.od, config) match {
       case Some(result) =>
         val log = Map[String, Long](
-          "algorithm.ksp.local.runtime" -> runTime,
+          "algorithm.ksp.local.runtime" -> this.runTime,
           "algorithm.ksp.local.success" -> 1L,
           "algorithm.ksp.local.k.requested" -> config.get.k,
           "algorithm.ksp.local.k.produced" -> result.paths.size
         )
-        Some(ServiceResult(request, result, log))
-      case None => None
+        val serviceResult = ServiceResult(request, result, log)
+        println("[KSP] ksp service halting with Some result")
+        Some(serviceResult)
+      case None =>
+        println("[KSP] ksp service halting with None result")
+        None
     }
   }
 }

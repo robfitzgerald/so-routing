@@ -16,13 +16,20 @@ object KSPBounds {
 
   /**
     * find n paths, which may take more than i iterations, n = i
-    * @param n
+    * @param n the number of valid alternative paths to find
     */
   case class PathsFound(n: Int) extends KSPBounds
 
   /**
     * run algorithm until we go beyond the listed time limit
-    * @param ms
+    * @param ms time duration, milliseconds
     */
   case class Time(ms: Long) extends KSPBounds
+
+  /**
+    * run i iterations of the KSP algorithm, unless we exceed ms milliseconds
+    * @param i number of iterations
+    * @param ms time duration, milliseconds
+    */
+  case class IterationOrTime(i: Int, ms: Long) extends KSPBounds
 }

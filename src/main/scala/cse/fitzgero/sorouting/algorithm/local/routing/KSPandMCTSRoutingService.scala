@@ -25,7 +25,7 @@ object KSPandMCTSRoutingService extends GraphBatchRoutingAlgorithmService {
   case class ServiceResult(result: GenSeq[LocalResponse], logs: LoggingClass)
   override type ServiceConfig = {
     def k: Int
-    def kSPBounds: Option[KSPBounds]
+    def kspBounds: Option[KSPBounds]
     def overlapThreshold: Double
     def coefficientCp: Double // 0 means flat mon
     def congestionRatioThreshold: Double
@@ -43,6 +43,7 @@ object KSPandMCTSRoutingService extends GraphBatchRoutingAlgorithmService {
     val promise = Promise[Option[ServiceResult]]()
     MKSPLocalDijkstrasService.runService(graph, request, config) map {
       case Some(ksp) =>
+        println(s"[SelectionMCTS] finished ksp, now calling mcts")
         SelectionLocalMCTSService.runService(graph, ksp.result, config) map {
           case Some(selection) =>
             val logs = Map[String, Long](
@@ -50,11 +51,14 @@ object KSPandMCTSRoutingService extends GraphBatchRoutingAlgorithmService {
               "algorithm.routing.local.batch.request.size" -> request.size,
               "algorithm.routing.local.batch.completed" -> selection.result.size
             )
+            println(s"[SelectionMCTS] completed and requests.size == result.size is ${request.size == selection.result.size}")
             promise.success(Some(ServiceResult(selection.result, logs ++ ksp.logs ++ selection.logs)))
           case None =>
+            println(s"[SelectionMCTS] mcts returned None")
             promise.success(None)
         }
       case None =>
+        println(s"[SelectionMCTS] ksp returned None")
         promise.success(None)
     }
     promise.future

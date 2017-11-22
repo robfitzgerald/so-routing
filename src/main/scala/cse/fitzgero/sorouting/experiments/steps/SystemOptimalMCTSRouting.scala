@@ -30,7 +30,7 @@ object SystemOptimalMCTSRouting {
     def timeWindow: Int
     def routePercentage: Double
     def k: Int
-    def kSPBounds: Option[KSPBounds]
+    def kspBounds: Option[KSPBounds]
     def overlapThreshold: Double
     def coefficientCp: Double // 0 means flat mon
     def congestionRatioThreshold: Double
@@ -145,8 +145,8 @@ object SystemOptimalMCTSRouting {
 
         val routesUE = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
         val routesSO = KSPandMCTSRoutingService.runService(snapshotGraph, groupToRouteSO, Some(config))
-        val resolvedUE = Await.result(routesUE, 1 hour)
-        val resolvedSO = Await.result(routesSO, 1 hour)
+        val resolvedUE = Await.result(routesUE, RoutingAlgorithmTimeout)
+        val resolvedSO = Await.result(routesSO, RoutingAlgorithmTimeout)
 
         // TODO: these should be encapsulated, but their base trait isn't designed correctly for a generalization on res.result
         val resultUE: (GenSeq[LocalResponse], Map[String, Long]) =

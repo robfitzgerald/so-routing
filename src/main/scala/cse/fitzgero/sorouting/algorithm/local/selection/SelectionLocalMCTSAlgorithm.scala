@@ -116,6 +116,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
             (od._1.id, alts)
         }
 
+      // we want the list of alt paths
       val globalTags: Seq[MCTSAltPath] =
         globalAlts
           .flatMap {
@@ -163,13 +164,13 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         */
       def meanCostDiff(costs: List[(String, Double, Double)]): Int = {
         if (costs.isEmpty) {
-          1
+          1 // TODO: costs should never be empty since this algorithm returns None on an empty request.
         } else {
-          val avgCostDiff = costs.map {
+          val avgCostDiff: Double = costs.map {
             tuple =>
               tuple._3 / tuple._2
           }.sum / costs.size
-          val testResult = avgCostDiff <= CongestionRatioThreshold
+          val testResult: Boolean = avgCostDiff <= CongestionRatioThreshold
           if (testResult) 1 else 0
         }
       }
@@ -212,18 +213,11 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           }
         }
 
-        // TODO: a smarter computation bounds than (1 to 1000)
-        //      val finalTree: MCTSTreeNode =
         while (withinComputationalLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
           val ∆ = defaultPolicy(graph, v_t, globalAlts, meanCostDiff)
           backup(v_t, ∆)
         }
-        //        (1 to 50000).foldLeft(originalRoot)((root, n) => {
-        //          val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
-        //          val ∆ = defaultPolicy(graph, v_t, globalAlts, basicEvaluation)
-        //          backup(v_t, ∆)
-        //        })
 
         //      println(root.toString)
 
@@ -234,7 +228,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 
         Some(result.toMap)
       }
-      // do work
+
       uctSearch()
     }
   }
