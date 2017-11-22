@@ -39,10 +39,14 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     computationalLimit: Long // ms
   )
   val config = Config(
+
+    // experiment file system arguments
     sourceAssetDirectory,
     s"result/$name",
     s"result/$name/$configLabel",
     s"result/$name/$configLabel/${LocalDateTime.now.toString}",
+
+    // general experiment parameters
     pop,
     win,
     route,
@@ -50,11 +54,13 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     departTime = LocalTime.parse("08:15:00"),
     endTime = Some(LocalTime.parse("09:00:00")),
     timeDeviation = Some(LocalTime.parse("00:15:00")),
-    k = 4,
-    kspBounds = Some(KSPBounds.IterationOrTime(10, 60000L)),
-    overlapThreshold = 1.0D,
-    coefficientCp = 0.05D,
-    congestionRatioThreshold = 1.5D,
+
+    // algorithm-specific parameters
+    k = 4, // the k in KSP
+    kspBounds = Some(KSPBounds.IterationOrTime(10, 20000L)), // the way we determine ending our search for alternative paths in KSP
+    overlapThreshold = 1.0D, // the percentage that alternate paths are allowed to overlap in KSP
+    coefficientCp = 0.01D, // the amount of priority put toward exploration in MCTS
+    congestionRatioThreshold = 1.5D, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
     computationalLimit = 10000L // milliseconds
   )
 

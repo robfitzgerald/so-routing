@@ -37,9 +37,6 @@ object SystemOptimalMCTSRouting {
     def computationalLimit: Long // ms.
   }
 
-  //  case class ServiceConfig(k: Int, kSPBounds: Option[KSPBounds], overlapThreshold: Double, coefficientCp: Double, congestionRatioThreshold: Double, computationalLimit: Long)
-  //  val serviceConfig = ServiceConfig(4,Some(Iteration(10)),1.0D,0D,3D,10000)
-
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
   val StartOfDay: LocalTime = LocalTime.MIN
   val RoutingAlgorithmTimeout: Duration = 1 hour
@@ -74,9 +71,8 @@ object SystemOptimalMCTSRouting {
               )
 
           // run incremental phase for each time window
-          val kspConfig = KSPLocalDijkstrasConfig(4, Some(Iteration(10)))
           val incrementalStep: ((GenSeq[LocalResponse], Map[String, Long]), TimeGroup) => (GenSeq[LocalResponse], Map[String, Long]) =
-            Incremental.incrementalLoopLocal(testGroup, controlGroup, config.experimentInstanceDirectory, config.timeWindow, config)
+            Incremental.incrementalLoopLocal(testGroup, controlGroup, config)
           val result = timeGroups.foldLeft((GenSeq.empty[LocalResponse], Map.empty[String, Long]))(incrementalStep)
 
           // save final population which is the combined UE/SO population
@@ -105,7 +101,7 @@ object SystemOptimalMCTSRouting {
 
     // inner loop function
     // given an accumulator of a response type, run a system optimal experiment for a time group that occurs between an incremental time and a time window delta
-    protected def incrementalLoopLocal(testGroup: GenSeq[LocalRequest], controlGroup: GenSeq[LocalRequest], currentInstanceDirectory: String, timeWindow: Int, config: SORoutingConfig)
+    protected def incrementalLoopLocal(testGroup: GenSeq[LocalRequest], controlGroup: GenSeq[LocalRequest], config: SORoutingConfig)
       (accumulator : (GenSeq[LocalResponse], Map[String, Long]), timeGroup: TimeGroup): (GenSeq[LocalResponse], Map[String, Long]) = {
 
       val groupToRouteSO: GenSeq[LocalRequest] = testGroup.filter(ExperimentOps.filterByTimeGroup(timeGroup))
@@ -115,12 +111,12 @@ object SystemOptimalMCTSRouting {
       else {
         // population with solved routes for all times before the current time group
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
-        val networkXML: xml.Elem = XML.load(s"$currentInstanceDirectory/network.xml")
-        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, timeWindow)
+        val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
+        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, config.timeWindow)
         val previousPopXML: xml.Elem = LocalPopulationOps.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
-        val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(currentInstanceDirectory)
+        val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(config.experimentInstanceDirectory)
         ExperimentFSOps.saveXmlDocType(
           s"$snapshotDirectory/population.xml",
           previousPopXML,
@@ -128,20 +124,13 @@ object SystemOptimalMCTSRouting {
         )
 
         // run MATSim on the previous populations
-        val snapshotURI: String = MATSimOps.MATSimRun(snapshotDirectory, StartOfDay, timeGroup.startRange, timeWindow)
+        val snapshotURI: String = MATSimOps.MATSimRun(snapshotDirectory, StartOfDay, timeGroup.startRange, config.timeWindow)
 
         // TODO: very infrequently, fs is not completed writing the snapshot file. maybe add a bounded spin wait here?
         val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
-        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, timeWindow)
+        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
 
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
-
-        // TODO: parameterize the routesSO algorithm
-//        val future = for {
-//          routesUE <- MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
-//          routesSO <- KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))
-//        } yield (routesUE, routesSO)
-//        val (resolvedUE, resolvedSO) = Await.result(future, RoutingAlgorithmTimeout)
 
         val routesUE = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
         val routesSO = KSPandMCTSRoutingService.runService(snapshotGraph, groupToRouteSO, Some(config))
@@ -164,15 +153,12 @@ object SystemOptimalMCTSRouting {
         val updatedResult: GenSeq[LocalResponse] = accumulator._1 ++ resultUE._1 ++ resultSO._1
         val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(accumulator._2, resultUE._2), resultSO._2)
 
-//        println(s"merged logs at end of time group ${timeGroup.startRange}")
-//        updatedLogs.foreach(println)
-
-        val combinations: Long =
-          if (resultSO._2.isDefinedAt("algorithm.selection.local.combinations"))
-            resultSO._2("algorithm.selection.local.combinations")
+        val completeSolutions: Long =
+          if (resultSO._2.isDefinedAt("algorithm.selection.local.mcts.solution.complete"))
+            resultSO._2("algorithm.selection.local.mcts.solution.complete")
           else 0L
 
-        println(s"${LocalDateTime.now} [UESO Router] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests, ${resultSO._1.size} optimal requests, and $combinations combinations.")
+        println(s"${LocalDateTime.now} [SO-MCTS] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests, ${resultSO._1.size} optimal requests, and $completeSolutions complete solutions found via MCTS.")
 
         (updatedResult, updatedLogs)
       }
