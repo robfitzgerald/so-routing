@@ -78,7 +78,7 @@ object UserEquilibriumRouting {
           val outputLog = result._2.mapValues(_.toString) ++ Map(
             "experiment.result.traveltime.avg.network" -> networkAvgTravelTime,
             "experiment.result.traveltime.avg.population" -> populationTravelTime,
-            "experiment.type" -> "User Equilibrium Incremental"
+            "experiment.type" -> "User Equilibrium"
           )
 
           outputLog

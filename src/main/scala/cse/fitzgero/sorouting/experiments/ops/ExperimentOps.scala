@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.experiments.ops
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import java.time.LocalTime
 
 import scala.collection.GenSeq
@@ -99,5 +99,26 @@ object ExperimentOps {
   def filterByTimeGroup(timeGroup: TimeGroup)(localRequest: LocalRequest): Boolean =
     timeGroup.startRange.compareTo(localRequest.requestTime) <= 0 &&
       localRequest.requestTime.compareTo(timeGroup.endRange) < 0
+
+
+  /**
+    * given some content and an optional header, write out the data to the path
+    * @param outputData the data to append. should be newline-terminated.
+    * @param path the path to the file to append to
+    * @param header optional file header row. should be newline-terminated.
+    * @return
+    */
+  def writeLogToPath(outputData: String, path: Path, header: Option[String] = None): String = {
+    header match {
+      case Some(fileHeaderString) =>
+        if (Files.notExists(path)) {
+          Files.write(path, fileHeaderString.getBytes, StandardOpenOption.CREATE)
+        }
+      case None =>
+    }
+
+    Files.write(path, outputData.getBytes, StandardOpenOption.APPEND)
+    path.toString
+  }
 }
 

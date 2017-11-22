@@ -85,7 +85,19 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     * @return a user-defined result object
     */
   override def runAlgorithm(graph: LocalGraph, request: AlgorithmRequest, config: Option[AlgorithmConfig]): Option[AlgorithmResult] = {
-    if (request.isEmpty) None
+    if (request.isEmpty) {
+      None
+    }
+    else if (request.size == 1) {
+      if (request.head._2.isEmpty) {
+        // single OD request but it came with no alternates (shouldn't happen)
+        None
+      }
+      else {
+        // single OD request, so we just return it with it's true shortest path
+        Some(request.mapValues(_.head))
+      }
+    }
     else {
       val Cp: Double = config match {
         case Some(conf) => conf.coefficientCp

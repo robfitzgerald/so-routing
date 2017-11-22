@@ -1,16 +1,16 @@
 package cse.fitzgero.sorouting.algorithm.local.mssp
 
 
+import scala.collection.GenSeq
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
+
 import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService}
 import cse.fitzgero.sorouting.model.population.{LocalRequest, LocalResponse}
 
-import scala.collection.{GenMap, GenSeq}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { service =>
+object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   // types taken from SSSP
   override type VertexId = SSSPLocalDijkstrasService.VertexId
   override type EdgeId = SSSPLocalDijkstrasService.EdgeId
@@ -31,32 +31,43 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService { ser
     * @param graph road network graph
     * @param request a sequence of origin/destination pairs
     * @param config (ignored)
-    * @return a map from od pair to it's resulting path
+    * @return a map from od pairs to their resulting paths
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = Future {
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = {
 
     if (request.isEmpty) {
-      None
+      Future { None }
     } else {
+      val p: Promise[Option[ServiceResult]] = Promise()
+
       val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
         Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
 
-      val resolved = Await.result(future, 1 hour)
-      val result = resolved.flatten.map(r => {
-        LocalResponse(r.request, r.response.path)
-      }).toSeq
+      future onComplete {
+        case Success(resolved) =>
 
-      val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
+          val result = resolved.flatten.map(r => {
+            LocalResponse(r.request, r.response.path)
+          }).toSeq
 
-      val log = Map[String, Long](
-        "algorithm.mssp.local.runtime.total" -> runTime,
-        "algorithm.mssp.local.batch.request.size" -> request.size,
-        "algorithm.mssp.local.batch.completed" -> result.size,
-        "algorithm.mssp.local.cost.effect" -> costEffect,
-        "algorithm.mssp.local.success" -> 1L
-      )
-      println(s"[MSSP] completed and requests.size == result.size is ${request.size == result.size}")
-      Some(ServiceResult(request, result, log))
+          val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
+
+          val log = Map[String, Long](
+            "algorithm.mssp.local.runtime.total" -> runTime,
+            "algorithm.mssp.local.batch.request.size" -> request.size,
+            "algorithm.mssp.local.batch.completed" -> result.size,
+            "algorithm.mssp.local.cost.effect" -> costEffect,
+            "algorithm.mssp.local.success" -> 1L
+          )
+
+          println(s"[MSSP] completed and requests.size == result.size is ${request.size == result.size}")
+          p.success(Some(ServiceResult(request, result, log)))
+        case Failure(e) =>
+          println(s"[MSSP] batch of SSSP failed for request(s): ${request.map(_.id).mkString(", ")}")
+          p.success(None)
+      }
+
+      p.future
     }
   }
 }

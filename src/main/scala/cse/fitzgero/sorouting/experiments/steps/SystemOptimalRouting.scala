@@ -84,7 +84,7 @@ object SystemOptimalRouting {
           val outputLog = result._2.mapValues(_.toString) ++ Map(
             "experiment.result.traveltime.avg.network" -> networkAvgTravelTime,
             "experiment.result.traveltime.avg.population" -> populationTravelTime,
-            "experiment.type" -> "System Optimal Incremental"
+            "experiment.type" -> "System Optimal"
           )
 
           outputLog

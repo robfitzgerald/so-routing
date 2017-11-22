@@ -42,7 +42,7 @@ object SparkCombinationsSORouting {
   object Incremental extends SyncStep {
 
     override type StepConfig = SORoutingConfig
-    val name: String = "[SystemOptimalRouting:Incremental] KSP Combinatorial Experiment for LocalGraph graphs with incremental (batch) evaluation"
+    val name: String = "[SystemOptimalRouting:Incremental] KSP Combinatorial Experiment for LocalGraph graphs with incremental (batch) evaluation using Apache Spark for distribution"
 
     override def apply(config: StepConfig, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
       // setup instance directory has already occurred, so we have population.xml, config.xml, network.xml
@@ -89,7 +89,7 @@ object SparkCombinationsSORouting {
           val outputLog = result._2.mapValues(_.toString) ++ Map(
             "experiment.result.traveltime.avg.network" -> networkAvgTravelTime,
             "experiment.result.traveltime.avg.population" -> populationTravelTime,
-            "experiment.type" -> "System Optimal Incremental"
+            "experiment.type" -> "System Optimal"
           )
 
           outputLog

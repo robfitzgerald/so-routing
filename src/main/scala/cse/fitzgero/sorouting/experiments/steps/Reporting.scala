@@ -1,28 +1,31 @@
 package cse.fitzgero.sorouting.experiments.steps
 
-import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths}
 
-import cse.fitzgero.sorouting.experiments.ops.ExperimentStepOps
-import edu.ucdenver.fitzgero.lib.experiment._
 import scala.util.Try
+
+import cse.fitzgero.sorouting.experiments.ops.{ExperimentOps, ExperimentStepOps}
+import edu.ucdenver.fitzgero.lib.experiment._
 
 
 object Reporting {
 
+  type BasicReportData = {
+    def populationSize: Int
+    def timeWindow: Int
+    def routePercentage: Double
+    def sourceAssetsDirectory: String
+    def experimentBaseDirectory: String
+    def experimentInstanceDirectory: String
+    def experimentConfigDirectory: String
+  }
+
+  case class ReportData(header: String, data: String)
+
   object AppendToReportCSVFiles extends SyncStep {
     val name: String = "[Reporting:AppendToReportCSV] Log average trip costs and some performance stats to the report csv file"
 
-    type StepConfig = {
-      def populationSize: Int
-      def timeWindow: Int
-      def routePercentage: Double
-      def sourceAssetsDirectory: String
-      def experimentBaseDirectory: String
-      def experimentInstanceDirectory: String
-      def experimentConfigDirectory: String
-    }
-
-    val header: Array[Byte] = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,combinations,has alternate paths\n".getBytes
+    type StepConfig = BasicReportData
 
     /**
       * experiment step which will gather any data in logs and write it out to a file with a simple human-readable format
@@ -31,12 +34,13 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
+      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,combinations,has alternate paths,mcts found complete solution\n"
       val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
       val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
 
       val log: Map[String, String] = categoryLog.flatMap(_._2)
       val safeLog = inspectLog(log)_
-      val outputData: Array[Byte] = Seq(
+      val outputData: String = Seq(
         safeLog("experiment.type"),
         conf.sourceAssetsDirectory,
         conf.experimentInstanceDirectory,
@@ -48,28 +52,49 @@ object Reporting {
         safeLog("experiment.result.traveltime.avg.population"),
         getExpectedCostEffect(log),
         safeLog("algorithm.selection.local.combinations"),
-        safeLog("algorithm.mksp.local.hasalternates"))
-        .mkString("",",","\n")
-        .getBytes
+        safeLog("algorithm.mksp.local.hasalternates"),
+        safeLog("algorithm.selection.local.mcts.solution.complete")
+      ).mkString("",",","\n")
+
 
       val t: Try[Map[String, String]] =
         Try({
           Map(
-            "fs.csv.report.base" -> writeLogToPath(outputData, Paths.get(baseReportFileURI)),
-            "fs.csv.report.config" -> writeLogToPath(outputData, Paths.get(configReportFileURI))
+            "fs.csv.report.base" -> ExperimentOps.writeLogToPath(outputData, Paths.get(baseReportFileURI), Some(header)),
+            "fs.csv.report.config" -> ExperimentOps.writeLogToPath(outputData, Paths.get(configReportFileURI), Some(header))
           )
         })
 
       ExperimentStepOps.resolveTry(t)
     }
-
-    def writeLogToPath(outputData: Array[Byte], path: Path): String = {
-      if (Files.notExists(path))
-        Files.write(path, header, StandardOpenOption.CREATE)
-      Files.write(path, outputData, StandardOpenOption.APPEND)
-      path.toString
-    }
   }
+
+
+
+  /**
+    * build the basic report data without finalizing it (ie. adding a newline character)
+    * @param conf the experiment config object
+    * @param log the experiment running logger
+    * @return
+    */
+  def basicReport(conf: BasicReportData, log: ExperimentGlobalLog): ReportData = {
+    val safeLog = inspectLog(log.flatMap(_._2))_
+    val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time"
+    val dataRow: String = Seq(
+      safeLog("experiment.type"),
+      conf.sourceAssetsDirectory,
+      conf.experimentInstanceDirectory,
+      conf.populationSize,
+      (conf.populationSize * conf.routePercentage).toInt.toString,
+      conf.routePercentage,
+      conf.timeWindow,
+      safeLog("experiment.result.traveltime.avg.network"),
+      safeLog("experiment.result.traveltime.avg.population")
+    ).mkString(",")
+    ReportData(header, dataRow)
+  }
+
+
 
   object AllLogsToTextFile extends SyncStep {
     val name: String = "[Reporting:AllLogsToTextFile] Generate Text File Log"
