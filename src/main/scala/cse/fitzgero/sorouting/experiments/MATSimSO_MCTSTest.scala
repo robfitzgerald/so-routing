@@ -7,6 +7,7 @@ import cse.fitzgero.graph.config.KSPBounds
 import cse.fitzgero.graph.config.KSPBounds.Iteration
 import cse.fitzgero.sorouting.experiments.steps.{ExperimentAssetGenerator, Reporting, SystemOptimalMCTSRouting}
 import cse.fitzgero.sorouting.matsimrunner.MATSimSimulator
+import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalPopulationOps, LocalPopulationSelectedSourceSinkGenerator}
 import edu.ucdenver.fitzgero.lib.experiment.Experiment
 
 object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
@@ -24,6 +25,7 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     experimentBaseDirectory: String,
     experimentConfigDirectory: String,
     experimentInstanceDirectory: String,
+    populationGenerator: LocalPopulationOps,
     populationSize: Int,
     timeWindow: Int,
     routePercentage: Double,
@@ -46,6 +48,9 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     s"result/$name/$configLabel",
     s"result/$name/$configLabel/${LocalDateTime.now.toString}",
 
+    LocalPopulationNormalGenerator,
+//    LocalPopulationSelectedSourceSinkGenerator("1","24"),
+
     // general experiment parameters
     pop,
     win,
@@ -59,8 +64,8 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     k = 4, // the k in KSP
     kspBounds = Some(KSPBounds.IterationOrTime(10, 20000L)), // the way we determine ending our search for alternative paths in KSP
     overlapThreshold = 1.0D, // the percentage that alternate paths are allowed to overlap in KSP
-    coefficientCp = 0.0D, // the amount of priority put toward exploration in MCTS
-    congestionRatioThreshold = 1.5D, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
+    coefficientCp = 1.0e-20, // the amount of priority put toward exploration in MCTS
+    congestionRatioThreshold = 1.50D, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
     computationalLimit = 10000L // milliseconds
   )
 

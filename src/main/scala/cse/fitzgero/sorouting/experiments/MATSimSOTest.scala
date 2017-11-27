@@ -5,6 +5,7 @@ import java.time.{LocalDateTime, LocalTime}
 
 import cse.fitzgero.sorouting.experiments.steps.{ExperimentAssetGenerator, Reporting, SystemOptimalRouting}
 import cse.fitzgero.sorouting.matsimrunner.MATSimSimulator
+import cse.fitzgero.sorouting.model.population.{LocalPopulationOps, LocalPopulationSelectedSourceSinkGenerator}
 import edu.ucdenver.fitzgero.lib.experiment.Experiment
 
 object MATSimSOTest extends Experiment with App with MATSimSimulator {
@@ -22,6 +23,7 @@ object MATSimSOTest extends Experiment with App with MATSimSimulator {
     experimentBaseDirectory: String,
     experimentConfigDirectory: String,
     experimentInstanceDirectory: String,
+    populationGenerator: LocalPopulationOps,
     populationSize: Int,
     timeWindow: Int,
     routePercentage: Double,
@@ -35,6 +37,7 @@ object MATSimSOTest extends Experiment with App with MATSimSimulator {
     s"result/$name",
     s"result/$name/$configLabel",
     s"result/$name/$configLabel/${LocalDateTime.now.toString}",
+    LocalPopulationSelectedSourceSinkGenerator("a", "b"),
     pop,
     win,
     route,

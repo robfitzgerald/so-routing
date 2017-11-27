@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstrasService
 import cse.fitzgero.sorouting.algorithm.local.routing.KSPCombinatorialRoutingService
 import cse.fitzgero.sorouting.experiments.ops.ExperimentOps.TimeGroup
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentOps, ExperimentStepOps, MATSimOps}
-import cse.fitzgero.sorouting.model.population.{LocalPopulationOps, LocalRequest, LocalResponse}
+import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment._
@@ -46,7 +46,7 @@ object SystemOptimalRouting {
         Try [ExperimentStepLog] {
           // load population.xml as GenSeq[Request], split according to config.routePercentage
           val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
-          val population: GenSeq[LocalRequest] = LocalPopulationOps.fromXML(populationXML)
+          val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
           val (testGroup, controlGroup) = ExperimentOps.splitPopulation(population, config.routePercentage)
 
           // generate time groups from 0 to config.endTime by config.timeWindow
@@ -73,7 +73,7 @@ object SystemOptimalRouting {
           // save final population which is the combined UE/SO population
           val networkXml: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
           val graph = LocalGraphOps.readMATSimXML(networkXml)
-          val populationUESO: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, result._1)
+          val populationUESO: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
 
           // run MATSim one last time to produce a Snapshot file here
@@ -108,7 +108,7 @@ object SystemOptimalRouting {
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
         val networkXML: xml.Elem = XML.load(s"$currentInstanceDirectory/network.xml")
         val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, timeWindow)
-        val previousPopXML: xml.Elem = LocalPopulationOps.generateXMLResponses(previousPopGraph, snapshotPopulation)
+        val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
         val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(currentInstanceDirectory)
@@ -126,13 +126,6 @@ object SystemOptimalRouting {
         val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, timeWindow)
 
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
-
-        // TODO: parameterize the routesSO algorithm
-//        val future = for {
-//          routesUE <- MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
-//          routesSO <- KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))
-//        } yield (routesUE, routesSO)
-//        val (resolvedUE, resolvedSO) = Await.result(future, RoutingAlgorithmTimeout)
 
         val routesUE = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
         val routesSO = KSPCombinatorialRoutingService.runService(snapshotGraph, groupToRouteSO, Some(kspConfig))

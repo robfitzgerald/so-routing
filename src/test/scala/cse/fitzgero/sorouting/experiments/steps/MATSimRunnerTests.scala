@@ -4,6 +4,7 @@ import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, LocalTime}
 
 import cse.fitzgero.sorouting.FileWriteSideEffectTestTemplate
+import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalPopulationOps}
 import edu.ucdenver.fitzgero.lib.experiment.StepFailure
 
 class MATSimRunnerTests extends FileWriteSideEffectTestTemplate("MATSimRunner"){
@@ -17,10 +18,10 @@ class MATSimRunnerTests extends FileWriteSideEffectTestTemplate("MATSimRunner"){
           Files.createDirectories(Paths.get(instanceDirectory))
           val startTime = LocalTime.parse("08:00:00")
           val endTime = LocalTime.parse("08:10:00")
-          case class PopulationConfig(populationSize: Int, departTime: LocalTime, endTime: Option[LocalTime], timeDeviation: Option[LocalTime], sourceAssetsDirectory: String, experimentConfigDirectory: String, experimentInstanceDirectory: String)
+          case class PopulationConfig(populationSize: Int, departTime: LocalTime, endTime: Option[LocalTime], timeDeviation: Option[LocalTime], sourceAssetsDirectory: String, experimentConfigDirectory: String, experimentInstanceDirectory: String, populationGenerator: LocalPopulationOps)
           case class ImportConfig (experimentConfigDirectory: String, experimentInstanceDirectory: String)
           case class MATSimConfig(experimentInstanceDirectory: String, timeWindow: Int, startTime: LocalTime, endTime: Option[LocalTime])
-          val populationConfig = PopulationConfig(100, startTime, Some(endTime), None, configDirectory, configDirectory, instanceDirectory)
+          val populationConfig = PopulationConfig(100, startTime, Some(endTime), None, configDirectory, configDirectory, instanceDirectory, LocalPopulationNormalGenerator)
           val importConfig = ImportConfig(configDirectory, instanceDirectory)
           val matsimConfig = MATSimConfig(instanceDirectory, 60, startTime, Some(endTime))
 

@@ -45,11 +45,11 @@ object SelectionLocalMCTSService extends GraphService {
         val response: AlgorithmResult =
           if (result.size == request.size) {
             // we got to a terminal node and we have a complete result
-            println(s"[MCTS] completed and requests.size == result.size is true")
+            println(s"[MCTS] finished with complete solution")
             result
           } else {
             // we didn't get to a terminal node; we need to fill in the remaining requests with shortest paths
-            println(s"[MCTS] completed and requests.size == result.size is false: calling MSSP for remaining")
+            println(s"[MCTS] finished but incomplete solution. calling MSSP for ${request.size - result.size} of ${request.size} unhandled requests.")
             // for each edge, the contribution from the mcts group in edge flows
             val edgesAndFlows: GenMap[String, Int] =
               result.flatMap {
@@ -96,13 +96,28 @@ object SelectionLocalMCTSService extends GraphService {
               None
           ).toSeq
 
+        // analytics
+        val trueShortestPathsHadOverlap: Boolean =
+          request
+            .flatMap {
+              req =>
+                if (req._2.isEmpty) None
+                else req._2.headOption.map(_.map(_.edgeId))
+            }
+            .groupBy(identity)
+            .mapValues(_.size)
+            .count(_._2 > 1) > 0
         val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, repackagedResponses).toLong
         val completeSolutionFromMCTS: Long = if (result.size == request.size) 1L else 0L
+
+        println(s"[MCTS] added cost: $costEffect")
 
         val log = Map[String, Long](
           "algorithm.selection.local.runtime" -> runTime,
           "algorithm.selection.local.cost.effect" -> costEffect,
           "algorithm.selection.local.success" -> 1L,
+          "algorithm.selection.local.mcts.solution.requests.handled" -> result.size,
+          "algorithm.selection.local.mcts.shortests.had.overlap" -> (if (trueShortestPathsHadOverlap) 1L else 0L),
           "algorithm.selection.local.mcts.solution.complete" -> completeSolutionFromMCTS
         )
         Some(ServiceResult(repackagedResponses, log))

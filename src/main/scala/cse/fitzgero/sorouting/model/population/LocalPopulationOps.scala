@@ -10,9 +10,9 @@ import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
 import scala.util.Random
 import scala.util.matching.Regex
-import scala.xml.XML
+import scala.xml.{NodeSeq, XML}
 
-object LocalPopulationOps extends BasicPopulationOps {
+trait LocalPopulationOps extends BasicPopulationOps {
   // graph types
   override type EdgeId = String
   override type VertexId = String
@@ -29,37 +29,24 @@ object LocalPopulationOps extends BasicPopulationOps {
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 
+  /**
+    * generate XML of this population. since it is requests, they will not have proper start/end links, just vertex positions, which are not used for routing by MATSim
+    * @param graph the underlying graph structure
+    * @param requests the LocalRequests to export to XML
+    * @return
+    */
   def generateXMLRequests(graph: Graph, requests: GenSeq[LocalRequest]): xml.Elem =
     <population>{requests.map(req => generateXML(graph, req))}</population>
 
-  def generateXMLResponses(graph: Graph, responses: GenSeq[LocalResponse]): xml.Elem =
-    <population>{responses.map(req => generateXML(graph, req))}</population>
-
   /**
-    * method to generate a collection of requests based on the graph topology
-    *
-    * @param graph  underlying graph structure
-    * @param config information to constrain the generated data
-    * @return a set of requests
+    * generate XML of this population. since it is responses, they will be written with link attributes for routing instructions.
+    * @param graph the underlying graph structure
+    * @param responses the LocalRequests to export to XML
+    * @return
     */
-  override def generateRequests(graph: Graph, config: PopulationConfig): GenSeq[Request] = {
+  def generateXMLResponses(graph: Graph, responses: GenSeq[LocalResponse]): xml.Elem =
+    <population>{responses.map(res => generateXML(graph, res))}</population>
 
-    val odPairGenerator = nonRepeatingVertexIdGenerator(graph, config.randomSeed)
-    val offsetGenerator = timeDepartureOffsetGenerator()
-
-    1 to config.n map (n => {
-
-      val (src, dst) = odPairGenerator()
-
-      val personId: String = s"$n-$src#$dst"
-
-      val timeDepartureOffset = offsetGenerator(config.departureTimeRange)
-
-      val time: LocalTime = config.meanDepartureTime.plusSeconds(timeDepartureOffset)
-
-      LocalRequest(personId, LocalODPair(personId, src, dst), time)
-    })
-  }
 
 
   /**
@@ -101,7 +88,6 @@ object LocalPopulationOps extends BasicPopulationOps {
 
   /**
     * turns a request into its MATSim XML representation
-    *
     * @param graph   underlying graph structure
     * @param request request data
     * @return request in xml format
@@ -133,28 +119,43 @@ object LocalPopulationOps extends BasicPopulationOps {
     */
   override def generateXML(graph: Graph, response: Response): xml.Elem = {
     // duplicating code since xml does not have good support for manipulation in Scala
-    val (srcX: String, srcY: String) = graph.vertexById(response.request.od.src) match {
-      case Some(v) => (v.x.toString, v.y.toString)
-      case None => ("0.0", "0.0")
-    }
-    val (dstX: String, dstY: String) = graph.vertexById(response.request.od.dst) match {
-      case Some(v) => (v.x.toString, v.y.toString)
-      case None => ("0.0", "0.0")
-    }
+//    val (srcX: String, srcY: String) = graph.vertexById(response.request.od.src) match {
+//      case Some(v) => (v.x.toString, v.y.toString)
+//      case None => ("0.0", "0.0")
+//    }
+//    val (dstX: String, dstY: String) = graph.vertexById(response.request.od.dst) match {
+//      case Some(v) => (v.x.toString, v.y.toString)
+//      case None => ("0.0", "0.0")
+//    }
+    val (src: String, dst: String) =
+      if (response.path.isEmpty) {
+        println("[LocalPopulationOps:generateXML] a response with an empty path!")
+        ("","")
+      }
+      else if (response.path.size == 1) {
+        (response.path.head.edgeId, response.path.head.edgeId)
+      } else {
+        (response.path.head.edgeId, response.path.last.edgeId)
+      }
 
     <person id={response.request.id}>
       <plan selected="yes">
-        <activity type="home" x={srcX} y={srcY} end_time={response.request.requestTime.format(HHmmssFormat)}/>
-          <leg mode="car">
-            <route type="links">
-              {response.path.map(_.edgeId).mkString(" ")}
-            </route>
-          </leg>
-        <activity type="work" x={dstX} y={dstY} end_time={response.request.requestTime.plusHours(9).toString}/>
+        <activity type="home" link={src} end_time={response.request.requestTime.format(HHmmssFormat)}/>
+        <leg mode="car">
+          <route type="links" start_link={src} end_link={dst}>
+            {response.path.map(_.edgeId).mkString(" ")}
+          </route>
+        </leg>
+        <activity type="work" link={dst} end_time={response.request.requestTime.plusHours(9).toString}/>
       </plan>
     </person>
+
   }
 
+  /**
+    * returns a function which can be used to create random time offsets in a normal distribution
+    * @return
+    */
   def timeDepartureOffsetGenerator(): (Option[LocalTime]) => Long = {
 
     val random = new Random

@@ -12,7 +12,7 @@ import scala.xml.XML
 import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstrasService
 import cse.fitzgero.sorouting.experiments.ops.ExperimentOps.TimeGroup
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentOps, ExperimentStepOps, MATSimOps}
-import cse.fitzgero.sorouting.model.population.{LocalPopulationOps, LocalRequest, LocalResponse}
+import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment.{ExperimentGlobalLog, ExperimentStepLog, StepStatus, SyncStep}
@@ -41,7 +41,7 @@ object UserEquilibriumRouting {
         Try {
           // load population file, convert to LocalRequest, solve shortest path, save back to XML file
           val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
-          val population: GenSeq[LocalRequest] = LocalPopulationOps.fromXML(populationXML)
+          val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
           val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
 
           // run an incremental algorithm here
@@ -53,12 +53,13 @@ object UserEquilibriumRouting {
           val timeGroups: Iterator[TimeGroup] =
             (StartOfDay.toSecondOfDay +: (config.startTime.toSecondOfDay until endTime.toSecondOfDay by config.timeWindow))
               .sliding(2)
-              .map(vec =>
-                TimeGroup(
-                  LocalTime.ofSecondOfDay(vec(0)),
-                  LocalTime.ofSecondOfDay(vec(1))
-                )
-              )
+              .map {
+                vec =>
+                  TimeGroup(
+                    LocalTime.ofSecondOfDay(vec(0)),
+                    LocalTime.ofSecondOfDay(vec(1))
+                  )
+              }
 
           // run incremental phase for each time window
           val incrementalStep: ((GenSeq[LocalResponse], Map[String, Long]), TimeGroup) => (GenSeq[LocalResponse], Map[String, Long]) =
@@ -67,7 +68,7 @@ object UserEquilibriumRouting {
 
           // save final population which is the combined UE/SO population
           val graph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, config.timeWindow)
-          val populationUE: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, result._1)
+          val populationUE: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUE, ExperimentFSOps.PopulationDocType)
 
           // run MATSim one last time to produce a Snapshot file here
@@ -98,7 +99,7 @@ object UserEquilibriumRouting {
         // population with solved routes for all times before the current time group
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
         val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, timeWindow)
-        val previousPopXML: xml.Elem = LocalPopulationOps.generateXMLResponses(previousPopGraph, snapshotPopulation)
+        val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
         val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(currentInstanceDirectory)

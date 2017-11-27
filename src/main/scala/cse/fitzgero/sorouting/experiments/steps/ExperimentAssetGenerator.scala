@@ -8,7 +8,6 @@ import scala.xml.XML
 
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentStepOps, MATSimOps}
 import cse.fitzgero.sorouting.model.population.LocalPopulationOps
-import cse.fitzgero.sorouting.model.population.LocalPopulationOps.LocalPopulationConfig
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps
 import edu.ucdenver.fitzgero.lib.experiment._
 
@@ -126,6 +125,7 @@ object ExperimentAssetGenerator {
     override type StepConfig = PopulationGeneratorConfig {
       def experimentConfigDirectory: String
       def experimentInstanceDirectory: String
+      def populationGenerator: LocalPopulationOps
     }
 
     /**
@@ -156,7 +156,7 @@ object ExperimentAssetGenerator {
               Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
               XML.save(
                 destinationPath,
-                generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation),
+                generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation, config.populationGenerator),
                 ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
           }
 
@@ -167,12 +167,12 @@ object ExperimentAssetGenerator {
   }
 
 
-
   object UniquePopulation extends SyncStep {
     val name: String = "[ExperimentAssetGenerator:UniquePopulation] Generate unique Population on each call"
     override type StepConfig = PopulationGeneratorConfig {
       def experimentConfigDirectory: String
       def experimentInstanceDirectory: String
+      def populationGenerator: LocalPopulationOps
     }
 
     override def apply(config: StepConfig, log: ExperimentGlobalLog = Map()): Option[(StepStatus, ExperimentStepLog)] = Some {
@@ -183,7 +183,7 @@ object ExperimentAssetGenerator {
           Files.createDirectories(Paths.get(config.experimentInstanceDirectory))
           XML.save(
             destinationPath,
-            generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation),
+            generatePopulation(config.populationSize, s"${config.experimentConfigDirectory}/network.xml", config.departTime, config.timeDeviation, config.populationGenerator),
             ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, ExperimentFSOps.PopulationDocType)
 
           Map("fs.xml.population" -> destinationPath)
@@ -196,12 +196,13 @@ object ExperimentAssetGenerator {
 
   // TODO: move helper functions into a helper object (an Ops object)
   private[ExperimentAssetGenerator]
-  def generatePopulation(popSize: Int, networkPath: String, departTime: LocalTime, timeDeviation: Option[LocalTime]): xml.Elem = {
+  def generatePopulation(popSize: Int, networkPath: String, departTime: LocalTime, timeDeviation: Option[LocalTime], populationGenerator: LocalPopulationOps): xml.Elem = {
+    import populationGenerator.LocalPopulationConfig
     val networkXml: xml.Elem = XML.loadFile(networkPath)
     val graph = LocalGraphOps.readMATSimXML(networkXml)
     val populationConfig: LocalPopulationConfig = LocalPopulationConfig(popSize, departTime, timeDeviation)
-    val requests = LocalPopulationOps.generateRequests(graph, populationConfig)
-    LocalPopulationOps.generateXMLRequests(graph, requests)
+    val requests = populationGenerator.generateRequests(graph, populationConfig)
+    populationGenerator.generateXMLRequests(graph, requests)
   }
 }
 

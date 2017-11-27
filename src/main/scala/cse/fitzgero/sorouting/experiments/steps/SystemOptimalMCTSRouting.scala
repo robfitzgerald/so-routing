@@ -16,7 +16,7 @@ import cse.fitzgero.sorouting.algorithm.local.mssp.MSSPLocalDijkstrasService
 import cse.fitzgero.sorouting.algorithm.local.routing.{KSPCombinatorialRoutingService, KSPandMCTSRoutingService}
 import cse.fitzgero.sorouting.experiments.ops.ExperimentOps.TimeGroup
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentOps, ExperimentStepOps, MATSimOps}
-import cse.fitzgero.sorouting.model.population.{LocalPopulationOps, LocalRequest, LocalResponse}
+import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment._
@@ -52,7 +52,7 @@ object SystemOptimalMCTSRouting {
         Try [ExperimentStepLog] {
           // load population.xml as GenSeq[Request], split according to config.routePercentage
           val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
-          val population: GenSeq[LocalRequest] = LocalPopulationOps.fromXML(populationXML)
+          val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
           val (testGroup, controlGroup) = ExperimentOps.splitPopulation(population, config.routePercentage)
 
           // generate time groups from 0 to config.endTime by config.timeWindow
@@ -78,7 +78,7 @@ object SystemOptimalMCTSRouting {
           // save final population which is the combined UE/SO population
           val networkXml: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
           val graph = LocalGraphOps.readMATSimXML(networkXml)
-          val populationUESO: xml.Elem = LocalPopulationOps.generateXMLResponses(graph, result._1)
+          val populationUESO: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
 
           // run MATSim one last time to produce a Snapshot file here
@@ -113,7 +113,7 @@ object SystemOptimalMCTSRouting {
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
         val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
         val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, config.timeWindow)
-        val previousPopXML: xml.Elem = LocalPopulationOps.generateXMLResponses(previousPopGraph, snapshotPopulation)
+        val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
         val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(config.experimentInstanceDirectory)
@@ -129,6 +129,8 @@ object SystemOptimalMCTSRouting {
         // TODO: very infrequently, fs is not completed writing the snapshot file. maybe add a bounded spin wait here?
         val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
         val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
+
+//        println(s"edges with load: ${snapshotGraph.edges.filter(_._2.attribute.linkCostFlow.getOrElse(40.0D) != 40.0D).map(e => (e._1, e._2.attribute.linkCostFlow)).mkString(", ")}")
 
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
 

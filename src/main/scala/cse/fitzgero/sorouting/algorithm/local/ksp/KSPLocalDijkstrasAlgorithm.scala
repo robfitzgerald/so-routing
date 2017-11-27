@@ -46,7 +46,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @return the optional algorithm result
     */
   override def runAlgorithm(graph: LocalGraph, request: AlgorithmRequest, config: Option[AlgorithmConfig] = Some(KSPLocalDijkstrasConfig())): Option[AlgorithmResult] = {
-    println(s"[KSP-ALG] beginning config section for request ${request.id}")
+//    println(s"[KSP-ALG] beginning config section for request ${request.id}")
     // setup
     val startTime = Instant.now.toEpochMilli
 
@@ -69,11 +69,11 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
       case None => 1.0D
     }
 
-    println(s"[KSP-ALG] finished config section for request ${request.id}")
+//    println(s"[KSP-ALG] finished config section for request ${request.id}")
 
     SSSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request) match {
       case None =>
-        println("[KSP-ALG] SSSP for true shortest path had None result, halting KSP with None")
+//        println("[KSP-ALG] SSSP for true shortest path had None result, halting KSP with None")
         // no path between these vertices
         None
       case Some(trueShortestPath) =>
@@ -85,7 +85,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
         @tailrec
         def kShortestPaths(walkback: Path, previousGraph: Graph, iteration: Int = 1): Option[AlgorithmResult] = {
-          println(s"[KSP-ALG] running request ${request.id} iteration $iteration")
+//          println(s"[KSP-ALG] running request ${request.id} iteration $iteration")
 
           val failedBoundsTest: Boolean =
             kspBounds match {
@@ -100,7 +100,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
           if (failedBoundsTest || walkback.isEmpty) {
             if (solution.isEmpty) {
               // should never reach here since trueShortestPath was found!
-              println("[KSP] landed in illegal state - no paths in solution after shortest path was found")
+//              println("[KSP] landed in illegal state - no paths in solution after shortest path was found")
               None
             } else {
               val paths: Seq[Path] = solution.dequeueAll.take(k)
@@ -163,7 +163,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
             }
           }
         }
-        println(s"[KSP-ALG] finished setup and calling first recursion for request ${request.id}")
+//        println(s"[KSP-ALG] finished setup and calling first recursion for request ${request.id}")
         kShortestPaths(reversedPath, graph)
     }
   }

@@ -99,6 +99,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       }
     }
     else {
+      val overlappingEdges: String = request.flatMap(_._2.head.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1).mkString(", ")
+      println(s"overlapping edges in selfish paths: $overlappingEdges")
+
       val Cp: Double = config match {
         case Some(conf) => conf.coefficientCp
         case None => DefaultCp
@@ -161,7 +164,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         * @param costs the edges paired with their starting costs and the costs from this group
         * @return 1 or 0
         */
-      def basicEvaluation(costs: List[(String, Double, Double)]): Int = {
+      def forAllCostDiff(costs: List[(String, Double, Double)]): Int = {
         val testResult = costs.forall {
           cost =>
             (cost._3 / cost._2) <= CongestionRatioThreshold
@@ -198,22 +201,18 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         * @return a solution
         */
       def uctSearch(): Option[AlgorithmResult] = {
-        val rootChildren: GenMap[Tag, Option[MCTSTreeNode]] =
+        val rootChildren: GenMap[Tag,() => Option[MCTSTreeNode]] =
           for {
             person <- globalAlts
             alt <- person._2
-          } yield (alt._1, None)
-        val rootChildrenClosure: GenMap[Tag, () => Option[MCTSTreeNode]] =
-          rootChildren
-            .mapValues(node => () => node)
-
+          } yield (alt._1, () => None)
 
         val root: MCTSTreeNode =
           MCTSTreeNode(
             visits = 0,
             reward = 0,
             state = Seq(),
-            children = Some(rootChildrenClosure),
+            children = Some(rootChildren),
             action = None,
             parent = () => None
           )
@@ -227,16 +226,13 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 
         while (withinComputationalLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
-          val ∆ = defaultPolicy(graph, v_t, globalAlts, meanCostDiff)
+          val ∆ = defaultPolicy(graph, v_t, globalAlts, forAllCostDiff)
           backup(v_t, ∆)
         }
 
-        //      println(root.toString)
+              println(root.toString)
 
-        val result = bestPath(root).map {
-          tag =>
-            untag(tag)
-        }
+        val result = bestPath(root).map { tag =>untag(tag) }
 
         Some(result.toMap)
       }
@@ -519,6 +515,8 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 //      }
 //    }
 
+    val printRewardLowerBound: Int = 10
+
     override def toString: String = {
       def depth: String = (for { i <- state.indices } yield "-").mkString("")
       parent() match {
@@ -545,8 +543,8 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
             case Some(tag) => s"${tag.personId}#${tag.alternate}"
           }
           children match {
-            case None => // root with no children
-              s"$depth$tagData - $visits visits, $reward reward\n"
+            case None => // leaf with no children
+              if (reward < printRewardLowerBound) "" else s"$depth$tagData - $visits visits, $reward reward\n"
             case Some(childrenToPrint) =>
               val recurseResult: String =
                 childrenToPrint.map {
@@ -557,7 +555,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
                         childToPrint.toString
                     }
                 }.mkString("")
-              s"$depth$tagData - $visits visits, $reward reward\n$recurseResult"
+              if (reward < printRewardLowerBound) s"$recurseResult" else s"$depth$tagData - $visits visits, $reward reward\n$recurseResult"
           }
       }
     }
