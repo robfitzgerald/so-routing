@@ -230,11 +230,14 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           backup(v_t, ∆)
         }
 
-              println(root.toString)
+        println(root.toString)
 
-        val result = bestPath(root).map { tag =>untag(tag) }
-
-        Some(result.toMap)
+        if (root.reward == 0) {
+          None
+        } else {
+          val result = bestPath(root).map { tag =>untag(tag) }
+          Some(result.toMap)
+        }
       }
 
       uctSearch()
@@ -384,23 +387,8 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         v.updateReward(delta)
       case Some(parent) =>
         // v has a parent, so we want to update v and recurse on parent
-        val updated = v.updateReward(delta)
+        v.updateReward(delta)
         backup(parent, delta)
-//        parent.children match {
-//          case None =>
-//            // somehow v is a child of parent, but parent isn't a parent of v
-//            // TODO: some kind of tree recovery here
-//            backup(parent, delta)
-//          case Some(children) =>
-//            v.action match {
-//              case None =>
-//                // somehow we have a relation between v and its parent, but the action is undefined. tree recovery?
-//                backup(parent, delta)
-//              case Some(tag) =>
-//                val relationUpdated = v.copy(children = Some(children.updated(tag, () => Some(updated))))
-//                backup(relationUpdated, delta)
-//            }
-//        }
     }
 
   @tailrec
@@ -433,7 +421,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 
   case class MCTSAltPath(tag: Tag, edges: Seq[String])
 
-  // MCTSTreeNode must be a mutable tree structure
+  // MCTSTreeNode is a mutable tree, due to MCTS dependency on cyclic links
   // https://stackoverflow.com/questions/8042356/why-no-immutable-double-linked-list-in-scala-collections
   class MCTSTreeNode(
     var visits: Int,
