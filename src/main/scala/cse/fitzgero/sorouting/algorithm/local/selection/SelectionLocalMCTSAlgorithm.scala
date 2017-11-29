@@ -100,7 +100,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     }
     else {
       val overlappingEdges: String = request.flatMap(_._2.head.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1).mkString(", ")
-      println(s"overlapping edges in selfish paths: $overlappingEdges")
+      println(s"[MCTS-ALG] overlapping edges in selfish paths: $overlappingEdges")
 
       val Cp: Double = config match {
         case Some(conf) => conf.coefficientCp
@@ -235,6 +235,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         if (root.reward == 0) {
           None
         } else {
+          if (root.visits == root.reward) {
+            println(s"[MCTS-ALG] all ${root.visits} explored states produced a reward")
+          }
           val result = bestPath(root).map { tag =>untag(tag) }
           Some(result.toMap)
         }

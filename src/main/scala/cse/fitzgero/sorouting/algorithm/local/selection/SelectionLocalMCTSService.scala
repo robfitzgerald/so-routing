@@ -77,9 +77,6 @@ object SelectionLocalMCTSService extends GraphService {
 
             println(s"[MCTS] MSSP completed for remaining ${remaining.size} unrouted vehicles")
             // merge and return
-            // result: GenMap[LocalODPair, Path]
-            // extrasResult: case class ServiceResult(request: ServiceRequest, result: GenSeq[LocalResponse], logs: LoggingClass)
-            //   where case class LocalResponse(request: LocalRequest, path: List[SORoutingPathSegment])
             extrasResult match {
               case None =>
                 result
@@ -97,28 +94,45 @@ object SelectionLocalMCTSService extends GraphService {
           ).toSeq
 
         // analytics
-        val trueShortestPathsHadOverlap: Boolean =
+        val trueShortestPathEdges: GenMap[EdgeId, Int] =
           request
             .flatMap {
               req =>
                 if (req._2.isEmpty) None
-                else req._2.headOption.map(_.map(_.edgeId))
+                else req._2.flatMap(_.map(_.edgeId))
             }
             .groupBy(identity)
             .mapValues(_.size)
-            .count(_._2 > 1) > 0
+        val optimalEdges: GenMap[EdgeId, Int] =
+          result
+            .flatMap { _._2.map(_.edgeId) }
+            .groupBy(identity)
+            .mapValues(_.size)
+
         val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, repackagedResponses).toLong
         val completeSolutionFromMCTS: Long = if (result.size == request.size) 1L else 0L
+        val trueShortestPathsHadOverlap: Boolean = trueShortestPathEdges.count(_._2 > 1) > 0
+        val optimalPathsHadOverlap: Boolean = optimalEdges.count(_._2 > 1) > 0
+        val overlapCountInTrueShortestPaths: Long = trueShortestPathEdges.values.sum
+        val overlapCountInSolutionPaths: Long = optimalEdges.values.sum
+        val solutionRoutesEqualSelfishRoutes: Boolean = {
+          val requestLookup = request.values.toVector
+          result.forall(requestLookup.contains)
+        }
 
-        println(s"[MCTS] added cost: $costEffect")
+//        println(s"[MCTS] added cost: $costEffect")
 
         val log = Map[String, Long](
           "algorithm.selection.local.runtime" -> runTime,
           "algorithm.selection.local.cost.effect" -> costEffect,
           "algorithm.selection.local.success" -> 1L,
-          "algorithm.selection.local.mcts.solution.requests.handled" -> result.size,
-          "algorithm.selection.local.mcts.shortests.had.overlap" -> (if (trueShortestPathsHadOverlap) 1L else 0L),
-          "algorithm.selection.local.mcts.solution.complete" -> completeSolutionFromMCTS
+          "algorithm.selection.local.mcts.solution.complete" -> completeSolutionFromMCTS,
+          "algorithm.selection.local.mcts.true.shortest.paths.had.overlap" -> (if (trueShortestPathsHadOverlap) 1L else 0L),
+          "algorithm.selection.local.mcts.optimal.paths.had.overlap" -> (if (optimalPathsHadOverlap) 1L else 0L),
+          "algorithm.selection.local.mcts.solution.route.count" -> result.size,
+          "algorithm.selection.local.mcts.overlap.count.selfish" -> overlapCountInTrueShortestPaths,
+          "algorithm.selection.local.mcts.overlap.count.optimal" -> overlapCountInSolutionPaths,
+          "algorithm.selection.local.mcts.selfish.matches.optimal" -> (if (solutionRoutesEqualSelfishRoutes) 1L else 0L)
         )
         Some(ServiceResult(repackagedResponses, log))
       case None => None

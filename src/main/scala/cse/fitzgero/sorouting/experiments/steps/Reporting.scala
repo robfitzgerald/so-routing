@@ -34,7 +34,7 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,combinations,has alternate paths,mcts found complete solution\n"
+      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal\n"
       val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
       val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
 
@@ -51,9 +51,16 @@ object Reporting {
         safeLog("experiment.result.traveltime.avg.network"),
         safeLog("experiment.result.traveltime.avg.population"),
         getExpectedCostEffect(log),
-        safeLog("algorithm.selection.local.combinations"),
         safeLog("algorithm.mksp.local.hasalternates"),
-        safeLog("algorithm.selection.local.mcts.solution.complete")
+        safeLog("algorithm.selection.local.success"),
+        safeLog("algorithm.selection.local.mcts.solution.complete"),
+        safeLog("algorithm.selection.local.mcts.true.shortest.paths.had.overlap"),
+        safeLog("algorithm.selection.local.mcts.optimal.paths.had.overlap"),
+        safeLog("algorithm.selection.local.mcts.solution.route.count"),
+        safeLog("algorithm.selection.local.mcts.overlap.count.selfish"),
+        safeLog("algorithm.selection.local.mcts.overlap.count.optimal"),
+        safeLog("algorithm.selection.local.mcts.selfish.matches.optimal")
+        //
       ).mkString("",",","\n")
 
 
