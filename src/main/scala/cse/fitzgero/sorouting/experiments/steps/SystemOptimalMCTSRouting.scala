@@ -155,12 +155,12 @@ object SystemOptimalMCTSRouting {
         val updatedResult: GenSeq[LocalResponse] = accumulator._1 ++ resultUE._1 ++ resultSO._1
         val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(accumulator._2, resultUE._2), resultSO._2)
 
-        val completeSolutions: Long =
-          if (resultSO._2.isDefinedAt("algorithm.selection.local.mcts.solution.complete"))
-            resultSO._2("algorithm.selection.local.mcts.solution.complete")
+        val optimalRoutes: Long =
+          if (resultSO._2.isDefinedAt("algorithm.selection.local.mcts.solution.route.count"))
+            resultSO._2("algorithm.selection.local.mcts.solution.route.count")
           else 0L
 
-        println(s"${LocalDateTime.now} [SO-MCTS] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests, ${resultSO._1.size} optimal requests, and $completeSolutions complete solutions found via MCTS.")
+        println(s"${LocalDateTime.now} [SO-MCTS] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests and ${resultSO._1.size} optimal requests, ${if (resultSO._1.size == optimalRoutes) "all" else optimalRoutes.toString} of which were found via MCTS.")
 
         (updatedResult, updatedLogs)
       }

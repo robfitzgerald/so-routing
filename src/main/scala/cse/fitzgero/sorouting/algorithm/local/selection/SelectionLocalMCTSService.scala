@@ -3,7 +3,7 @@ package cse.fitzgero.sorouting.algorithm.local.selection
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 
 import cse.fitzgero.graph.algorithm.GraphService
 import cse.fitzgero.sorouting.algorithm.local.mssp.{MSSPLocalDijkstrasService, MSSPLocalDijkstsasAlgorithmOps}
@@ -71,6 +71,7 @@ object SelectionLocalMCTSService extends GraphService {
               }
 
             // run MSSP with remaining requests on updated graph
+            // TODO: remove Await and instead map these futures together for the 'result' or use a promise
             val remaining = request.filter { req => !result.isDefinedAt(req._1.od) }
             val future = MSSPLocalDijkstrasService.runService(updatedGraph, remaining.toSeq.map{ req => req._1 })
             val extrasResult = Await.result(future, MSSPComputationalLimit)
@@ -135,7 +136,21 @@ object SelectionLocalMCTSService extends GraphService {
           "algorithm.selection.local.mcts.selfish.matches.optimal" -> (if (solutionRoutesEqualSelfishRoutes) 1L else 0L)
         )
         Some(ServiceResult(repackagedResponses, log))
-      case None => None
+      case None => // the algorithm could not find an optimal solution, so we should fall back to selfish routing
+        val returnAsMSSP =
+          request.map {
+            req =>
+              LocalResponse(req._1, req._2.head)
+          }.toSeq
+        val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, returnAsMSSP).toLong
+        val log = Map[String, Long](
+          "algorithm.selection.local.success" -> 0L,
+          "algorithm.selection.local.runtime" -> runTime,
+          "algorithm.selection.local.cost.effect" -> costEffect,
+          "algorithm.selection.local.mcts.selfish.matches.optimal" -> 1L
+        )
+        println(s"[MCTS] no solution found, returning selfish solution for ${returnAsMSSP.size} requests")
+        Some(ServiceResult(returnAsMSSP, log))
     }
   }
 }
