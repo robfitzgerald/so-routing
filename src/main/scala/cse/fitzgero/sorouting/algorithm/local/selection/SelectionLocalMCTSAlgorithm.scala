@@ -466,7 +466,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       * @return
       */
     def evaluateUCT(Cp: Double, parentVisits: Int): Double = {
-      val exploitation: Double = reward / visits
+      val exploitation: Double = if (visits == 0) 0D else reward / visits
       val exploration: Double =
         if (Cp == 0)
           0D
@@ -481,6 +481,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 
       exploitation + exploration
     }
+
+
+
 
 //    override def toString: String = {
 //      def depth: String = (for { i <- state.indices } yield "-").mkString("")

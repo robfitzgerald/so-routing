@@ -40,6 +40,7 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
     if (request.isEmpty)
       Future{ None }
+      // TODO: handle the size==1 case. would we return 1 shortest path, or is it incorrect for mksp to provide that result?
     else {
       val p: Promise[Option[ServiceResult]] = Promise()
       val future: Future[Iterator[Option[KSPResult]]] =
@@ -68,7 +69,7 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
             "algorithm.mksp.local.k.produced" -> kProduced,
             "algorithm.mksp.local.success" -> 1L
           )
-          println(s"[MKSP] completed and requests.size == result.size is ${request.size == result.size}")
+          println(s"[MKSP] completed with ${result.size} results")
 //          Some(ServiceResult(request, result, logs))
           p.success(Some(ServiceResult(request, result, logs)))
         case Failure(e) =>

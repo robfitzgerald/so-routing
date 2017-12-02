@@ -60,11 +60,3 @@ object MATSimUETest extends Experiment with App with MATSimSimulator {
     Reporting.AllLogsToTextFile
   ))
 }
-
-//object foo {
-//  type DirectoriesConfig = {
-//    def experimentSetDirectory: String // sits above all configurations in a set of related tests
-//    def experimentConfigDirectory: String // has the base config and a set of instance directories
-//    def experimentInstanceDirectory: String // a date/time-named directory
-//  }
-//}

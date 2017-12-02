@@ -60,7 +60,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
             "algorithm.mssp.local.success" -> 1L
           )
 
-          println(s"[MSSP] completed and requests.size == result.size is ${request.size == result.size}")
+          println(s"[MSSP] completed with ${result.size} results")
           p.success(Some(ServiceResult(request, result, log)))
         case Failure(e) =>
           println(s"[MSSP] batch of SSSP failed for request(s): ${request.map(_.id).mkString(", ")}")
