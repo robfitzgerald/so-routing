@@ -2,7 +2,7 @@ package cse.fitzgero.sorouting.experiments.ops
 
 import java.io.File
 import java.nio.file.{Files, Paths}
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime}
 import java.time.format.DateTimeFormatter
 
 import scala.collection.JavaConverters._
@@ -29,6 +29,10 @@ object ExperimentFSOps {
 
   def saveXmlDocType(uri: String, xmlElement: Elem, docType: DocType): String = {
     XML.save(uri, xmlElement, ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, docType)
+    // TODO: a spin wait that tests that the file exists. uncertain if XML.save is an async utility. do we want this?
+    //      val endLoop: Long = Instant.now.toEpochMilli + 20000L
+    //      while (Instant.now.toEpochMilli < endLoop && !Files.exists(Paths.get(uri))) { Thread.sleep(100) }
+    //      // (wrap in Try)
     uri
   }
 

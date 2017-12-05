@@ -165,6 +165,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         * @return 1 or 0
         */
       def forAllCostDiff(costs: List[(String, Double, Double)]): Int = {
+        val debug = costs.map {
+          t => (t._1, t._2, t._3, t._3 / t._2)
+        }
         val testResult = costs.forall {
           cost =>
             (cost._3 / cost._2) <= CongestionRatioThreshold
@@ -224,13 +227,19 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           }
         }
 
+        // collection of good leaves
+//        val mrGoodLeaves: collection.mutable.ArrayBuffer[MCTSTreeNode] = collection.mutable.ArrayBuffer[MCTSTreeNode]()
+
         while (withinComputationalLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, selectionMethod)
           val ∆ = defaultPolicy(graph, v_t, globalAlts, forAllCostDiff)
           backup(v_t, ∆)
+//          if (v_t.isLeaf && v_t.reward == 1) {
+//            mrGoodLeaves += v_t
+//          }
         }
 
-        println(root.toString)
+//        println(root.toString)
 
         if (root.reward == 0) {
           None
@@ -238,7 +247,15 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           if (root.visits == root.reward) {
             println(s"[MCTS-ALG] all ${root.visits} explored states produced a reward")
           }
+
           val result = bestPath(root).map { tag =>untag(tag) }
+//          val result =
+//            mrGoodLeaves
+//              // TODO: need to compute the total congestion cost of each set, then minBy(_.thatCostYo)
+//              .maxBy(_.reward)
+//              .state
+//              .map { alt => untag(alt.tag)}
+
           Some(result.toMap)
         }
       }
@@ -273,25 +290,20 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     val edgesAndFlows: GenMap[String, Int] =
       setToEvaluate.flatMap(_.edges).groupBy(identity).mapValues(_.size)
 
-    val evaluatedCosts: List[(String, Double, Double)] =
-      edgesAndFlows.flatMap {
-        e =>
-          graph.edgeById(e._1) match {
-            case None => None
-            case Some(edge) =>
-              edge.attribute.linkCostFlow match {
-                case None => None
-                case Some(previousCost) =>
-                  edge.attribute.costFlow(e._2) match {
-                    case None => None
-                    case Some(updatedCost) =>
-                      Some(e._1, previousCost, updatedCost)
-                  }
-              }
-          }
-      }.toList
+    // we can effectively calculate the marginal cost,
+    // by looking at the cost to add 1 in order to reach the current flow
+    val evaluatedCosts: GenIterable[(String, Double, Double)] =
+      for {
+        e <- edgesAndFlows
+        edge <- graph.edgeById(e._1)
+        currentEdgeFlow <- edge.attribute.flow
+        previousCost <- edge.attribute.costFlow(-1)
+        updatedCost <- edge.attribute.linkCostFlow
+        if currentEdgeFlow != 0
+      } yield (e._1, previousCost, updatedCost)
 
-    evaluate(evaluatedCosts)
+//    evaluate(evaluatedCosts)
+    evaluate(evaluatedCosts.toList)
   }
 
 
@@ -394,6 +406,12 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         backup(parent, delta)
     }
 
+  /**
+    * a final backpropogation method for choosing the best set of tags. may only be a partial solution
+    * @param v the current node
+    * @param solution accumulation of the tags picked up during this tree traversal
+    * @return a sequence of tags, which represent alternate paths, which we will map to produce our resulting optimal combination
+    */
   @tailrec
   def bestPath(v: MCTSTreeNode, solution: Seq[Tag] = Seq()): Seq[Tag] = {
     v.children match {
@@ -434,13 +452,29 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     val action: Option[Tag],
     val parent: () => Option[MCTSTreeNode]) {
 
-    // mutable operations
+    /**
+      * predicate function to tell if this node is a leaf
+      * @return
+      */
+    def isLeaf: Boolean = children.isEmpty
+
+    /**
+      * updates the reward value at this node in the tree
+      * @param rewardUpdate the reward to add, typically 0 or 1
+      * @return the updated (mutated) tree
+      */
     def updateReward(rewardUpdate: Int): MCTSTreeNode = {
       reward = reward + rewardUpdate
       visits += 1
       this
     }
 
+    /**
+      * adds a tree node to the children of this node
+      * @param tag the "action" it takes to move from the current node to this child
+      * @param node the child node to add
+      * @return the updated (mutated) tree
+      */
     def addChild(tag: Tag, node: MCTSTreeNode): MCTSTreeNode = {
       children match {
         case None => this
@@ -449,15 +483,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           this
       }
     }
-    // everything else is handled by mutability
 
-//    /**
-//      * update reward and visit data points during backtracking function
-//      * @param reward the reward resulted from the simulation
-//      * @return this node with updated statistics
-//      */
-//    def update(reward: Int): MCTSTreeNode =
-//      this.copy(visits = this.visits + 1, reward = this.reward + reward)
 
     /**
       * Upper Confidence Bound For Trees
@@ -466,7 +492,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       * @return
       */
     def evaluateUCT(Cp: Double, parentVisits: Int): Double = {
-      val exploitation: Double = if (visits == 0) 0D else reward / visits
+      val exploitation: Double = if (visits == 0) 0D else reward.toDouble / visits.toDouble
       val exploration: Double =
         if (Cp == 0)
           0D
@@ -482,32 +508,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       exploitation + exploration
     }
 
-
-
-
-//    override def toString: String = {
-//      def depth: String = (for { i <- state.indices } yield "-").mkString("")
-//      children match {
-//        case None => action match {
-//          case None => ""
-//          case Some(tag) => s"$depth${tag.personId}#${tag.alternate} - $visits visits, $reward reward\n"
-//        }
-//        case Some(childrenToPrint) =>
-//          childrenToPrint.map {
-//            child =>
-//              child._2() match {
-//                case None => ""
-//                case Some(childNode) =>
-//                  action match {
-//                    case None =>
-//                      s"${depth}root - $visits visits, $reward reward\n${childNode.toString}"
-//                    case Some(tag) =>
-//                      s"$depth${tag.personId}#${tag.alternate} - $visits visits, $reward reward\n${childNode.toString}"
-//                  }
-//              }
-//          }.mkString("")
-//      }
-//    }
+//    def printLeaves: String = ???
 
     val printRewardLowerBound: Int = 10
 

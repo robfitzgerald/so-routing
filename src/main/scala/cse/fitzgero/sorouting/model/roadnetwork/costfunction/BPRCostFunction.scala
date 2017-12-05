@@ -55,9 +55,9 @@ trait BPRCostFunction extends CostFunction {
     * shorthand method for getting the cost flow of the current link flow
     * @return
     */
-  def linkCostFlow: Option[Double] =
-    flow match {
-      case Some(ff) => costFlow(ff)
-      case None => costFlow(0D)
-    }
+  def linkCostFlow: Option[Double] = costFlow(0D)
+//    flow match {
+//      case Some(ff) => costFlow(ff)
+//      case None => costFlow(0D)
+//    }
 }

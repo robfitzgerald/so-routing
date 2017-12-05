@@ -66,10 +66,10 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     kspBounds = Some(KSPBounds.IterationOrTime(10, 20000L)), // the way we determine ending our search for alternative paths in KSP
     overlapThreshold = 1.0D, // the percentage that alternate paths are allowed to overlap in KSP
 //    coefficientCp = 1e-6, // less exploration for our problem seems to work better
-//    coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
-    coefficientCp = 0D, // finds a solution if possible in most situations, best for our case (flat monte carlo, yes?)
+    coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
+//    coefficientCp = 0D, // finds a solution if possible in most situations, best for our case (flat monte carlo, yes?)
     congestionRatioThreshold = congestionThreshold, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
-    computationalLimit = 1000L // milliseconds
+    computationalLimit = 5000L // milliseconds
   )
 
   runSync(config, List(
