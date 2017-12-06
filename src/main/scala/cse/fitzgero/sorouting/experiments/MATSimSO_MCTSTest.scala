@@ -49,8 +49,8 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     s"result/$name/$configLabel",
     s"result/$name/$configLabel/${LocalDateTime.now.toString}",
 
-    LocalPopulationNormalGenerator,
-//    LocalPopulationSelectedSourceSinkGenerator("1","24"),
+//    LocalPopulationNormalGenerator,
+    LocalPopulationSelectedSourceSinkGenerator("254129111","254809988"), // rye
 
     // general experiment parameters
     pop,
