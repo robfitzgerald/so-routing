@@ -1,10 +1,11 @@
 package cse.fitzgero.sorouting.algorithm.local.selection
 
+import scala.annotation.tailrec
+
 import cse.fitzgero.graph.algorithm.GraphAlgorithm
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasAlgorithm
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
-
 import scala.collection.{GenMap, GenSeq}
 
 object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
@@ -28,33 +29,64 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
     * @return a map of request objects to their optimal paths, with one path per request
     */
   override def runAlgorithm(graph: Graph, request: GenMap[LocalODPair, GenSeq[Path]], config: Option[Nothing] = None): Option[AlgorithmResult] = {
+    if (request.isEmpty) {
+      None
+    } else {
+      case class Tag(personId: String, alternate: Int)
 
-    case class Tag(personId: String, alternate: Int)
+      type AltIndices = Vector[Int]
 
-    // helper for inspecting a path cost
-    def pathCost(p: Path): Double =
-      p.map(_.cost.getOrElse(List[Double]()).sum).sum
-
-    // a back-tracking map from personIds to their OD object
-    val unTag: GenMap[String, LocalODPair] =
-      request.keys.map(od => (od.id, od)).toMap
-
-    // a multiset of path sets for each person
-    val tagsAndPaths: GenSeq[GenSeq[(Tag, Path)]] =
-      request.map(od => {
-        od._2.zipWithIndex
-          .map(path => {
-            (Tag(od._1.id, path._2), path._1)
-          })
-      }).toSeq
-
-    // combinatorial solver
-    def minimalMultisetCombinationsOf(multiset: GenSeq[GenSeq[(Tag, Path)]]): Option[GenSeq[(Tag, Path)]] = {
+      // a back-tracking map from personIds to their OD object
+      val unTag: GenMap[String, LocalODPair] =
+        request.keys.map(od => (od.id, od)).toMap
 
 
-      def _mmC(subSet: GenSeq[GenSeq[(Tag, Path)]], thisCombination: GenSeq[(Tag, Path)] = GenSeq(), depth: Int = 1): GenSeq[(Double, GenSeq[(Tag, Path)])] = {
-        if (subSet.isEmpty) {
-          // take all edges out of this combination, attach flow count values
+
+      def solve(): GenSeq[(Tag, Path)] = {
+        val globalAlternates: Vector[Vector[(Tag, Path)]] =
+          request.map { od => {
+            od._2.toVector.zipWithIndex
+              .map(path => {
+                (Tag(od._1.id, path._2), path._1)
+              })
+          }
+          }.toVector
+
+        val startIndices: AltIndices = globalAlternates.map { _ => 0 }
+        val finalIndices: AltIndices = globalAlternates.map { _.size - 1 }
+
+//        def atEnd(ind: AltIndices): Boolean = ind == finalIndices
+
+        // invariant: starts from last position
+        def advance(startIndices: AltIndices): Option[AltIndices] = {
+          if (startIndices == finalIndices) { None }
+          else if (startIndices.isEmpty) { None }
+          else {
+            @tailrec
+            def _advance (ind: AltIndices, currentBucket: Int) : AltIndices = {
+              if (ind(currentBucket) < globalAlternates(currentBucket).size - 1) {
+                ind.updated(currentBucket, ind(currentBucket) + 1)
+              } else {
+                if (currentBucket == 0) {
+                  ind
+                } else {
+                  _advance(ind.updated(currentBucket, 0), currentBucket - 1)
+                }
+              }
+            }
+            Some {
+              _advance(startIndices, startIndices.size - 1)
+            }
+          }
+        }
+
+        def alternatesAt(ind: AltIndices): GenSeq[(Tag, Path)] =
+          ind.zipWithIndex
+            .map { i =>
+              globalAlternates(i._2)(i._1)
+            }
+
+        def evaluate(thisCombination: GenSeq[(Tag, Path)]): Double = {
           val edgesVisited: GenMap[EdgeId, Int] =
             thisCombination
               .flatMap(_._2.map(edge => (edge.edgeId, 1)))
@@ -62,57 +94,44 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
               .mapValues(_.map(_._2).sum)
 
           // calculate cost of added flow for each named edge
-          val addedCost: Double =
-            edgesVisited.map(edgeAndFlow => {
-              graph.edgeById(edgeAndFlow._1) match {
-                case None =>
-                  println(s"[SelectionLocal] Edge (id, flow): $edgeAndFlow does not correspond to an edge in the original graph")
-                  0D
-                case Some(edge) =>
-                  edge.attribute
-                    .costFlow(edgeAndFlow._2)
-                    .getOrElse(DefaultFlowCost) // TODO: add policy for managing missing cost flow evaluation data (is zero the correct default value?)
-              }
-            }).sum
-
-          // sum and return with a calculated cost as a single-item GenSeq[] with one tuple with one cost and a GenSeq[] as long as the # of buckets
-          GenSeq((addedCost, thisCombination))
-
-        } else {
-          // parallelize subproblems up to a defined depth
-//          val thisBucket: GenSeq[(Tag, Path)] =
-//            if (depth <= ParallelizationDepth) subSet.head.par
-//            else subSet.head
-
-          // don't parallelize because we are losing child threads possibly due to max heap issues
-          val thisBucket: GenSeq[(Tag, Path)] = subSet.head
-
-          thisBucket.map(item => {
-            val combinationsOnThisBranch = _mmC(subSet.tail, item +: thisCombination, depth + 1)
-            combinationsOnThisBranch.minBy(_._1)
-          })
+          edgesVisited.map(edgeAndFlow => {
+            graph.edgeById(edgeAndFlow._1) match {
+              case None =>
+                println(s"[SelectionLocal] Edge (id, flow): $edgeAndFlow does not correspond to an edge in the original graph")
+                0D
+              case Some(edge) =>
+                edge.attribute
+                  .costFlow(edgeAndFlow._2)
+                  .getOrElse(DefaultFlowCost) // TODO: add policy for managing missing cost flow evaluation data (is zero the correct default value?)
+            }
+          }).sum
         }
+
+
+
+        @tailrec
+        def _solve (ind: AltIndices = startIndices, best: (Double, GenSeq[(Tag, Path)]) = (evaluate(alternatesAt(startIndices)), alternatesAt(startIndices))) : GenSeq[(Tag, Path)] = {
+          advance(ind) match {
+            case None => best._2
+            case Some(nextInd) =>
+              val nextAlts = alternatesAt(ind)
+              val nextCost: Double = evaluate(nextAlts)
+              val nextTuple = (nextCost, nextAlts)
+              if (nextCost < best._1) {
+                _solve(nextInd, nextTuple)
+              } else {
+                _solve(nextInd, best)
+              }
+          }
+        }
+        _solve()
       }
+      val result: GenMap[LocalODPair, Path] =
+        solve().map {
+          tup => (unTag(tup._1.personId), tup._2)
+        }.toMap
 
-      if (multiset.isEmpty) None
-      else {
-        // sorting by descending order so we can better reason about the parallelization occurring
-        val sortedBySizeDescending = multiset.toVector.sortBy(-_.size)
-        val result = _mmC(sortedBySizeDescending)
-        Some(result.minBy(_._1)._2)
-      }
-    }
-
-    minimalMultisetCombinationsOf(tagsAndPaths) match {
-      case None => None
-      case Some(combination) =>
-        val result: GenMap[LocalODPair, Path] =
-          combination
-            .map(tagAndPath => {
-              (unTag(tagAndPath._1.personId), tagAndPath._2)
-            }).toMap
-
-        Some(result)
+      Some(result)
     }
   }
 }
