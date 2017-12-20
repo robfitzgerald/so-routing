@@ -24,7 +24,13 @@ trait LocalPopulationOps extends BasicPopulationOps {
   override type Request = LocalRequest
   override type Response = LocalResponse
 
-  // helpers
+  /**
+    * the configuration used to generate a population
+    * @param n the size of the population
+    * @param meanDepartureTime mean value for random distribution of driver departure times
+    * @param departureTimeRange the width of the distribution of driver departure times
+    * @param randomSeed seed value for the random number generator
+    */
   case class LocalPopulationConfig(n: Int, meanDepartureTime: LocalTime, departureTimeRange: Option[LocalTime] = None, randomSeed: Option[Int] = None)
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
@@ -111,6 +117,8 @@ trait LocalPopulationOps extends BasicPopulationOps {
     </person>
   }
 
+
+
   /**
     * turns a response into its MATSim XML representation
     * @param graph    underlying graph structure
@@ -118,15 +126,6 @@ trait LocalPopulationOps extends BasicPopulationOps {
     * @return response in xml format
     */
   override def generateXML(graph: Graph, response: Response): xml.Elem = {
-    // duplicating code since xml does not have good support for manipulation in Scala
-//    val (srcX: String, srcY: String) = graph.vertexById(response.request.od.src) match {
-//      case Some(v) => (v.x.toString, v.y.toString)
-//      case None => ("0.0", "0.0")
-//    }
-//    val (dstX: String, dstY: String) = graph.vertexById(response.request.od.dst) match {
-//      case Some(v) => (v.x.toString, v.y.toString)
-//      case None => ("0.0", "0.0")
-//    }
     val (src: String, dst: String) =
       if (response.path.isEmpty) {
         println("[LocalPopulationOps:generateXML] a response with an empty path!")

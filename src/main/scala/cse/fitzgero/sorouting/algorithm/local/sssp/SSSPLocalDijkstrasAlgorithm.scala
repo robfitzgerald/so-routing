@@ -15,22 +15,22 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
   case class AlgorithmResult(od: AlgorithmRequest, path: Path)
   /**
     * run a shortest path search
-    * @param g the graph to search
-    * @param od an origin-destination pair
+    * @param graph the graph to search
+    * @param odPair an origin-destination pair
     * @param config (unused)
     * @return the shortest path
     */
-  override def runAlgorithm(g: Graph, od: AlgorithmRequest, config: Option[Nothing] = None): Option[AlgorithmResult] = {
-    if (od.src == od.dst) {
+  override def runAlgorithm(graph: Graph, odPair: AlgorithmRequest, config: Option[Nothing] = None): Option[AlgorithmResult] = {
+    if (odPair.src == odPair.dst) {
       None
     } else {
-      minSpanningDijkstras(g, od.src, Some(od.dst)) match {
+      minSpanningDijkstras(graph, odPair.src, Some(odPair.dst)) match {
         case None => None // destination was never found
         case Some(spanningTree) =>
-          backPropagate(g, spanningTree, od.dst) match {
+          backPropagate(graph, spanningTree, odPair.dst) match {
             case None => None //
             case Some(path) =>
-              Some(AlgorithmResult(od, path))
+              Some(AlgorithmResult(odPair, path))
           }
       }
     }

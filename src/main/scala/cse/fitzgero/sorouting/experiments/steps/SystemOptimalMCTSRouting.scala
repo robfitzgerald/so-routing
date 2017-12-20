@@ -51,6 +51,7 @@ object SystemOptimalMCTSRouting {
       val t: Try[ExperimentStepLog] =
         Try [ExperimentStepLog] {
           // load population.xml as GenSeq[Request], split according to config.routePercentage
+          // @ TODO: can we give these files an absolute path? this isn't yet in MATSim, why isn't it relative to the working directory?
           val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
           val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
           val (testGroup, controlGroup) = ExperimentOps.splitPopulation(population, config.routePercentage)

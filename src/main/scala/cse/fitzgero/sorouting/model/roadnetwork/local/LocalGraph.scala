@@ -4,7 +4,7 @@ import cse.fitzgero.graph.propertygraph._
 
 import scala.collection.GenMap
 
-// a graph class designed for local (non-cluster) simulations
+// an immutable graph class designed for local (non-cluster) simulations
 class LocalGraph (
   adjList: GenMap[String, GenMap[String, String]],
   edgeList: GenMap[String, LocalEdge],
@@ -20,6 +20,12 @@ class LocalGraph (
   def edges: GenMap[String, LocalEdge] = edgeList
   def vertices: GenMap[String, LocalVertex] = vertexList
 
+  /**
+    * given an edge ID, and an edge object, add it to this graph, or update if the edge ID is already present
+    * @param e the edge ID
+    * @param a the edge attribute
+    * @return
+    */
   override def updateEdge(e: String, a: Edge): LocalGraph =
     if (adjList.isDefinedAt(a.src))
       new LocalGraph(
@@ -34,6 +40,12 @@ class LocalGraph (
         vertexList
       )
 
+  /**
+    * given a vetex ID, and a vertex object, add it to this graph, or update if the vertex ID is already present
+    * @param v the vertex ID
+    * @param a the vertex attribute
+    * @return
+    */
   override def updateVertex(v: String, a: LocalVertex): LocalGraph =
     if (adjList.isDefinedAt(v))
       new LocalGraph(

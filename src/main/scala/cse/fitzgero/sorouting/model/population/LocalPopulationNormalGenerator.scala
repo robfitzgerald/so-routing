@@ -9,7 +9,6 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 object LocalPopulationNormalGenerator extends LocalPopulationOps {
   /**
     * method to generate a collection of requests based on the graph topology
-    *
     * @param graph  underlying graph structure
     * @param config information to constrain the generated data
     * @return a set of requests
@@ -20,15 +19,10 @@ object LocalPopulationNormalGenerator extends LocalPopulationOps {
     val offsetGenerator = timeDepartureOffsetGenerator()
 
     1 to config.n map (n => {
-
       val (src, dst) = odPairGenerator()
-
       val personId: String = s"$n-$src#$dst"
-
       val timeDepartureOffset = offsetGenerator(config.departureTimeRange)
-
       val time: LocalTime = config.meanDepartureTime.plusSeconds(timeDepartureOffset)
-
       LocalRequest(personId, LocalODPair(personId, src, dst), time)
     })
   }
