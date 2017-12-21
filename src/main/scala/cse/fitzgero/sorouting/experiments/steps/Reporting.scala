@@ -18,6 +18,7 @@ object Reporting {
     def experimentBaseDirectory: String
     def experimentInstanceDirectory: String
     def experimentConfigDirectory: String
+    def congestionRatioThreshold: Double
   }
 
   case class ReportData(header: String, data: String)
@@ -34,7 +35,7 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,network avg travel time,population avg travel time,expected cost effect,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal\n"
+      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,congestionThreshold,,network avg travel time,population avg travel time,expected cost effect,,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal,embarrassingly solvable requests\n"
       val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
       val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
 
@@ -48,18 +49,22 @@ object Reporting {
         (conf.populationSize * conf.routePercentage).toInt.toString,
         conf.routePercentage,
         conf.timeWindow,
+        conf.congestionRatioThreshold.toString,
+        "",
         safeLog("experiment.result.traveltime.avg.network"),
         safeLog("experiment.result.traveltime.avg.population"),
         getExpectedCostEffect(log),
+        "",
         safeLog("algorithm.mksp.local.hasalternates"),
-        safeLog("algorithm.selection.local.success"),
+        safeLog("algorithm.selection.local.called"),
         safeLog("algorithm.selection.local.mcts.solution.complete"),
         safeLog("algorithm.selection.local.mcts.true.shortest.paths.had.overlap"),
         safeLog("algorithm.selection.local.mcts.optimal.paths.had.overlap"),
         safeLog("algorithm.selection.local.mcts.solution.route.count"),
         safeLog("algorithm.selection.local.mcts.overlap.count.selfish"),
         safeLog("algorithm.selection.local.mcts.overlap.count.optimal"),
-        safeLog("algorithm.selection.local.mcts.selfish.matches.optimal")
+        safeLog("algorithm.selection.local.mcts.selfish.matches.optimal"),
+        safeLog("algorithm.selection.local.mcts.solution.meaningful")
         //
       ).mkString("",",","\n")
 

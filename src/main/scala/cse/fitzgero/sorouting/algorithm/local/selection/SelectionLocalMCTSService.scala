@@ -41,17 +41,16 @@ object SelectionLocalMCTSService extends GraphService {
     val algRequest = request.map(req => (req._1.od, req._2))
     SelectionLocalMCTSAlgorithm.runAlgorithm(graph, algRequest, config) match {
       case Some(mctsResult) =>
-
-        if (mctsResult.size == request.size) {
+        if (mctsResult.result.size == request.size) {
           // we got to a terminal node and we have a complete mctsResult
           println(s"[MCTS] finished with complete solution")
-          promise.success(processResults(graph, request, mctsResult, mctsResult))
+          promise.success(processResults(graph, request, mctsResult.result, mctsResult.result, mctsResult.embarrassinglySolvable))
         } else {
           // we didn't get to a terminal node; we need to fill in the remaining requests with shortest paths
-          println(s"[MCTS] finished but incomplete solution. calling MSSP for ${request.size - mctsResult.size} of ${request.size} unhandled requests.")
+          println(s"[MCTS] finished but incomplete solution. calling MSSP for ${request.size - mctsResult.result.size} of ${request.size} unhandled requests.")
           // for each edge, the contribution from the mcts group in edge flows
           val edgesAndFlows: GenMap[String, Int] =
-            mctsResult.flatMap {
+            mctsResult.result.flatMap {
               req =>
                 req._2.map(_.edgeId)
             }.groupBy(identity)
@@ -71,17 +70,17 @@ object SelectionLocalMCTSService extends GraphService {
 
           // run MSSP with remaining requests on updated graph
           // TODO: remove Await and instead map these futures together for the 'mctsResult' or use a promise
-          val remaining = request.filter { req => !mctsResult.isDefinedAt(req._1.od) }
+          val remaining = request.filter { req => !mctsResult.result.isDefinedAt(req._1.od) }
           MSSPLocalDijkstrasService.runService(updatedGraph, remaining.toSeq.map{ req => req._1 }) onComplete {
             case Success(extrasResult) =>
               println(s"[MCTS] MSSP completed for remaining ${remaining.size} unrouted vehicles")
               // merge and return
               extrasResult match {
                 case None =>
-                  promise.success(processResults(graph, request, mctsResult, mctsResult))
+                  promise.success(processResults(graph, request, mctsResult.result, mctsResult.result, mctsResult.embarrassinglySolvable))
                 case Some(extrasResolved) =>
-                  val finalResult = mctsResult ++ extrasResolved.result.map{ res => (res.request.od, res.path)}
-                  promise.success(processResults(graph, request, mctsResult, finalResult))
+                  val finalResult = mctsResult.result ++ extrasResolved.result.map{ res => (res.request.od, res.path)}
+                  promise.success(processResults(graph, request, mctsResult.result, finalResult, mctsResult.embarrassinglySolvable))
               }
             case Failure(e) =>
               promise.failure(e)
@@ -95,10 +94,10 @@ object SelectionLocalMCTSService extends GraphService {
           }.toSeq
         val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, returnAsMSSP).toLong
         val log = Map[String, Long](
-          "algorithm.selection.local.success" -> 0L,
+          "algorithm.selection.local.called" -> 1L,
           "algorithm.selection.local.runtime" -> runTime,
           "algorithm.selection.local.cost.effect" -> costEffect,
-          "algorithm.selection.local.mcts.selfish.matches.optimal" -> 1L
+          "algorithm.selection.local.mcts.selfish.matches.optimal" -> request.size
         )
         println(s"[MCTS] no solution found, returning selfish solution for ${returnAsMSSP.size} requests")
         promise.success(Some(ServiceResult(returnAsMSSP, log)))
@@ -114,7 +113,7 @@ object SelectionLocalMCTSService extends GraphService {
     * @param finalResult in the case of a partial mcts solution, it is the full set of requests filled in with selfish routing
     * @return
     */
-  def processResults(graph: LocalGraph, request: ServiceRequest, mctsResult: GenMap[LocalODPair, Path], finalResult: GenMap[LocalODPair, Path]): Option[ServiceResult] = {
+  def processResults(graph: LocalGraph, request: ServiceRequest, mctsResult: GenMap[LocalODPair, Path], finalResult: GenMap[LocalODPair, Path], embarrassinglySolvable: Boolean): Option[ServiceResult] = {
     // format response
     val repackagedResponses: GenSeq[LocalResponse] =
       request.flatMap(req =>
@@ -153,14 +152,15 @@ object SelectionLocalMCTSService extends GraphService {
     val log = Map[String, Long](
       "algorithm.selection.local.runtime" -> runTime,
       "algorithm.selection.local.cost.effect" -> costEffect,
-      "algorithm.selection.local.success" -> 1L,
+      "algorithm.selection.local.called" -> 1L,
       "algorithm.selection.local.mcts.solution.complete" -> completeSolutionFromMCTS,
-      "algorithm.selection.local.mcts.true.shortest.paths.had.overlap" -> (if (trueShortestPathsHadOverlap) 1L else 0L),
-      "algorithm.selection.local.mcts.optimal.paths.had.overlap" -> (if (optimalPathsHadOverlap) 1L else 0L),
+      "algorithm.selection.local.mcts.true.shortest.paths.had.overlap" -> (if (trueShortestPathsHadOverlap) mctsResult.size else 0L),
+      "algorithm.selection.local.mcts.optimal.paths.had.overlap" -> (if (optimalPathsHadOverlap) mctsResult.size else 0L),
       "algorithm.selection.local.mcts.solution.route.count" -> mctsResult.size,
       "algorithm.selection.local.mcts.overlap.count.selfish" -> overlapCountInTrueShortestPaths,
       "algorithm.selection.local.mcts.overlap.count.optimal" -> overlapCountInSolutionPaths,
-      "algorithm.selection.local.mcts.selfish.matches.optimal" -> (if (solutionRoutesEqualSelfishRoutes) 1L else 0L)
+      "algorithm.selection.local.mcts.selfish.matches.optimal" -> (if (solutionRoutesEqualSelfishRoutes) mctsResult.size else 0L),
+      "algorithm.selection.local.mcts.solution.meaningful" -> (if (!embarrassinglySolvable) mctsResult.size else 0L)
     )
     Some(ServiceResult(repackagedResponses, log))
   }

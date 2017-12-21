@@ -70,10 +70,10 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     def congestionRatioThreshold: Double
     def computationalLimit: Long // ms.
   }
-  override type AlgorithmResult = GenMap[LocalODPair, Path]
+  case class AlgorithmResult(result: GenMap[LocalODPair, Path], embarrassinglySolvable: Boolean)
 
   val DefaultCp: Double = 0.7071D // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
-  val DefaultCongestionRatioThreshold: Double = 1.5D // the 'game' is to keep growth below 50%
+  val DefaultCongestionRatioThreshold: Double = 1.5D // the 'game' is to keep growth below 50%, by default
   val DefaultComputationalLimit = 60000 // 60 seconds
   val random: Random = new Random
 
@@ -95,7 +95,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       }
       else {
         // single OD request, so we just return it with it's true shortest path
-        Some(request.mapValues(_.head))
+        Some(AlgorithmResult(request.mapValues(_.head), embarrassinglySolvable = true))
       }
     }
     else {
@@ -122,8 +122,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       }
 
       val endTime: Long = Instant.now.toEpochMilli + ComputationalLimit
-      def withinComputationalLimit: Boolean = Instant.now.toEpochMilli < endTime
-
+      def withinComputationalTimeLimit: Boolean = Instant.now.toEpochMilli < endTime
 
 
       // global search support collections
@@ -192,24 +191,19 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           }.take(1)
         }
 
-        while (withinComputationalLimit) {
+        while (withinComputationalTimeLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, UctSearchHelpers.selectionMethod)
           val ∆ = defaultPolicy(graph, v_t, globalAlts, UctSearchHelpers.forAllCostDiff)
           backup(v_t, ∆)
         }
 
-//        println(root.toString)
+        println(root.toString)
 
         if (root.reward == 0) {
           None
         } else {
-          if (root.visits == root.reward) {
-            println(s"[MCTS-ALG] all ${root.visits} explored states produced a reward")
-          }
-
           val result = bestPath(root).map { tag =>untag(tag) }
-
-          Some(result.toMap)
+          Some(AlgorithmResult(result.toMap, embarrassinglySolvable = root.visits == root.reward))
         }
       }
 
@@ -521,22 +515,46 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     }
 
     val printRewardLowerBound: Int = 10
+    val printDepthLimit: Int = 2
 
     /**
       * prints a tree of any nodes that have been visited more than $printRewardLowerBound times
       * @return string representation of MCTS tree data structure
       */
     override def toString: String = {
-      def depth: String = (for { i <- state.indices } yield "-").mkString("")
-      parent() match {
-        case None => // root node
-          children match {
-            case None => // root with no children
-              s"root - $visits visits, $reward reward\n"
-            case Some(childrenToPrint) =>
-              val recurseResult: String =
-                childrenToPrint
-                  .map {
+      val depth: Int = state.size
+      if (depth > printDepthLimit) ""
+      else {
+        def indent: String = (for { i <- 0 until depth } yield "-").mkString("")
+        parent() match {
+          case None => // root node
+            children match {
+              case None => // root with no children
+                s"root - $visits visits, $reward reward\n"
+              case Some(childrenToPrint) =>
+                val recurseResult: String =
+                  childrenToPrint
+                    .map {
+                      child =>
+                        child._2() match {
+                          case None => "" // unexplored child
+                          case Some(childToPrint) =>
+                            childToPrint.toString
+                        }
+                    }.mkString("")
+                s"root - $visits visits, $reward reward\n$recurseResult"
+            }
+          case Some(_p) =>
+            val tagData: String = action match {
+              case None => ""
+              case Some(tag) => s"${tag.personId}#${tag.alternate}"
+            }
+            children match {
+              case None => // leaf with no children
+                if (reward < printRewardLowerBound) "" else s"$indent$tagData - $visits visits, $reward reward\n"
+              case Some(childrenToPrint) =>
+                val recurseResult: String =
+                  childrenToPrint.map {
                     child =>
                       child._2() match {
                         case None => "" // unexplored child
@@ -544,28 +562,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
                           childToPrint.toString
                       }
                   }.mkString("")
-              s"root - $visits visits, $reward reward\n$recurseResult"
-          }
-        case Some(_p) =>
-          val tagData: String = action match {
-            case None => ""
-            case Some(tag) => s"${tag.personId}#${tag.alternate}"
-          }
-          children match {
-            case None => // leaf with no children
-              if (reward < printRewardLowerBound) "" else s"$depth$tagData - $visits visits, $reward reward\n"
-            case Some(childrenToPrint) =>
-              val recurseResult: String =
-                childrenToPrint.map {
-                  child =>
-                    child._2() match {
-                      case None => "" // unexplored child
-                      case Some(childToPrint) =>
-                        childToPrint.toString
-                    }
-                }.mkString("")
-              if (reward < printRewardLowerBound) s"$recurseResult" else s"$depth$tagData - $visits visits, $reward reward\n$recurseResult"
-          }
+                if (reward < printRewardLowerBound) s"$recurseResult" else s"$indent$tagData - $visits visits, $reward reward\n$recurseResult"
+            }
+        }
       }
     }
   }
@@ -596,7 +595,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       parent.children match {
         case None => None
         case Some(childrenOfParent) =>
-          val children = childrenOfParent.flatMap(_._2())
+          val children: GenIterable[MCTSTreeNode] = childrenOfParent.flatMap(_._2())
           if (children.isEmpty) {
             None
           } else {

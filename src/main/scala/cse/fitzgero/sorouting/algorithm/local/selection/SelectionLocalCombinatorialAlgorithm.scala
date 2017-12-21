@@ -17,7 +17,6 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type AlgorithmConfig = Nothing
 
   val DefaultFlowCost: Double = 0D
-  val ParallelizationDepth: Int = 2 // produces k ^ ParallelizationDepth lightweight threads in this computation
 
   type AlgorithmResult = GenMap[LocalODPair, Path]
 
@@ -33,7 +32,6 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
       None
     } else {
       case class Tag(personId: String, alternate: Int)
-
       type AltIndices = Vector[Int]
 
       // a back-tracking map from personIds to their OD object
@@ -41,7 +39,10 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
         request.keys.map(od => (od.id, od)).toMap
 
 
-
+      /**
+        * setup and run the recursive combinatorial solver
+        * @return the solution
+        */
       def solve(): GenSeq[(Tag, Path)] = {
         val globalAlternates: Vector[Vector[(Tag, Path)]] =
           request.map { od => {
@@ -55,12 +56,14 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
         val startIndices: AltIndices = globalAlternates.map { _ => 0 }
         val finalIndices: AltIndices = globalAlternates.map { _.size - 1 }
 
-//        def atEnd(ind: AltIndices): Boolean = ind == finalIndices
-
-        // invariant: starts from last position
-        def advance(startIndices: AltIndices): Option[AltIndices] = {
-          if (startIndices == finalIndices) { None }
-          else if (startIndices.isEmpty) { None }
+        /**
+          * advances the index selection. invariant: starts from last position
+          * @param currentIndices the indices for the current combination, which we will be advancing
+          * @return a set of indices that forms a new combination
+          */
+        def advance(currentIndices: AltIndices): Option[AltIndices] = {
+          if (currentIndices == finalIndices) { None }
+          else if (currentIndices.isEmpty) { None }
           else {
             @tailrec
             def _advance (ind: AltIndices, currentBucket: Int) : AltIndices = {
@@ -75,17 +78,27 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
               }
             }
             Some {
-              _advance(startIndices, startIndices.size - 1)
+              _advance(currentIndices, currentIndices.size - 1)
             }
           }
         }
 
+        /**
+          * unpack the set of alternate paths at the given alternate index set
+          * @param ind the alternate index set
+          * @return the tags and paths associated with this index set
+          */
         def alternatesAt(ind: AltIndices): GenSeq[(Tag, Path)] =
           ind.zipWithIndex
             .map { i =>
               globalAlternates(i._2)(i._1)
             }
 
+        /**
+          * finds the cost of this combination of tags and paths
+          * @param thisCombination a combination of alternate path data
+          * @return
+          */
         def evaluate(thisCombination: GenSeq[(Tag, Path)]): Double = {
           val edgesVisited: GenMap[EdgeId, Int] =
             thisCombination
@@ -108,11 +121,17 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
         }
 
 
-
+        /**
+          * explores all possible combinations and holds on to the best one
+          * @param ind a set of indices which correspond to a combination of alternate paths
+          * @param best the current winner
+          * @return the final winner, after testing all possible combinations
+          */
         @tailrec
         def _solve (ind: AltIndices = startIndices, best: (Double, GenSeq[(Tag, Path)]) = (evaluate(alternatesAt(startIndices)), alternatesAt(startIndices))) : GenSeq[(Tag, Path)] = {
           advance(ind) match {
-            case None => best._2
+            case None =>
+              best._2
             case Some(nextInd) =>
               val nextAlts = alternatesAt(ind)
               val nextCost: Double = evaluate(nextAlts)
@@ -126,8 +145,9 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
         }
         _solve()
       }
+      val recurseResult: GenSeq[(Tag, Path)] = solve()
       val result: GenMap[LocalODPair, Path] =
-        solve().map {
+        recurseResult.map {
           tup => (unTag(tup._1.personId), tup._2)
         }.toMap
 

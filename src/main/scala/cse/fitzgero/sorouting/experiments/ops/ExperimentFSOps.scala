@@ -14,9 +14,10 @@ object ExperimentFSOps {
   // MATSim XML DocTypes for writing new files
   val WriteXmlDeclaration: Boolean = true
   val UTF8: String = "UTF-8"
-  val ConfigDocType: DocType = DocType("config", SystemID("http://www.matsim.org/files/dtd/config_v1.dtd"), Nil)
-  val NetworkDocType: DocType = DocType("network", SystemID("http://www.matsim.org/files/dtd/network_v1.dtd"), Nil)
-  val PopulationDocType: DocType = DocType("population", SystemID("http://www.matsim.org/files/dtd/population_v6.dtd"), Nil)
+  private val cwd: String = Paths.get("").toAbsolutePath.toString
+  val ConfigDocType: DocType = DocType("config", SystemID(s"$cwd/src/main/resources/matsim-dtd/config_v1.dtd"), Nil)
+  val NetworkDocType: DocType = DocType("network", SystemID(s"$cwd/src/main/resources/matsim-dtd/network_v1.dtd"), Nil)
+  val PopulationDocType: DocType = DocType("population", SystemID(s"$cwd/src/main/resources/matsim-dtd/population_v6.dtd"), Nil)
 
   def populationFileURI(path: String): String = s"$path/population.xml"
   def networkFileURI(path: String): String = s"$path/network.xml"

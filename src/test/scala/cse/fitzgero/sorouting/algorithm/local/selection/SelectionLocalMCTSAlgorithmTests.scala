@@ -36,8 +36,8 @@ class SelectionLocalMCTSAlgorithmTests extends SORoutingUnitTestTemplate {
             case None => fail()
             case Some(result) =>
               println(result)
-              println(result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
-              println(s"request size ${kspResult.size} result size ${result.size}")
+              println(result.result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
+              println(s"request size ${kspResult.size} result size ${result.result.size}")
           }
         }
       }
@@ -59,7 +59,7 @@ class SelectionLocalMCTSAlgorithmTests extends SORoutingUnitTestTemplate {
             case None => fail()
             case Some(result) =>
               println(result)
-              println(result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
+              println(result.result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
           }
         }
       }
@@ -81,7 +81,7 @@ class SelectionLocalMCTSAlgorithmTests extends SORoutingUnitTestTemplate {
             case None => fail()
             case Some(result) =>
               println(result)
-              println(result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
+              println(result.result.flatMap(_._2.map(_.edgeId)).groupBy(identity).mapValues(_.size).filter(_._2 > 1))
           }
         }
       }
