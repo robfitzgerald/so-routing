@@ -35,7 +35,7 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,congestionThreshold,,network avg travel time,population avg travel time,expected cost effect,,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal,embarrassingly solvable requests\n"
+      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,congestionThreshold,,network avg travel time,population avg travel time,expected cost effect,,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal,not embarrassingly solvable requests\n"
       val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
       val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
 

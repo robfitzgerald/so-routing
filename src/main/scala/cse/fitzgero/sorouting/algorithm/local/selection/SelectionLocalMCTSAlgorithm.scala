@@ -191,6 +191,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           }.take(1)
         }
 
+        // Monte Carlo Tree Search Loop
         while (withinComputationalTimeLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, UctSearchHelpers.selectionMethod)
           val ∆ = defaultPolicy(graph, v_t, globalAlts, UctSearchHelpers.forAllCostDiff)

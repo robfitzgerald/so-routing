@@ -28,6 +28,7 @@ object MATSimUETest extends Experiment with App with MATSimSimulator {
     populationSize: Int,
     timeWindow: Int,
     routePercentage: Double,
+    congestionRatioThreshold: Double,
     startTime: LocalTime,
     departTime: LocalTime,
     endTime: Option[LocalTime],
@@ -38,11 +39,12 @@ object MATSimUETest extends Experiment with App with MATSimSimulator {
     s"result/$name",
     s"result/$name/$configLabel",
     s"result/$name/$configLabel/${LocalDateTime.now.toString}",
-//    LocalPopulationNormalGenerator,
-    LocalPopulationSelectedSourceSinkGenerator("254129111","254809988"), // rye
+    LocalPopulationNormalGenerator,
+//    LocalPopulationSelectedSourceSinkGenerator("254129111","254809988"), // rye
     pop,
     win,
     route,
+    congestionThreshold,
     LocalTime.parse("08:00:00"),
     LocalTime.parse("08:15:00"),
     Some(LocalTime.parse("09:00:00")),
