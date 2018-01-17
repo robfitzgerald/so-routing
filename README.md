@@ -13,7 +13,6 @@
 ```bash
 $ git clone https://gitlab.com/ucdenver-bdlab/SO-Routing
 $ cd SO-Routing
-$ sbt
 ```
 
 - install build dependencies
