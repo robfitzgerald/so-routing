@@ -1,0 +1,7 @@
+val ods = for { src <- 1 to 25; dst <- 1 to 25 if (src != dst && ((src - 5) to (src + 5)).contains(dst) ) } yield (src, dst)
+val withIndex = ods.map(tup => (s"${tup._1}-${tup._2}", tup._1, tup._2)) // (edgeId, src, dst)
+withIndex.foreach(tup => println(s""""${tup._1}" -> LocalEdge("${tup._1}", "${tup._2}", "${tup._3}", new LocalEdgeAttribute() with BasicCostFunction),"""))
+val adjList = withIndex.groupBy(_._2).mapValues(_.map(t => (t._1, t._3)).toMap)
+val quotedSrcDst = adjList.mapValues(_.map(t => s""""${t._1}" -> "${t._2}""""))
+quotedSrcDst.foreach(t => println(s""""${t._1}" -> Map[String, String](${t._2.mkString(", ")}),"""))
+ods.map(tup => s""""${tup._2}" -> LocalVertex("${tup._2}", 0, 0),""").foreach(println)

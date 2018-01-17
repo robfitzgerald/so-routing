@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<!DOCTYPE config SYSTEM "src/main/resources/matsim-dtd/config_v1.dtd">
+<config>
+
+	<module name="global">
+		<!--<param name="randomSeed" value="4711" />-->
+		<param name="coordinateSystem" value="Atlantis" />
+	</module>
+
+	<module name="network">
+		<param name="inputNetworkFile" value="network.xml" />
+	</module>
+
+	<module name="plans">
+		<param name="inputPlansFile" value="plans100.xml" />
+	</module>
+
+	<module name="controler">
+		<param name="createGraphs" value="true" />
+		<param name="outputDirectory" value="./output/alamosa" />
+		<param name="firstIteration" value="0" />
+		<param name="lastIteration" value="0" />
+		<param name="routingAlgorithmType" value="FastDijkstra" />
+		<param name="mobsim" value="qsim" />
+		<param name="snapshotFormat" value="" />
+	</module>
+
+	<module name="planCalcScore">
+		<param name="activityType_0"            value="home" />
+		<param name="activityPriority_0"        value="1" />
+		<param name="activityType_1"            value="work" />
+		<param name="activityPriority_1"        value="1" />
+	</module>
+</config>

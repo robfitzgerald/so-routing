@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<network>
+    <links>
+        <link id="0-1" from="0" to="1" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="1-2" from="1" to="2" freespeed="27.78" capacity="1000.0"/>
+        <link id="1-4" from="1" to="4" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="2-5" from="2" to="5" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="4-7" from="4" to="7" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="5-8" from="5" to="8" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="7-10" from="7" to="10" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="8-11" from="8" to="11" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="10-11" from="10" to="11" freespeed="27.78" capacity="1000.0"/>
+
+        <link id="11-100" from="11" to="100" freespeed="27.78" capacity="1000.0"/>
+    </links>
+    <nodes>
+        <node id="0" x="60" y="40"/>
+        <node id="1" x="20" y="40"/>
+        <node id="2" x="10" y="30"/>
+        <node id="4" x="30" y="30"/>
+        <node id="5" x="10" y="20"/>
+        <node id="7" x="30" y="20"/>
+        <node id="8" x="10" y="10"/>
+        <node id="10" x="30" y="10"/>
+        <node id="11" x="20" y="0"/>
+        <node id="100" x="60" y="0"/>
+    </nodes>
+</network>

@@ -30,18 +30,22 @@ class SnapshotEventHandler (callback: (SnapshotEventData) => Unit) extends Vehic
   }
 
   override def handleEvent(event: VehicleEntersTrafficEvent): Unit = {
+//    println(s"[link: ${event.getLinkId}-veh: ${event.getVehicleId}] entering traffic")
     callback(LinkEnterData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: VehicleLeavesTrafficEvent): Unit = {
+//    println(s"[link: ${event.getLinkId}-veh: ${event.getVehicleId}] leaving traffic")
     callback(LinkLeaveData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: LinkEnterEvent): Unit = {
+//    println(s"[link: ${event.getLinkId}-veh: ${event.getVehicleId}] entering link")
     callback(LinkEnterData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 
   override def handleEvent(event: LinkLeaveEvent): Unit = {
+//    println(s"[link: ${event.getLinkId}-veh: ${event.getVehicleId}] leaving link")
     callback(LinkLeaveData(event.getTime.toInt, event.getLinkId, event.getVehicleId))
   }
 }
