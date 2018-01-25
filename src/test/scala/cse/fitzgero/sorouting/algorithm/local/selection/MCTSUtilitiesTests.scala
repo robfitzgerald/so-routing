@@ -5,6 +5,7 @@ import scala.collection.GenMap
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.local.selection.SelectionLocalMCTSAlgorithm.{MCTSAltPath, MCTSTreeNode, PersonID, Tag}
 import org.scalatest.prop.PropertyChecks
+//import org.scalacheck.Prop.forAllNoShrink
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
 

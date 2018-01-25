@@ -77,6 +77,9 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
   val DefaultComputationalLimit = 60000 // 60 seconds
 //  val random: Random = new Random
 
+  case class BestChoice(choice: Seq[MCTSAltPath], cost: Double)
+  case class BestChoiceCollection(partial: Option[BestChoice] = None, complete: Option[BestChoice] = None)
+
   /**
     * UCT-based MCTS solving a Multi-Armed Bandit Problem over the multiset of alternate paths
     * @param graph underlying graph structure
@@ -192,11 +195,16 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
           }.take(1)
         }
 
+        // holds the best value at each iteration as a side effect
+        var best = BestChoiceCollection()
+
         // Monte Carlo Tree Search Loop
         while (withinComputationalTimeLimit) {
           val v_t = treePolicy(root, Cp, remainingTags, util.selectionMethod)
-          val ∆ = defaultPolicy(graph, v_t, globalAlts, util.random, util.meanCostDiff)
-          backup(v_t, ∆)
+          // the symbol for delta (∆) created an issue when default policy went from one result to a tuple result
+          val (delta, newBest) = defaultPolicy(graph, v_t, globalAlts, util.random, best, util.meanCostDiff)
+          best = newBest
+          backup(v_t, delta)
         }
 
         println(root.toString)
@@ -204,8 +212,20 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         if (root.reward == 0) {
           None
         } else {
-          val result = bestPath(root).map { tag =>untag(tag) }
-          Some(AlgorithmResult(result.toMap, embarrassinglySolvable = root.visits == root.reward))
+//          val result: Seq[(LocalODPair, Path)] = bestPath(root).map { tag =>untag(tag) }
+          if (best.complete.isEmpty) println(s"no complete solution, using a partial solution")
+          val result2 =
+            best.complete.orElse(best.partial) match {
+              case None => Seq()
+              case Some(choice) =>
+                choice.choice map { alt => untag(alt.tag)}
+            }
+
+//          println(s"best via bestPath:")
+//          println(s"$result\n")
+//          println(s"actual best evaluated:")
+//          println(s"$result2\n")
+          Some(AlgorithmResult(result2.toMap, embarrassinglySolvable = root.visits == root.reward))
         }
       }
 
@@ -218,22 +238,24 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     * @param graph the underlying graph structure
     * @param v the current node we are evaluating from
     * @param globalAlts the complete list of available alternate paths
+    * @param random our random number generator
+    * @param best the current best choices for branch nodes and leaf nodes in our search
     * @param evaluate a special user-defined function that evaluates a given outcome
     * @return {1|0} the reward function
     */
-  def defaultPolicy(graph: LocalGraph, v: MCTSTreeNode, globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]], random: Random, evaluate: (List[(String, Double, Double)]) => Int): Int = {
+  def defaultPolicy(graph: LocalGraph, v: MCTSTreeNode, globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]], random: Random, best: BestChoiceCollection, evaluate: (List[(String, Double, Double)]) => Int): (Int, BestChoiceCollection) = {
     // identify what persons remain.
     val personsRepresented: Set[PersonID] = v.state.map(_.tag.personId).toSet
     val remainingPersons = globalAlts.filter(person => !personsRepresented(person._1))
 
     // add selections of theirs randomly
-    val setToEvaluate: GenIterable[MCTSAltPath] =
-      remainingPersons.map{
+    val setToEvaluate: Seq[MCTSAltPath] =
+      (remainingPersons.map{
       person =>
         val alts = person._2.toVector
         val selectedAlt = alts(random.nextInt(alts.size))
         MCTSAltPath(selectedAlt._1, selectedAlt._2)
-    } ++ v.state
+    } ++ v.state).toList
 
     // evaluate the cost
     val edgesAndFlows: GenMap[String, Int] =
@@ -245,13 +267,53 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
       for {
         e <- edgesAndFlows
         edge <- graph.edgeById(e._1)
-        currentEdgeFlow <- edge.attribute.flow
-        previousCost <- edge.attribute.costFlow(-1)
-        updatedCost <- edge.attribute.linkCostFlow
-        if currentEdgeFlow != 0
+//        currentEdgeFlow <- edge.attribute.flow
+        previousCost <- edge.attribute.costFlow(e._2 - 1)
+        updatedCost <- edge.attribute.costFlow(e._2)
+        if e._2 != 0
       } yield (e._1, previousCost, updatedCost)
 
-    evaluate(evaluatedCosts.toList)
+    // the cost of this group
+    val thisFlowCost: Double = evaluatedCosts.map { _._3 }.sum
+
+    val score: Int = evaluate(evaluatedCosts.toList)
+    // if these are better than our best choices, update our best choices
+
+    val newBest: BestChoiceCollection =
+      if (score == 0) {
+        best
+      }
+      else {
+        if (remainingPersons.nonEmpty) {
+          // branch of search tree. evaluate against the best.partial case
+          best.copy(partial = {
+            best.partial match {
+              case None => Some(BestChoice(v.state.toList, thisFlowCost))
+              case Some(bestPartial) =>
+                if (bestPartial.cost < thisFlowCost) {
+                  Some(bestPartial)
+                } else {
+                  Some(BestChoice(v.state.toList, thisFlowCost))
+                }
+            }
+          })
+        } else {
+          // leaf of search tree. evaluate against the best.complete case
+          best.copy(complete = {
+            best.complete match {
+              case None => Some(BestChoice(setToEvaluate, thisFlowCost))
+              case Some(bestComplete) =>
+                if (bestComplete.cost < thisFlowCost) {
+                  Some(bestComplete)
+                } else {
+                  Some(BestChoice(setToEvaluate, thisFlowCost))
+                }
+            }
+          })
+        }
+      }
+
+    (score, newBest)
   }
 
 

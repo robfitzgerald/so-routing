@@ -69,7 +69,7 @@ object MATSimSO_MCTSTest extends Experiment with App with MATSimSimulator {
     coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
 //    coefficientCp = 0D, // finds a solution if possible in most situations, best for our case (flat monte carlo, yes?)
     congestionRatioThreshold = congestionThreshold, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
-    computationalLimit = 5000L // milliseconds
+    computationalLimit = 1000L // milliseconds
   )
 
   runSync(config, List(
