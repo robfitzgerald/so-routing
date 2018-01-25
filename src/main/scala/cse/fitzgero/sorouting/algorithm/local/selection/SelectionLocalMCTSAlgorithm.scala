@@ -66,7 +66,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
   type Path = List[SORoutingPathSegment]
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
   override type AlgorithmConfig = {
-    def coefficientCp: Double // 0 means flat mon
+    def coefficientCp: Double // 0 means flat monte carlo
     def congestionRatioThreshold: Double
     def computationalLimit: Long // ms.
   }
@@ -75,7 +75,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
   val DefaultCp: Double = 0.7071D // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
   val DefaultCongestionRatioThreshold: Double = 1.5D // the 'game' is to keep growth below 50%, by default
   val DefaultComputationalLimit = 60000 // 60 seconds
-  val random: Random = new Random
+//  val random: Random = new Random
 
   /**
     * UCT-based MCTS solving a Multi-Armed Bandit Problem over the multiset of alternate paths
@@ -160,6 +160,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
               }
         }
 
+      val util = MCTSUtilities(None, CongestionRatioThreshold, globalAlts)
 
       /**
         * main method for running MCTS
@@ -193,8 +194,8 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
 
         // Monte Carlo Tree Search Loop
         while (withinComputationalTimeLimit) {
-          val v_t = treePolicy(root, Cp, remainingTags, UctSearchHelpers.selectionMethod)
-          val ∆ = defaultPolicy(graph, v_t, globalAlts, UctSearchHelpers.forAllCostDiff)
+          val v_t = treePolicy(root, Cp, remainingTags, util.selectionMethod)
+          val ∆ = defaultPolicy(graph, v_t, globalAlts, util.random, util.meanCostDiff)
           backup(v_t, ∆)
         }
 
@@ -205,62 +206,6 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
         } else {
           val result = bestPath(root).map { tag =>untag(tag) }
           Some(AlgorithmResult(result.toMap, embarrassinglySolvable = root.visits == root.reward))
-        }
-      }
-
-      object UctSearchHelpers {
-        /**
-          * gives a reward value only if none of the costs increase by CongestionRatioThreshold
-          * @param costs the edges paired with their starting costs and the costs from this group
-          * @return 1 or 0
-          */
-        def forAllCostDiff(costs: List[(String, Double, Double)]): Int = {
-          val testResult = costs.forall { cost =>
-            (cost._3 / cost._2) <= CongestionRatioThreshold
-          }
-          if (testResult) 1 else 0
-        }
-
-        /**
-          * gives a reward value if the average of the costs do not exceed CongestionRatioThreshold
-          * @param costs the edges paired with their starting costs and the costs from this group
-          * @return 1 or 0
-          */
-        def meanCostDiff(costs: List[(String, Double, Double)]): Int = {
-          if (costs.isEmpty) {
-            1 // TODO: costs should never be empty since this algorithm returns None on an empty request.
-          } else {
-            val avgCostDiff: Double = costs.map {
-              tuple =>
-                tuple._3 / tuple._2
-            }.sum / costs.size
-            val testResult: Boolean = avgCostDiff <= CongestionRatioThreshold
-            if (testResult) 1 else 0
-          }
-        }
-
-        /**
-          * backtrack from a tag to the associated (Tag, EdgeList)
-          * @param tag a tag (shorthand for a person and a number representing an alternate path)
-          * @return the tag along with the edge list related to this tag
-          */
-        private def getAltPathFrom(tag: Tag): MCTSAltPath = {
-          val edges = globalAlts(tag.personId)(tag)
-          MCTSAltPath(tag, edges)
-        }
-
-        /**
-          * a helper that selects a random child in the Expand step
-          * @param children the set of children of a given MCTS node
-          * @return one child selected by a random process
-          */
-        def selectionMethod(children: GenMap[Tag, () => Option[MCTSTreeNode]]): MCTSAltPath = {
-          val remainingAlts =
-            children
-              .filter(_._2().isEmpty)
-              .keys.map(getAltPathFrom)
-              .toVector
-          remainingAlts(random.nextInt(remainingAlts.size))
         }
       }
 
@@ -276,7 +221,7 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     * @param evaluate a special user-defined function that evaluates a given outcome
     * @return {1|0} the reward function
     */
-  def defaultPolicy(graph: LocalGraph, v: MCTSTreeNode, globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]], evaluate: (List[(String, Double, Double)]) => Int): Int = {
+  def defaultPolicy(graph: LocalGraph, v: MCTSTreeNode, globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]], random: Random, evaluate: (List[(String, Double, Double)]) => Int): Int = {
     // identify what persons remain.
     val personsRepresented: Set[PersonID] = v.state.map(_.tag.personId).toSet
     val remainingPersons = globalAlts.filter(person => !personsRepresented(person._1))

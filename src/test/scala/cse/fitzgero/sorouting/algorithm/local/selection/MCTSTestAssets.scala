@@ -2,11 +2,77 @@ package cse.fitzgero.sorouting.algorithm.local.selection
 
 import java.time.LocalTime
 
+import cse.fitzgero.sorouting.algorithm.local.selection.SelectionLocalMCTSAlgorithm.Tag
 import cse.fitzgero.sorouting.model.population.LocalRequest
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction._
 import cse.fitzgero.sorouting.model.roadnetwork.local._
+import org.scalacheck.Gen
 
 object MCTSTestAssets {
+
+  trait selectionMethodGenerator {
+    val globalAltsGen: Gen[Seq[(String, Map[Tag, Seq[String]])]] = Gen.containerOf[Seq, (String, Map[Tag, Seq[String]])] {
+      for {
+        pID <- Gen.alphaChar // Gen.oneOf((97 to 122).map(_.toChar.toString))
+        alts <- Gen.choose(1, 8)
+      } yield {
+        val personID: String = pID.toString
+        val altPaths: Map[Tag, Seq[String]] = (1 to alts).map {
+          alt =>
+            Tag(personID, alt) -> (1 to 2).map {
+              edgeId => s"$personID-alt$alt-edge$edgeId"
+            }
+        }.toMap
+        (personID, altPaths)
+      }
+    }
+  }
+  trait selectionMethodMock {
+    val globalAlts: Map[String, Map[Tag, Seq[String]]] =
+      Map(
+        "e" -> Map(
+          Tag("e", 1) -> Vector("e-alt1-edge1", "e-alt1-edge2"),
+          Tag("e", 5) -> Vector("e-alt5-edge1", "e-alt5-edge2"),
+          Tag("e", 3) -> Vector("e-alt3-edge1", "e-alt3-edge2"),
+          Tag("e", 4) -> Vector("e-alt4-edge1", "e-alt4-edge2"),
+          Tag("e", 6) -> Vector("e-alt6-edge1", "e-alt6-edge2"),
+          Tag("e", 2) -> Vector("e-alt2-edge1", "e-alt2-edge2")
+        ),
+        "n" -> Map(
+          Tag("n", 5) -> Vector("n-alt5-edge1", "n-alt5-edge2"),
+          Tag("n", 1) -> Vector("n-alt1-edge1", "n-alt1-edge2"),
+          Tag("n", 6) -> Vector("n-alt6-edge1", "n-alt6-edge2"),
+          Tag("n", 4) -> Vector("n-alt4-edge1", "n-alt4-edge2"),
+          Tag("n", 3) -> Vector("n-alt3-edge1", "n-alt3-edge2"),
+          Tag("n", 2) -> Vector("n-alt2-edge1", "n-alt2-edge2")
+        ),
+        "j" -> Map(
+          Tag("j", 1) -> Vector("j-alt1-edge1", "j-alt1-edge2"),
+          Tag("j", 2) -> Vector("j-alt2-edge1", "j-alt2-edge2"),
+          Tag("j", 3) -> Vector("j-alt3-edge1", "j-alt3-edge2")
+        ),
+        "t" -> Map(
+          Tag("t", 1) -> Vector("t-alt1-edge1", "t-alt1-edge2"),
+          Tag("t", 2) -> Vector("t-alt2-edge1", "t-alt2-edge2"),
+          Tag("t", 3) -> Vector("t-alt3-edge1", "t-alt3-edge2"),
+          Tag("t", 5) -> Vector("t-alt5-edge1", "t-alt5-edge2"),
+          Tag("t", 4) -> Vector("t-alt4-edge1", "t-alt4-edge2"),
+          Tag("t", 6) -> Vector("t-alt6-edge1", "t-alt6-edge2")
+        ),
+        "i" -> Map(
+          Tag("i", 1) -> Vector("i-alt1-edge1", "i-alt1-edge2"),
+          Tag("i", 2) -> Vector("i-alt2-edge1", "i-alt2-edge2")
+        ),
+        "g" -> Map(
+          Tag("g", 1) -> Vector("g-alt1-edge1", "g-alt1-edge2"),
+          Tag("g", 2) -> Vector("g-alt2-edge1", "g-alt2-edge2"),
+          Tag("g", 3) -> Vector("g-alt3-edge1", "g-alt3-edge2"),
+          Tag("g", 4) -> Vector("g-alt4-edge1", "g-alt4-edge2")
+        ), "c" -> Map(
+          Tag("c", 1) -> Vector("c-alt1-edge1", "c-alt1-edge2"),
+          Tag("c", 2) -> Vector("c-alt2-edge1", "c-alt2-edge2")
+        ), "h" -> Map(Tag("h", 2) -> Vector("h-alt2-edge1", "h-alt2-edge2"), Tag("h", 8) -> Vector("h-alt8-edge1", "h-alt8-edge2"), Tag("h", 3) -> Vector("h-alt3-edge1", "h-alt3-edge2"), Tag("h", 1) -> Vector("h-alt1-edge1", "h-alt1-edge2"), Tag("h", 7) -> Vector("h-alt7-edge1", "h-alt7-edge2"), Tag("h", 5) -> Vector("h-alt5-edge1", "h-alt5-edge2"), Tag("h", 6) -> Vector("h-alt6-edge1", "h-alt6-edge2"), Tag("h", 4) -> Vector("h-alt4-edge1", "h-alt4-edge2")), "r" -> Map(Tag("r", 1) -> Vector("r-alt1-edge1", "r-alt1-edge2"), Tag("r", 2) -> Vector("r-alt2-edge1", "r-alt2-edge2")), "d" -> Map(Tag("d", 2) -> Vector("d-alt2-edge1", "d-alt2-edge2"), Tag("d", 1) -> Vector("d-alt1-edge1", "d-alt1-edge2"), Tag("d", 5) -> Vector("d-alt5-edge1", "d-alt5-edge2"), Tag("d", 4) -> Vector("d-alt4-edge1", "d-alt4-edge2"), Tag("d", 3) -> Vector("d-alt3-edge1", "d-alt3-edge2")))
+  }
 
   trait graphComposedAlts extends requestComposed with graphComposedAltsTopology {
     val graph: LocalGraph =
