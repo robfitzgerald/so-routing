@@ -4,8 +4,14 @@ version := "1.0.0"
 
 scalaVersion := "2.11.11"
 
+// ~~~ Cats Pure Functional Library
+scalacOptions += "-Ypartial-unification"
+libraryDependencies += "org.typelevel" %% "cats-core" % "1.0.1"
 
-// ~~~ ScalaTest
+// ~~~ Scalaz Pure Functional Library
+//libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.17"
+
+// ~~~ Test Dependencies
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.4"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
@@ -22,10 +28,6 @@ resolvers += Resolver.bintrayRepo("matsim", "matsim")
 resolvers += "Osgeo Repo" at "http://download.osgeo.org/webdav/geotools/"
 libraryDependencies += "org.matsim" % "matsim" % "0.9.0" // exclude("com.google.inject", "guice")/* exclude("ch.qos.logback", "*")*/
 
-
-// ~~~ Scalaz
-// Functional Abstractions Library
-//libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.17"
 
 // ~~~ Scallop
 // command line parsing

@@ -7,6 +7,7 @@ import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasAlgorithm
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 import scala.collection.{GenMap, GenSeq}
+import cats.Eval
 
 object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
@@ -122,28 +123,27 @@ object SelectionLocalCombinatorialAlgorithm extends GraphAlgorithm {
 
 
         /**
-          * explores all possible combinations and holds on to the best one
+          * explores all possible combinations in a stack safe trampoline, holds on to the best combination and returns it on exhaustion of the search
           * @param ind a set of indices which correspond to a combination of alternate paths
           * @param best the current winner
           * @return the final winner, after testing all possible combinations
           */
-        @tailrec
-        def _solve (ind: AltIndices = startIndices, best: (Double, GenSeq[(Tag, Path)]) = (evaluate(alternatesAt(startIndices)), alternatesAt(startIndices))) : GenSeq[(Tag, Path)] = {
+        def _solve (ind: AltIndices = startIndices, best: (Double, GenSeq[(Tag, Path)]) = (evaluate(alternatesAt(startIndices)), alternatesAt(startIndices))) : Eval[GenSeq[(Tag, Path)]] = {
           advance(ind) match {
             case None =>
-              best._2
+              Eval.now(best._2)
             case Some(nextInd) =>
               val nextAlts = alternatesAt(ind)
               val nextCost: Double = evaluate(nextAlts)
               val nextTuple = (nextCost, nextAlts)
               if (nextCost < best._1) {
-                _solve(nextInd, nextTuple)
+                Eval.defer(_solve(nextInd, nextTuple))
               } else {
-                _solve(nextInd, best)
+                Eval.defer(_solve(nextInd, best))
               }
           }
         }
-        _solve()
+        _solve().value
       }
       val recurseResult: GenSeq[(Tag, Path)] = solve()
       val result: GenMap[LocalODPair, Path] =

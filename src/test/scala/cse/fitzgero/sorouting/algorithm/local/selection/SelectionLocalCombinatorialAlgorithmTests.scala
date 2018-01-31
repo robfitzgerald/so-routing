@@ -19,8 +19,9 @@ class SelectionLocalCombinatorialAlgorithmTests extends SORoutingUnitTestTemplat
         }
       }
     }
+
     // this can take up to an hour
-    "given a result of a bigger mksp search" should {
+    "given a result of a bigger mksp search" ignore {
       "find a minimal cost set" in new CombinatorialTestAssets.BiggerMap {
         SelectionLocalCombinatorialAlgorithm.runAlgorithm(bigGraph, kspResult) match {
           case None => fail("there should be a result")
