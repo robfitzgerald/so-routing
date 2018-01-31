@@ -244,76 +244,87 @@ object SelectionLocalMCTSAlgorithm extends GraphAlgorithm {
     * @return {1|0} the reward function
     */
   def defaultPolicy(graph: LocalGraph, v: MCTSTreeNode, globalAlts: GenMap[PersonID, GenMap[Tag, Seq[String]]], random: Random, best: BestChoiceCollection, evaluate: (List[(String, Double, Double)]) => Int): (Int, BestChoiceCollection) = {
-    // identify what persons remain.
-    val personsRepresented: Set[PersonID] = v.state.map(_.tag.personId).toSet
-    val remainingPersons = globalAlts.filter(person => !personsRepresented(person._1))
+    // if this node is a leaf, and has been visited before, simply repeat the reward (repeat zero, or increment if non-zero)
+    // this is a performance optimization
+    if (v.state.lengthCompare(globalAlts.size) == 0 && v.visits > 0) {
+      if (v.reward == 0) {
+        (0, best)
+      } else {
+        (1, best)
+      }
+    } else {
 
-    // add selections of theirs randomly
-    val setToEvaluate: Seq[MCTSAltPath] =
-      (remainingPersons.map{
-      person =>
-        val alts = person._2.toVector
-        val selectedAlt = alts(random.nextInt(alts.size))
-        MCTSAltPath(selectedAlt._1, selectedAlt._2)
-    } ++ v.state).toList
+      // identify what persons remain.
+      val personsRepresented: Set[PersonID] = v.state.map(_.tag.personId).toSet
+      val remainingPersons = globalAlts.filter(person => !personsRepresented(person._1))
 
-    // evaluate the cost
-    val edgesAndFlows: GenMap[String, Int] =
-      setToEvaluate.flatMap(_.edges).groupBy(identity).mapValues(_.size)
+      // add selections of theirs randomly
+      val setToEvaluate: Seq[MCTSAltPath] =
+        (remainingPersons.map{
+          person =>
+            val alts = person._2.toVector
+            val selectedAlt = alts(random.nextInt(alts.size))
+            MCTSAltPath(selectedAlt._1, selectedAlt._2)
+        } ++ v.state).toList
 
-    // we can effectively calculate the marginal cost,
-    // by looking at the cost to add 1 in order to reach the current flow
-    val evaluatedCosts: GenIterable[(String, Double, Double)] =
+      // evaluate the cost
+      val edgesAndFlows: GenMap[String, Int] =
+        setToEvaluate.flatMap(_.edges).groupBy(identity).mapValues(_.size)
+
+      // we can effectively calculate the marginal cost,
+      // by looking at the cost to add 1 in order to reach the current flow
+      val evaluatedCosts: GenIterable[(String, Double, Double)] =
       for {
         e <- edgesAndFlows
         edge <- graph.edgeById(e._1)
-//        currentEdgeFlow <- edge.attribute.flow
+        //        currentEdgeFlow <- edge.attribute.flow
         previousCost <- edge.attribute.costFlow(e._2 - 1)
         updatedCost <- edge.attribute.costFlow(e._2)
         if e._2 != 0
       } yield (e._1, previousCost, updatedCost)
 
-    // the cost of this group
-    val thisFlowCost: Double = evaluatedCosts.map { _._3 }.sum
+      // the cost of this group
+      val thisFlowCost: Double = evaluatedCosts.map { _._3 }.sum
 
-    val score: Int = evaluate(evaluatedCosts.toList)
-    // if these are better than our best choices, update our best choices
+      val score: Int = evaluate(evaluatedCosts.toList)
+      // if these are better than our best choices, update our best choices
 
-    val newBest: BestChoiceCollection =
-      if (score == 0) {
-        best
-      }
-      else {
-        if (remainingPersons.nonEmpty) {
-          // branch of search tree. evaluate against the best.partial case
-          best.copy(partial = {
-            best.partial match {
-              case None => Some(BestChoice(v.state.toList, thisFlowCost))
-              case Some(bestPartial) =>
-                if (bestPartial.cost < thisFlowCost) {
-                  Some(bestPartial)
-                } else {
-                  Some(BestChoice(v.state.toList, thisFlowCost))
-                }
-            }
-          })
-        } else {
-          // leaf of search tree. evaluate against the best.complete case
-          best.copy(complete = {
-            best.complete match {
-              case None => Some(BestChoice(setToEvaluate, thisFlowCost))
-              case Some(bestComplete) =>
-                if (bestComplete.cost < thisFlowCost) {
-                  Some(bestComplete)
-                } else {
-                  Some(BestChoice(setToEvaluate, thisFlowCost))
-                }
-            }
-          })
+      val newBest: BestChoiceCollection =
+        if (score == 0) {
+          best
         }
-      }
+        else {
+          if (remainingPersons.nonEmpty) {
+            // branch of search tree. evaluate against the best.partial case
+            best.copy(partial = {
+              best.partial match {
+                case None => Some(BestChoice(v.state.toList, thisFlowCost))
+                case Some(bestPartial) =>
+                  if (bestPartial.cost < thisFlowCost) {
+                    Some(bestPartial)
+                  } else {
+                    Some(BestChoice(v.state.toList, thisFlowCost))
+                  }
+              }
+            })
+          } else {
+            // leaf of search tree. evaluate against the best.complete case
+            best.copy(complete = {
+              best.complete match {
+                case None => Some(BestChoice(setToEvaluate, thisFlowCost))
+                case Some(bestComplete) =>
+                  if (bestComplete.cost < thisFlowCost) {
+                    Some(bestComplete)
+                  } else {
+                    Some(BestChoice(setToEvaluate, thisFlowCost))
+                  }
+              }
+            })
+          }
+        }
 
-    (score, newBest)
+      (score, newBest)
+    }
   }
 
 
