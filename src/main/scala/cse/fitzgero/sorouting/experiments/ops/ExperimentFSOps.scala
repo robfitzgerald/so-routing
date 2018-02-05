@@ -18,6 +18,7 @@ object ExperimentFSOps {
   val ConfigDocType: DocType = DocType("config", SystemID(s"$cwd/src/main/resources/matsim-dtd/config_v1.dtd"), Nil)
   val NetworkDocType: DocType = DocType("network", SystemID(s"$cwd/src/main/resources/matsim-dtd/network_v1.dtd"), Nil)
   val PopulationDocType: DocType = DocType("population", SystemID(s"$cwd/src/main/resources/matsim-dtd/population_v6.dtd"), Nil)
+  val BenchmarkSelectionAlgorithmDocType: DocType = DocType("benchmark-selection-algorithm", SystemID(s"$cwd/src/main/resources/benchmark-selection-algorithm_v1.dtd"), Nil)
 
   def populationFileURI(path: String): String = s"$path/population.xml"
   def networkFileURI(path: String): String = s"$path/network.xml"
@@ -25,15 +26,14 @@ object ExperimentFSOps {
   def snapshotFileURI(path: String): String = s"$path/snapshot.xml"
   def selfishDirectory(path: String): String = s"$path/selfish"
   def optimalDirectory(path: String): String = s"$path/optimal"
+  private def benchmarkDirectory: String = s"$cwd/benchmarks"
+  def benchmarkSelectionAlgorithmDirectory: String = s"$benchmarkDirectory/selectionAlgorithm"
+  def benchmarkSelectionAlgorithmURI(path: String): String = s"$path/benchmark.xml"
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
   def saveXmlDocType(uri: String, xmlElement: Elem, docType: DocType): String = {
     XML.save(uri, xmlElement, ExperimentFSOps.UTF8, ExperimentFSOps.WriteXmlDeclaration, docType)
-    // TODO: a spin wait that tests that the file exists. uncertain if XML.save is an async utility. do we want this?
-    //      val endLoop: Long = Instant.now.toEpochMilli + 20000L
-    //      while (Instant.now.toEpochMilli < endLoop && !Files.exists(Paths.get(uri))) { Thread.sleep(100) }
-    //      // (wrap in Try)
     uri
   }
 
