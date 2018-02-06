@@ -2,8 +2,6 @@ package cse.fitzgero.mcts
 
 import scala.collection.GenMap
 
-import cse.fitzgero.sorouting.algorithm.local.selection.SelectionLocalMCTSAlgorithm.MCTSTreeNode
-
 class MonteCarloTree [S,A] (
   var visits: Int = 0,
   var reward: Double = 0D,
@@ -45,6 +43,7 @@ class MonteCarloTree [S,A] (
     }
   }
 
+  def hasChildren: Boolean = children.nonEmpty
   def hasNoChildren: Boolean = children.isEmpty
   def hasUnexploredChildren: Boolean = children match {
     case None => false
