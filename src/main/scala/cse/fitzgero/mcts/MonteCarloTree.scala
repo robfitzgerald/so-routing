@@ -22,7 +22,7 @@ class MonteCarloTree [S,A] (
     * @param rewardUpdate the reward to add, typically 0 or 1
     * @return the updated (mutated) tree
     */
-  def updateReward(rewardUpdate: Int): MonteCarloTree[S,A] = {
+  def updateReward(rewardUpdate: Double): MonteCarloTree[S,A] = {
     reward = reward + rewardUpdate
     visits += 1
     this
