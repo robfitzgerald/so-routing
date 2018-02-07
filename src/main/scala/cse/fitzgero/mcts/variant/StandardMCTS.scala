@@ -35,12 +35,15 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
 
           // simulate moves until a terminal game state is found, then evaluate
           @tailrec
-          def _defaultPolicy[S](state: S): Double = {
+          def _defaultPolicy(state: S): Double = {
             if (stateIsNonTerminal(state)) {
-              val nextState = selectAction(monteCarloTree, generatePossibleActions(state)) map {
+              selectAction(monteCarloTree, generatePossibleActions(state)) map {
                 action => applyAction(state,action)
+              } match {
+                case None => Double.MaxValue
+                case Some(nextState) =>
+                  _defaultPolicy(nextState)
               }
-              _defaultPolicy(nextState)
             } else {
               evaluate(state)
             }
@@ -96,10 +99,9 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
   override final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
     for {
       state <- node.state
-      validActions <- generatePossibleActions(state)
-      action <- actionSelection.selectAction(node, validActions)
-      newState <- applyAction(state, action)
+      action <- actionSelection.selectAction(node, generatePossibleActions(state))
     } yield {
+      val newState = applyAction(state, action)
       val newNode = MonteCarloTree(Some(newState), Some(action), None, () => Some(node))
       node.addChild(action, newNode)
       newNode
