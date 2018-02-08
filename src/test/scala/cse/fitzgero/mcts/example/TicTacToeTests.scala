@@ -2,8 +2,10 @@ package cse.fitzgero.mcts.example
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import TicTacToe._
+import org.scalatest.prop.PropertyChecks
+import org.scalacheck.Gen
 
-class TicTacToeTests extends SORoutingUnitTestTemplate {
+class TicTacToeTests extends SORoutingUnitTestTemplate with PropertyChecks {
   "TicTacToe" when {
     "Move" when {
       "winningMoves" when {
@@ -90,6 +92,21 @@ class TicTacToeTests extends SORoutingUnitTestTemplate {
           "return Turn" in {
             val board = new Board(state = Set(Move(UL, X), Move(CC, O), Move(CR, X)), currentPlayer = O)
             Board.gameState(board) should equal (Board.Turn(3))
+          }
+        }
+      }
+      ".applyMove" when {
+        val moveGenerator = for {
+          piece <- Gen.oneOf(Seq(X, O))
+          position <- Gen.oneOf(Board.allPositions.toSeq)
+        } yield Move(position, piece)
+        "called with an empty board and an arbitrary move" should {
+          "add the move to the board" in {
+            forAll (moveGenerator) { (move: Move) =>
+              new Board(move.piece).applyMove(move) should equal (
+                new Board(currentPlayer = Piece.nextPlayer(move.piece), state=Set(move))
+              )
+            }
           }
         }
       }

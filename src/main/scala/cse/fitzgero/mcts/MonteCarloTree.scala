@@ -36,7 +36,9 @@ class MonteCarloTree [S,A] (
     */
   def addChild(action: A, node: MonteCarloTree[S,A]): MonteCarloTree[S,A] = {
     children match {
-      case None => this
+      case None =>
+        children = Some(GenMap(action -> (() => Some(node))))
+        this
       case Some(childrenToUpdate) =>
         children = Some(childrenToUpdate.updated(action, () => Some(node)))
         this
@@ -50,6 +52,7 @@ class MonteCarloTree [S,A] (
     case Some(c) => c.exists(_._2().isEmpty)
   }
   def hasNoUnexploredChildren: Boolean = !hasUnexploredChildren
+//  def print: String =
 }
 
 object MonteCarloTree {

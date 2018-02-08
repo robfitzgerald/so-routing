@@ -37,7 +37,7 @@ object TicTacToe {
 
     def gameState(board: Board): BoardState =
       if (isWinner(board, X)) XWins
-      else if (isWinner(board, Piece.nextPlayer(O))) OWins
+      else if (isWinner(board, O)) OWins
       else if (isFull(board)) Stalemate
       else Turn(board.state.size)
 
