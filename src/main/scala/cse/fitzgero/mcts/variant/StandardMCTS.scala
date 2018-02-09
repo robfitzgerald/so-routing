@@ -6,15 +6,12 @@ import cse.fitzgero.mcts.{MonteCarloTree, MonteCarloTreeSearch}
 trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
 
   override final def treePolicy(node: MonteCarloTree[S, A]): MonteCarloTree[S, A] = {
-    if (node.hasNoChildren) {
-      node
-    } else if (node.hasUnexploredChildren) {
+    if (stateIsNonTerminal(node.state)) {
       expand(node) match {
         case None => node
         case Some(newChild) => newChild
       }
     } else {
-      // recurse via bestchild
       bestChild(node) match {
         case None => node
         case Some(bestChild) =>
@@ -28,32 +25,28 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
   // pull them together into a trait that should be supplied
   // then we can have UCT, UCT_with_AMAF, etc.
   override final def defaultPolicy(monteCarloTree: MonteCarloTree[S,A]): Double = {
-    monteCarloTree.state match {
-      case None => Double.MaxValue
-      case Some(startState) =>
-        if (stateIsNonTerminal(startState)) {
+    if (stateIsNonTerminal(startState)) {
 
-          // simulate moves until a terminal game state is found, then evaluate
-          @tailrec
-          def _defaultPolicy(state: S): Double = {
-            if (stateIsNonTerminal(state)) {
-              selectAction(monteCarloTree, generatePossibleActions(state)) map {
-                action => applyAction(state,action)
-              } match {
-                case None => Double.MaxValue
-                case Some(nextState) =>
-                  _defaultPolicy(nextState)
-              }
-            } else {
-              evaluate(state)
-            }
+      // simulate moves until a terminal game state is found, then evaluate
+      @tailrec
+      def _defaultPolicy(state: S): Double = {
+        if (stateIsNonTerminal(state)) {
+          selectAction(generatePossibleActions(state)) map {
+            action => applyAction(state,action)
+          } match {
+            case None => Double.MaxValue
+            case Some(nextState) =>
+              _defaultPolicy(nextState)
           }
-
-          _defaultPolicy(startState)
         } else {
-          // return the evaluation of this state
-          evaluate(startState)
+          evaluate(state)
         }
+      }
+
+      _defaultPolicy(startState)
+    } else {
+      // return the evaluation of this state
+      evaluate(startState)
     }
   }
 
@@ -79,10 +72,8 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
       node.children map {
         _.flatMap {
           // produce a tuple for each valid child that is (cost, child)
-          _._2() flatMap { child =>
-            child.state map {
-              state => (evaluate(state), child)
-            }
+          _._2() map { child =>
+            (evaluate(child.state), child)
           }
         }.maxBy{_._1}
           // take the child associated with the tuple that has evaluates with the maximal reward
@@ -98,11 +89,10 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     */
   override final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
     for {
-      state <- node.state
-      action <- actionSelection.selectAction(node, generatePossibleActions(state))
+      action <- actionSelection.selectAction(generatePossibleActions(node.state))
     } yield {
-      val newState = applyAction(state, action)
-      val newNode = MonteCarloTree(Some(newState), Some(action), None, () => Some(node))
+      val newState = applyAction(node.state, action)
+      val newNode = MonteCarloTree(newState, Some(action), None, node)
       node.addChild(action, newNode)
       newNode
     }

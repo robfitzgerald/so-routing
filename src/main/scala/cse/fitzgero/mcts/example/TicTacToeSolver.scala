@@ -28,8 +28,8 @@ class TicTacToeSolver(
   override def generatePossibleActions(state: Board): Seq[Move] =
     Board.possibleMoves(state)
 
-  override def selectAction(monteCarloTree: MonteCarloTree[Board, Move], actions: Seq[Move]): Option[Move] =
-    actionSelection.selectAction(monteCarloTree, actions)
+  override def selectAction(actions: Seq[Move]): Option[Move] =
+    actionSelection.selectAction(actions)
 
   override def stateIsNonTerminal(state: Board): Boolean =
     Board.gameState(state) match {
@@ -37,6 +37,7 @@ class TicTacToeSolver(
       case _ => false
     }
 
+  override def startState: Board = Board(X)
   override def random: RandomGenerator = new BuiltInRandomGenerator(Some(seed))
   override val samplingMethod =  UCTSamplingFunction(Cp)
   override val terminationCriterion = TimeTermination(Instant.now, duration)

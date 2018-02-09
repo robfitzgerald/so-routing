@@ -16,13 +16,15 @@ trait MonteCarloTreeSearch[S,A] {
   def terminationCriterion: TerminationCriterion
   def actionSelection: ActionSelection[S,A]
   def random: RandomGenerator
+  def hasPossibleActions(state: S): Boolean = generatePossibleActions(state).nonEmpty
 
   // domain and user-provided operations. to be implemented by the user
   def generatePossibleActions(state: S): Seq[A]
   def applyAction(state: S, action: A): S
   def evaluate(state: S): Double
   def stateIsNonTerminal(state: S): Boolean
-  def selectAction(monteCarloTree: MonteCarloTree[S,A], actions: Seq[A]): Option[A]
+  def selectAction(actions: Seq[A]): Option[A]
+  def startState: S
 
   /**
     * run this Monte Carlo Tree Search
@@ -30,7 +32,7 @@ trait MonteCarloTreeSearch[S,A] {
     */
   final def run(): MonteCarloTree[S,A] = {
 
-    val root: MonteCarloTree[S,A] = MonteCarloTree[S,A]()
+    val root: MonteCarloTree[S,A] = MonteCarloTree[S,A](state = startState)
 
     while (terminationCriterion.terminationCheck(root)) {
       val v_t = treePolicy(root)
