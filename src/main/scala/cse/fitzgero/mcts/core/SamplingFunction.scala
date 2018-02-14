@@ -3,18 +3,18 @@ package cse.fitzgero.mcts.core
 import cse.fitzgero.mcts.MonteCarloTree
 
 trait SamplingFunction {
-  def evaluate[S,A](monteCarloTree: MonteCarloTree[S,A]): Double
+  def evaluate[S,A](monteCarloTree: MonteCarloTree[S,A], Cp: Double): Double
 }
 
-class UCTSamplingFunction (Cp: Double) extends SamplingFunction {
+class UCTSamplingFunction extends SamplingFunction {
   /**
     * Upper Confidence Bound For Trees sampling method
     * @param node the node to evaluate
     * @return
     */
-  def evaluate[S,A](node: MonteCarloTree[S,A]): Double = {
-    val parentVisits: Int = node.parent() match {
-      case None => 0
+  def evaluate[S,A](node: MonteCarloTree[S,A], Cp: Double): Double = {
+    val parentVisits: Long = node.parent() match {
+      case None => 0L
       case Some(parent) => parent.visits
     }
     val exploitation: Double = if (node.visits == 0) 0D else node.reward / node.visits.toDouble
@@ -34,5 +34,5 @@ class UCTSamplingFunction (Cp: Double) extends SamplingFunction {
 }
 
 object UCTSamplingFunction {
-  def apply(Cp: Double): UCTSamplingFunction = new UCTSamplingFunction(Cp)
+  def apply(): UCTSamplingFunction = new UCTSamplingFunction
 }

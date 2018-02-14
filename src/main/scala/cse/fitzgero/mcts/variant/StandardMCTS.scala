@@ -5,36 +5,38 @@ import cse.fitzgero.mcts.{MonteCarloTree, MonteCarloTreeSearch}
 
 trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
 
-  override final def treePolicy(node: MonteCarloTree[S, A]): MonteCarloTree[S, A] = {
+  @tailrec
+  override protected final def treePolicy(node: MonteCarloTree[S, A], Cp: Double): MonteCarloTree[S, A] = {
     if (stateIsNonTerminal(node.state)) {
-      expand(node) match {
-        case None => node
-        case Some(newChild) => newChild
+      if (hasUnexploredActions(node)) {
+        bestChild(node, Cp) match {
+          case None => node
+          case Some(bestChild) =>
+            treePolicy(bestChild, Cp)
+        }
+      } else {
+        expand(node) match {
+          case None => node
+          case Some(newChild) => newChild
+        }
       }
     } else {
-      bestChild(node) match {
-        case None => node
-        case Some(bestChild) =>
-          treePolicy(bestChild)
-      }
+      node
     }
   }
 
 
-  // TODO: default policy, tree policy, and backup will want to be abstracted out
-  // pull them together into a trait that should be supplied
-  // then we can have UCT, UCT_with_AMAF, etc.
-  override final def defaultPolicy(monteCarloTree: MonteCarloTree[S,A]): Double = {
-    if (stateIsNonTerminal(startState)) {
+  override protected final def defaultPolicy(monteCarloTree: MonteCarloTree[S,A]): Double = {
+    if (stateIsNonTerminal(monteCarloTree.state)) {
 
       // simulate moves until a terminal game state is found, then evaluate
       @tailrec
       def _defaultPolicy(state: S): Double = {
         if (stateIsNonTerminal(state)) {
-          selectAction(generatePossibleActions(state)) map {
-            action => applyAction(state,action)
-          } match {
-            case None => Double.MaxValue
+          selectAction(generatePossibleActions(state)) map { applyAction(state,_) } match {
+            case None =>
+              // should never reach this line if State and Actions are well defined
+              Double.MaxValue
             case Some(nextState) =>
               _defaultPolicy(nextState)
           }
@@ -43,14 +45,14 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
         }
       }
 
-      _defaultPolicy(startState)
+      _defaultPolicy(monteCarloTree.state)
     } else {
-      // return the evaluation of this state
-      evaluate(startState)
+      evaluate(monteCarloTree.state)
     }
   }
 
-  override final def backup(node: MonteCarloTree[S, A], delta: Double): MonteCarloTree[S, A] = {
+  @tailrec
+  override protected final def backup(node: MonteCarloTree[S, A], delta: Double): MonteCarloTree[S, A] = {
     node.parent() match {
       case None =>
         node.updateReward(delta)
@@ -66,15 +68,15 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     * @param node the parent node
     * @return the best child, based on the evaluate function provided by the user
     */
-  override final def bestChild(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
+  override protected final def bestChild(node: MonteCarloTree[S,A], Cp: Double): Option[MonteCarloTree[S,A]] = {
     if (node.hasNoChildren) { None }
     else {
       node.children map {
-        _.flatMap {
+        _.map {
+          tuple =>
           // produce a tuple for each valid child that is (cost, child)
-          _._2() map { child =>
-            (evaluate(child.state), child)
-          }
+          val child: MonteCarloTree[S,A] = tuple._2()
+          (samplingMethod.evaluate(child, Cp), child)
         }.maxBy{_._1}
           // take the child associated with the tuple that has evaluates with the maximal reward
           ._2
@@ -87,7 +89,7 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     * @param node the parent node we are expanding from
     * @return the new node of the tree
     */
-  override final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
+  override protected final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
     for {
       action <- actionSelection.selectAction(generatePossibleActions(node.state))
     } yield {

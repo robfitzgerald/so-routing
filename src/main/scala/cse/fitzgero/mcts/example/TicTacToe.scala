@@ -52,7 +52,9 @@ object TicTacToe {
 
   }
 
-  case class Move (position: Position, piece: Piece)
+  case class Move (position: Position, piece: Piece) {
+    override def toString: String = s"$piece plays $position"
+  }
 
   sealed trait Position
   case object UL extends Position
