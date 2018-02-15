@@ -8,5 +8,9 @@ import cse.fitzgero.graph.basicgraph.BasicPathSegment
   * @param cost an optional vector of calculated costs
   */
 case class SORoutingPathSegment (edgeId: String, cost: Option[Seq[Double]]) extends BasicPathSegment with Serializable {
-  override type EdgeId = String
+  override type EdgeId = SORoutingPathSegment.EdgeId
+}
+
+object SORoutingPathSegment {
+  type EdgeId = String
 }

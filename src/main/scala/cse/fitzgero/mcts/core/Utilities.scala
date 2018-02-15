@@ -1,18 +1,19 @@
 package cse.fitzgero.mcts.core
 
 import scala.annotation.tailrec
+import scala.collection.GenSeq
 
 import cse.fitzgero.mcts.MonteCarloTree
 
 object Utilities {
 
-  def hasUnexploredActions[S,A](generatePossibleActions: (S) => Seq[A])(node: MonteCarloTree[S,A]): Boolean =
-    generatePossibleActions(node.state)
-      .diff(node.children match {
-        case None => Seq[A]()
-        case Some(c) => c.keys.toSeq
-      })
-      .isEmpty
+  def hasUnexploredActions[S,A](generatePossibleActions: (S) => Seq[A])(node: MonteCarloTree[S,A]): Boolean = {
+    val explored: GenSeq[A] = node.children match {
+      case None => Seq[A]()
+      case Some(c) => c.keys.toSeq
+    }
+    generatePossibleActions(node.state).diff(explored).nonEmpty
+  }
 
 
   def bestGame[S,A](bestChild: (MonteCarloTree[S,A], Double) => Option[MonteCarloTree[S,A]])(root: MonteCarloTree[S,A]): Seq[A] =

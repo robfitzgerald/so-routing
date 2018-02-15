@@ -9,15 +9,15 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
   override protected final def treePolicy(node: MonteCarloTree[S, A], Cp: Double): MonteCarloTree[S, A] = {
     if (stateIsNonTerminal(node.state)) {
       if (hasUnexploredActions(node)) {
+        expand(node) match {
+          case None => node
+          case Some(newChild) => newChild
+        }
+      } else {
         bestChild(node, Cp) match {
           case None => node
           case Some(bestChild) =>
             treePolicy(bestChild, Cp)
-        }
-      } else {
-        expand(node) match {
-          case None => node
-          case Some(newChild) => newChild
         }
       }
     } else {
