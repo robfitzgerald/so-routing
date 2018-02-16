@@ -9,6 +9,7 @@ trait TerminationCriterion {
 }
 
 class TimeTermination (
+  // TODO: rewrite using scala.concurrent.duration .fromNow, hasTimeLeft methods
   val startTime: Instant,
   val computationTimeBudget: Long
 ) extends TerminationCriterion {

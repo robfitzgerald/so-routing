@@ -1,5 +1,8 @@
 package cse.fitzgero.sorouting.model.path
 
+import scala.annotation.tailrec
+import scala.collection.GenSeq
+
 import cse.fitzgero.graph.basicgraph.BasicPathSegment
 
 /**
@@ -13,4 +16,19 @@ case class SORoutingPathSegment (edgeId: String, cost: Option[Seq[Double]]) exte
 
 object SORoutingPathSegment {
   type EdgeId = String
+  def hasNoOverlap(request: GenSeq[GenSeq[GenSeq[SORoutingPathSegment]]]): Boolean = {
+    @tailrec
+    def _hasNoOverlap(req: GenSeq[EdgeId], lookup: Set[EdgeId] = Set()): Boolean = {
+      if (req.isEmpty) true
+      else if (lookup(req.head)) false
+      else _hasNoOverlap(req.tail, lookup + req.head)
+    }
+    _hasNoOverlap(
+      for {
+        person <- request
+        alt <- person
+        edge <- alt
+      } yield edge.edgeId
+    )
+  }
 }

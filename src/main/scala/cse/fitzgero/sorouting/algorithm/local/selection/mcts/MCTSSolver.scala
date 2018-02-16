@@ -13,9 +13,9 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 class MCTSSolver(
   graph: LocalGraph,
   request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]],
+  congestionThreshold: Double,
   seed: Long = 0L,
   duration: Long = 5000L,
-  congestionThreshold: Double,
   val Cp: Double = 0.717D) extends StandardMCTS[AlternatesSet, Tag] {
 
    val globalAlternates: Tag.GlobalAlternates = Tag.repackage(request)
@@ -62,6 +62,9 @@ class MCTSSolver(
 }
 
 object MCTSSolver {
-  def apply(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]], seed: Long, duration: Long, congestionThreshold: Double, Cp: Double): MCTSSolver =
-    new MCTSSolver(graph, request, seed, duration, congestionThreshold, Cp)
+  def apply(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]], congestionThreshold: Double, seed: Long, duration: Long, Cp: Double): MCTSSolver =
+    new MCTSSolver(graph, request, congestionThreshold, seed, duration, Cp)
+  def apply(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]], congestionThreshold: Double): MCTSSolver =
+    new MCTSSolver(graph, request, congestionThreshold)
+
 }

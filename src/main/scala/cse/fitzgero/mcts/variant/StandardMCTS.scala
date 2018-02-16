@@ -63,11 +63,6 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     }
   }
 
-  /**
-    * find the best child of a parent node based on the selection policy of this MCTS algorithm
-    * @param node the parent node
-    * @return the best child, based on the evaluate function provided by the user
-    */
   override protected final def bestChild(node: MonteCarloTree[S,A], Cp: Double): Option[MonteCarloTree[S,A]] = {
     if (node.hasNoChildren) { None }
     else {
@@ -84,11 +79,6 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     }
   }
 
-  /**
-    * chooses a child to expand via a provided selection method and attaches that new node to the tree
-    * @param node the parent node we are expanding from
-    * @return the new node of the tree
-    */
   override protected final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
     for {
       action <- actionSelection.selectAction(generatePossibleActions(node.state))
