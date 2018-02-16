@@ -24,11 +24,16 @@ object StandardMCTSAlgorithm extends GraphAlgorithm {
   }
   type AlgorithmResult = GenMap[LocalODPair, Path]
 
+  // helpers to recognize trivial reward averages
+  def isApproximatelyOne(n: Double): Boolean = n <= 1 && n >= 0.999999D
+  def isApproximatelyZero(n: Double): Boolean = n >= 0 && n <= 0.000001D
+
   override def runAlgorithm(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[Path]], config: Option[AlgorithmConfig]): Option[GenMap[LocalODPair, Path]] = {
     if (SORoutingPathSegment.hasNoOverlap(request.values.toSeq)) {
       println("[mCTS02] request was found to have no overlapping edges. reverting to greedy solution.")
       None
     } else {
+
       val solver = config match {
         case Some(conf) =>
           MCTSSolver(
@@ -45,13 +50,15 @@ object StandardMCTSAlgorithm extends GraphAlgorithm {
             congestionThreshold = 1.1D
           )
       }
+
       val tree = solver.run()
+
       val finalReward = tree.reward / tree.visits
-      if (finalReward >= 0.99D) {
-        println("[MCTS02] final reward greater than 99% for root: trivial optimization. reverting to greedy solution.")
+      if (isApproximatelyOne(finalReward)) {
+        println("[MCTS02] final reward average was approx. 100% for root: trivial optimization. reverting to greedy solution.")
         None
-      } else if (finalReward < 0.01D) {
-        println("[MCTS02] final reward less than 1% for root: impossible optimization. reverting to greedy solution.")
+      } else if (isApproximatelyZero(finalReward)) {
+        println("[MCTS02] final reward average was approx. 0% for root: impossible optimization. reverting to greedy solution.")
         None
       } else {
         val solution = solver.bestGame(tree)
