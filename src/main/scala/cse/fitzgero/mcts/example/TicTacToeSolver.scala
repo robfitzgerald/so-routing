@@ -9,9 +9,8 @@ import cse.fitzgero.mcts.variant.StandardMCTS
 
 
 class TicTacToeSolver(
-  seed: Long = 0L,
-  duration: Long = 5000L,
-  val Cp: Double = 0.717D) extends StandardMCTS[Board, Move] {
+                      seed: Long = 0L,
+                      duration: Long = 5000L) extends StandardMCTS[Board, Move] {
 
   override def applyAction(state: Board, action: Move): Board = state.applyMove(action)
 
@@ -45,5 +44,5 @@ class TicTacToeSolver(
 object TicTacToeSolver {
   def apply(): TicTacToeSolver = new TicTacToeSolver()
   def apply(seed: Long, duration: Long, Cp: Double): TicTacToeSolver =
-    new TicTacToeSolver(seed, duration, Cp)
+    new TicTacToeSolver(seed, duration)
 }

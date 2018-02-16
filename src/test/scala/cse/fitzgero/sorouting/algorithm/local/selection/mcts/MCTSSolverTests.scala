@@ -13,8 +13,7 @@ class MCTSSolverTests extends SORoutingUnitTestTemplate {
           request = kspResult,
           seed = 0L,
           duration = 1000L,
-          congestionThreshold = 3D,
-          Cp = 0.717D
+          congestionThreshold = 3D
         )
         val tree: MonteCarloTree[Tag.AlternatesSet, Tag] = solver.run()
         println(tree.printTree(printDepth = 3))

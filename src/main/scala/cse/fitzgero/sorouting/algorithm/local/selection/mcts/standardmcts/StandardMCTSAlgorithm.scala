@@ -18,7 +18,6 @@ object StandardMCTSAlgorithm extends GraphAlgorithm {
   /////// algorithm API
   override type AlgorithmRequest = GenMap[LocalODPair, GenSeq[Path]]
   override type AlgorithmConfig = {
-    def coefficientCp: Double // exploration parameter
     def congestionRatioThreshold: Double // used to find "congestion improvement" in search
     def randomSeed: Long
     def computationalLimit: Long // ms. spent searching before decision
@@ -37,8 +36,7 @@ object StandardMCTSAlgorithm extends GraphAlgorithm {
             request = request,
             seed = conf.randomSeed,
             duration = conf.computationalLimit,
-            congestionThreshold = conf.congestionRatioThreshold,
-            Cp = conf.coefficientCp
+            congestionThreshold = conf.congestionRatioThreshold
           )
         case None =>
           MCTSSolver(
