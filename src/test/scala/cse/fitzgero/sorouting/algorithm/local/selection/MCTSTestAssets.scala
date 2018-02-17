@@ -110,16 +110,16 @@ object MCTSTestAssets {
 
     val shortestPath: Map[String, LocalEdge] =
       Map(
-        "ab" -> LocalEdge("ab", "a", "b", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "bc" -> LocalEdge("bc", "b", "c", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "cd1" -> LocalEdge("cd1", "c", "d", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
+        "ab" -> LocalEdge("ab", "a", "b", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "bc" -> LocalEdge("bc", "b", "c", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "cd1" -> LocalEdge("cd1", "c", "d", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
       )
 
     def alts(flow: Option[Double]): Map[String, LocalEdge] =
       Map(
-        "ad" -> LocalEdge("ad", "a", "d", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "bd" -> LocalEdge("bd", "b", "d", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "cd2" -> LocalEdge("cd2", "c", "d", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
+        "ad" -> LocalEdge("ad", "a", "d", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "bd" -> LocalEdge("bd", "b", "d", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "cd2" -> LocalEdge("cd2", "c", "d", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
       )
   }
 
@@ -175,29 +175,29 @@ object MCTSTestAssets {
       )
     val outerPathsEdges: Map[String, LocalEdge] =
       Map[String, LocalEdge](
-        "001" -> LocalEdge("001", "0", "1", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "002" -> LocalEdge("002", "0", "2", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "004" -> LocalEdge("004", "0", "4", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "104" -> LocalEdge("104", "1", "4", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "306" -> LocalEdge("306", "3", "6", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "407" -> LocalEdge("407", "4", "7", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "609" -> LocalEdge("609", "6", "9", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "708" -> LocalEdge("708", "7", "8", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "809" -> LocalEdge("809", "8", "9", new LocalEdgeAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
+        "001" -> LocalEdge("001", "0", "1", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "002" -> LocalEdge("002", "0", "2", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "004" -> LocalEdge("004", "0", "4", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "102" -> LocalEdge("102", "1", "2", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "104" -> LocalEdge("104", "1", "4", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "203" -> LocalEdge("203", "2", "3", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "306" -> LocalEdge("306", "3", "6", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "407" -> LocalEdge("407", "4", "7", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "609" -> LocalEdge("609", "6", "9", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "708" -> LocalEdge("708", "7", "8", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "809" -> LocalEdge("809", "8", "9", new LocalEdgeFlowAttribute(None, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
       )
     def tenElevenPaths(flow: Option[Double]): Map[String, LocalEdge] =
       Map(
-        "110" -> LocalEdge("110", "1", "10", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "10-9" -> LocalEdge("10-9", "10", "9", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "111" -> LocalEdge("111", "1", "11", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "11-9" -> LocalEdge("11-9", "11", "9", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
+        "110" -> LocalEdge("110", "1", "10", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "10-9" -> LocalEdge("10-9", "10", "9", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "111" -> LocalEdge("111", "1", "11", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "11-9" -> LocalEdge("11-9", "11", "9", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
     )
     def oneFivePath(flow: Option[Double]): Map[String, LocalEdge] =
       Map(
-        "105" -> LocalEdge("105", "1", "5", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
-        "509" -> LocalEdge("509", "5", "9", new LocalEdgeAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
+        "105" -> LocalEdge("105", "1", "5", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction),
+        "509" -> LocalEdge("509", "5", "9", new LocalEdgeFlowAttribute(flow, Some(4), Some(8.33), Some(50)) with BPRCostFunction)
       )
   }
   

@@ -21,10 +21,10 @@ object TestAssets {
         "3" -> Map[String, String]("301" -> "1")
       ),
       edgeList = Map[String, LocalEdge](
-        "102" -> LocalEdge("102", "1", "2", new LocalEdgeAttribute() with BasicCostFunction),
-        "103" -> LocalEdge("103", "1", "3", new LocalEdgeAttribute() with BasicCostFunction),
-        "203" -> LocalEdge("203", "2", "3", new LocalEdgeAttribute() with BasicCostFunction),
-        "301" -> LocalEdge("301", "3", "1", new LocalEdgeAttribute() with BasicCostFunction)
+        "102" -> LocalEdge("102", "1", "2", new LocalEdgeFlowAttribute() with BasicCostFunction),
+        "103" -> LocalEdge("103", "1", "3", new LocalEdgeFlowAttribute() with BasicCostFunction),
+        "203" -> LocalEdge("203", "2", "3", new LocalEdgeFlowAttribute() with BasicCostFunction),
+        "301" -> LocalEdge("301", "3", "1", new LocalEdgeFlowAttribute() with BasicCostFunction)
       ),
       vertexList = Map[String, LocalVertex](
         "1" -> LocalVertex("1", -10, 0),

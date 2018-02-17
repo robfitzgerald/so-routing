@@ -1,7 +1,7 @@
 package cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata
 
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeAttribute
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeFlowAttribute
 
 case class CongestionData(time: Int, vehicleCount: Int, congestionCost: Double)
 
@@ -16,7 +16,7 @@ case class NewAnalyticLinkData(
   congestion: List[CongestionData] = List(),
   travelTime: List[NewAnalyticLinkData.TravelTime] = List(),
   vehicles: NewAnalyticLinkData.VehicleArrivalData = Map(),
-  edge: LocalEdgeAttribute with CostFunction
+  edge: LocalEdgeFlowAttribute with CostFunction
 ) extends LinkData[AnalyticLinkDataUpdate] with NewAnalyticLinkDataOps {
 
   /**
@@ -26,7 +26,7 @@ case class NewAnalyticLinkData(
     */
   override def add(data: AnalyticLinkDataUpdate): NewAnalyticLinkData = {
     val vehicleUpdate = vehicles.updated(data.veh, data.t)
-    val edgeUpdate = LocalEdgeAttribute.modifyFlow(this.edge, 1)
+    val edgeUpdate = LocalEdgeFlowAttribute.modifyFlow(this.edge, 1)
     val congestionUpdate = updateCongestion(edgeUpdate, data)
     val result = this.copy(vehicles = vehicleUpdate, congestion = congestionUpdate, edge = edgeUpdate)
     result
@@ -39,7 +39,7 @@ case class NewAnalyticLinkData(
     */
   override def remove(data: AnalyticLinkDataUpdate): NewAnalyticLinkData = {
     val vehicleUpdate = vehicles - data.veh
-    val edgeUpdate = LocalEdgeAttribute.modifyFlow(this.edge, -1)
+    val edgeUpdate = LocalEdgeFlowAttribute.modifyFlow(this.edge, -1)
     val congestionUpdate = updateCongestion(edgeUpdate, data)
     val travelTimeUpdate = updateTravelTime(data)
     val result = this.copy(vehicles = vehicleUpdate, congestion = congestionUpdate, travelTime = travelTimeUpdate, edge = edgeUpdate)

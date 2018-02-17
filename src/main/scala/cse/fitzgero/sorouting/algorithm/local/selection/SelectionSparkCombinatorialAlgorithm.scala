@@ -10,7 +10,7 @@ import cse.fitzgero.graph.algorithm.GraphAlgorithm
 import cse.fitzgero.sorouting.algorithm.local.ksp.KSPLocalDijkstrasAlgorithm
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
-import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeAttribute, LocalGraph, LocalODPair}
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeAttribute, LocalEdgeFlowAttribute, LocalGraph, LocalODPair}
 
 object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
   override type VertexId = KSPLocalDijkstrasAlgorithm.VertexId
@@ -127,7 +127,7 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
       None
     } else if (expectedCombinations < CombinationsParallelizationThreshold) {
       // find minimum using local method
-      val edgeCostLookup: GenMap[String, LocalEdgeAttribute with CostFunction] = edgeLookup(graph)
+      val edgeCostLookup: GenMap[String, LocalEdgeFlowAttribute with CostFunction] = edgeLookup(graph)
       val minimum =
         combinations
           .collect()
@@ -139,7 +139,7 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
       Some(minimum)
     } else {
       // find minimum using spark aggregate method
-      val edgeCostLookup: Broadcast[GenMap[String, LocalEdgeAttribute with CostFunction]] =
+      val edgeCostLookup: Broadcast[GenMap[String, LocalEdgeFlowAttribute with CostFunction]] =
         sc.broadcast(edgeLookup(graph))
 
       val zero = Seq.empty[(Double, Seq[(Tag, Path)])]
@@ -205,7 +205,7 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
       .mapValues(_.map(_._2).sum)
 
 
-  def costOfCombinationSet(lookup: GenMap[String, LocalEdgeAttribute with CostFunction])(combination: Map[EdgeId, Int]): Double =
+  def costOfCombinationSet(lookup: GenMap[String, LocalEdgeFlowAttribute with CostFunction])(combination: Map[EdgeId, Int]): Double =
     combination.map {
       edgeAndFlow =>
         lookup(edgeAndFlow._1)
@@ -214,6 +214,7 @@ object SelectionSparkCombinatorialAlgorithm extends GraphAlgorithm {
       }.sum
 
 
-  def edgeLookup(graph: LocalGraph): GenMap[String, LocalEdgeAttribute with CostFunction] =
-    graph.edges.map(edgeRow => (edgeRow._1, edgeRow._2.attribute))
+  // TODO: design flaw here. became an issue when different types of edge attributes emerged
+  def edgeLookup(graph: LocalGraph): GenMap[String, LocalEdgeFlowAttribute with CostFunction] = ???
+//    graph.edges.map(edgeRow => (edgeRow._1, edgeRow._2.attribute))
 }

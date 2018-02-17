@@ -14,6 +14,7 @@ import cse.fitzgero.sorouting.experiments.ops.ExperimentOps.TimeGroup
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentOps, ExperimentStepOps, MATSimOps}
 import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithFlows
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment.{ExperimentGlobalLog, ExperimentStepLog, StepStatus, SyncStep}
 
@@ -70,7 +71,7 @@ object UserEquilibriumRouting {
           val result = timeGroups.foldLeft((GenSeq.empty[LocalResponse], Map.empty[String, Long]))(incrementalStep)
 
           // save final population (routed) to disk
-          val graph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, config.timeWindow)
+          val graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, None, BPRCostFunctionType, config.timeWindow)
           val populationUE: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUE, ExperimentFSOps.PopulationDocType)
 
@@ -114,7 +115,7 @@ object UserEquilibriumRouting {
 
         // grab the group of drivers who have already had routes solved, from the beginning of the day, up until this time group
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
-        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, timeWindow)
+        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, None, BPRCostFunctionType, timeWindow)
         val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // run a MATSim simulation from the beginning of the day up to the beginning of this time group, and grab the final snapshot
@@ -128,7 +129,7 @@ object UserEquilibriumRouting {
         val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
 
         // load the road network graph with the flows from the MATSim snapshot
-        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, timeWindow)
+        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, Some(snapshotXML), BPRCostFunctionType, timeWindow)
         ExperimentFSOps.recursiveDelete(snapshotDirectory)
 
         // run multiple source shortest paths on this timegroup over the snapshot graph

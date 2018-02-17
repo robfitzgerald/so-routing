@@ -9,6 +9,7 @@ import scala.xml.XML
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentStepOps, MATSimOps}
 import cse.fitzgero.sorouting.model.population.LocalPopulationOps
 import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithFlows
 import edu.ucdenver.fitzgero.lib.experiment._
 
 /**
@@ -199,7 +200,7 @@ object ExperimentAssetGenerator {
   def generatePopulation(popSize: Int, networkPath: String, departTime: LocalTime, timeDeviation: Option[LocalTime], populationGenerator: LocalPopulationOps): xml.Elem = {
     import populationGenerator.LocalPopulationConfig
     val networkXml: xml.Elem = XML.loadFile(networkPath)
-    val graph = LocalGraphOps.readMATSimXML(networkXml)
+    val graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXml)
     val populationConfig: LocalPopulationConfig = LocalPopulationConfig(popSize, departTime, timeDeviation)
     val requests = populationGenerator.generateRequests(graph, populationConfig)
     populationGenerator.generateXMLRequests(graph, requests)

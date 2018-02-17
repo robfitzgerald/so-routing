@@ -18,6 +18,28 @@ object LocalEdge {
 
   val MATSimFlowRate: Double = 3600D // distance units per hour
 
+  def ofDrivers(
+    id: String,
+    src: String,
+    dst: String,
+    capacity: Option[Double] = None,
+    freeFlowSpeed: Option[Double] = None,
+    distance: Option[Double] = None,
+    costFunction: Option[CostFunctionType] = None,
+    algorithmFlowRate: Double = 3600D): LocalEdge = {
+    val capacityScaled: Option[Double] = capacity.map(_ * (algorithmFlowRate / MATSimFlowRate))
+    costFunction match {
+      case None =>
+        LocalEdge(id, src, dst, new LocalEdgeSimulationAttribute(capacity = capacityScaled, freeFlowSpeed = freeFlowSpeed, distance = distance) with BasicCostFunction)
+      case Some(cost) => cost match {
+        case BasicCostFunctionType =>
+          LocalEdge(id, src, dst, new LocalEdgeSimulationAttribute(capacity = capacityScaled, freeFlowSpeed = freeFlowSpeed, distance = distance) with BasicCostFunction)
+        case BPRCostFunctionType =>
+          LocalEdge(id, src, dst, new LocalEdgeSimulationAttribute(capacity = capacityScaled, freeFlowSpeed = freeFlowSpeed, distance = distance) with BPRCostFunction)
+      }
+    }
+  }
+
   def apply(
     id: String,
     src: String,
@@ -31,12 +53,12 @@ object LocalEdge {
     val capacityScaled: Option[Double] = capacity.map(_ * (algorithmFlowRate / MATSimFlowRate))
     costFunction match {
       case None =>
-        LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
+        LocalEdge(id, src, dst, new LocalEdgeFlowAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
       case Some(cost) => cost match {
         case BasicCostFunctionType =>
-          LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
+          LocalEdge(id, src, dst, new LocalEdgeFlowAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BasicCostFunction)
         case BPRCostFunctionType =>
-          LocalEdge(id, src, dst, new LocalEdgeAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BPRCostFunction)
+          LocalEdge(id, src, dst, new LocalEdgeFlowAttribute(flow, capacityScaled, freeFlowSpeed, distance) with BPRCostFunction)
       }
     }
   }
@@ -53,10 +75,10 @@ object LocalEdge {
       case None => 0D
     }
     edge.attribute match {
-      case a: LocalEdgeAttribute with BasicCostFunction =>
-        edge.copy(attribute = new LocalEdgeAttribute(Some(currentFlow + additionalFlow), a.capacity, a.freeFlowSpeed, a.distance) with BasicCostFunction)
-      case a: LocalEdgeAttribute with BPRCostFunction =>
-        edge.copy(attribute = new LocalEdgeAttribute(Some(currentFlow + additionalFlow), a.capacity, a.freeFlowSpeed, a.distance) with BPRCostFunction)
+      case a: LocalEdgeFlowAttribute with BasicCostFunction =>
+        edge.copy(attribute = new LocalEdgeFlowAttribute(Some(currentFlow + additionalFlow), a.capacity, a.freeFlowSpeed, a.distance) with BasicCostFunction)
+      case a: LocalEdgeFlowAttribute with BPRCostFunction =>
+        edge.copy(attribute = new LocalEdgeFlowAttribute(Some(currentFlow + additionalFlow), a.capacity, a.freeFlowSpeed, a.distance) with BPRCostFunction)
     }
   }
 }

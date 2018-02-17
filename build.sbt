@@ -22,6 +22,10 @@ resolvers += Resolver.bintrayRepo("matsim", "matsim")
 resolvers += "Osgeo Repo" at "http://download.osgeo.org/webdav/geotools/"
 libraryDependencies += "org.matsim" % "matsim" % "0.9.0" // exclude("com.google.inject", "guice")/* exclude("ch.qos.logback", "*")*/
 
+// ~~~ Quiver
+// Functional Graph Library
+libraryDependencies += "io.verizon.quiver" %% "core" % "7.0.18"
+
 
 // ~~~ Scalaz
 // Functional Abstractions Library

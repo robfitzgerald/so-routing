@@ -16,6 +16,7 @@ import cse.fitzgero.sorouting.experiments.ops.ExperimentOps.TimeGroup
 import cse.fitzgero.sorouting.experiments.ops.{ExperimentFSOps, ExperimentOps, ExperimentStepOps, MATSimOps}
 import cse.fitzgero.sorouting.model.population.{LocalPopulationNormalGenerator, LocalRequest, LocalResponse}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithFlows
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment._
 
@@ -77,7 +78,7 @@ object SystemOptimalMCTSRouting02 {
 
           // save final population which is the combined UE/SO population
           val networkXml: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
-          val graph = LocalGraphOps.readMATSimXML(networkXml)
+          val graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXml)
           val populationUESO: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
 
@@ -112,7 +113,7 @@ object SystemOptimalMCTSRouting02 {
         // population with solved routes for all times before the current time group
         val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
         val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
-        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, None, BPRCostFunctionType, config.timeWindow)
+        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, None, BPRCostFunctionType, config.timeWindow)
         val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
         // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
@@ -128,7 +129,7 @@ object SystemOptimalMCTSRouting02 {
 
         // TODO: very infrequently, fs is not completed writing the snapshot file. maybe add a bounded spin wait here?
         val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
-        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
+        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
 
 //        println(s"edges with load: ${snapshotGraph.edges.filter(_._2.attribute.linkCostFlow.getOrElse(40.0D) != 40.0D).map(e => (e._1, e._2.attribute.linkCostFlow)).mkString(", ")}")
 

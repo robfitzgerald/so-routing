@@ -2,11 +2,11 @@ package cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata
 
 import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata.NewAnalyticLinkData.TravelTime
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.CostFunction
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeAttribute
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeFlowAttribute
 
 trait NewAnalyticLinkDataOps { ops: NewAnalyticLinkData =>
 
-  def updateCongestion(updatedEdge: LocalEdgeAttribute with CostFunction, data: AnalyticLinkDataUpdate): List[CongestionData] = {
+  def updateCongestion(updatedEdge: LocalEdgeFlowAttribute with CostFunction, data: AnalyticLinkDataUpdate): List[CongestionData] = {
     val currentFlow: Int = updatedEdge.flow match {
       case None => 0
       case Some(f) => f.toInt

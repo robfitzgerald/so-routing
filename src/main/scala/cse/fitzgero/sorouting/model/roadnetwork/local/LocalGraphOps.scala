@@ -4,15 +4,20 @@ import cse.fitzgero.sorouting.model.roadnetwork.costfunction._
 
 object LocalGraphOps {
 
+  sealed trait GraphFlowType
+  case object EdgesWithFlows extends GraphFlowType
+  case object EdgesWithDrivers extends GraphFlowType
+
   /**
     * loads a network.xml and optional snapshot.xml and produces a LocalGraph
-    * @param network
-    * @param snapshotXML
-    * @param costFunctionType
-    * @param algorithmFlowRate
+    * @param graphFlowType EdgesWithFlows holds and updates macroscopic flow values; EdgesWithDrivers holds and updates Sets of Drivers
+    * @param network the MATSim XML network file
+    * @param snapshotXML an optional snapshot, to load flow data
+    * @param costFunctionType a trait describing how we evaluate link attributes to produce cost function values
+    * @param algorithmFlowRate the number of seconds we are using for a time window, to calculate flow from distance over time units and to compare them to each other
     * @return
     */
-  def readMATSimXML(network: xml.Elem, snapshotXML: Option[xml.Elem] = None, costFunctionType: CostFunctionType = BPRCostFunctionType, algorithmFlowRate: Double = 10D): LocalGraph = {
+  def readMATSimXML(graphFlowType: GraphFlowType, network: xml.Elem, snapshotXML: Option[xml.Elem] = None, costFunctionType: CostFunctionType = BPRCostFunctionType, algorithmFlowRate: Double = 10D): LocalGraph = {
 
     // get (optional) flow data in xml snapshot format
     val flowData: Map[String, Double] = snapshotXML match {
@@ -49,7 +54,10 @@ object LocalGraphOps {
       val freespeed: Option[Double] = linkData.get("freespeed").map(_.toDouble)
       val length: Option[Double] = linkData.get("length").map(_.toDouble)
 
-      val edge: LocalEdge = LocalEdge(id, src, dst, flow, capacity, freespeed, length, Some(costFunctionType), algorithmFlowRate)
+      val edge: LocalEdge = graphFlowType match {
+        case EdgesWithFlows => LocalEdge(id, src, dst, flow, capacity, freespeed, length, Some(costFunctionType), algorithmFlowRate)
+        case EdgesWithDrivers => LocalEdge.ofDrivers(id, src, dst, capacity, freespeed, length, Some(costFunctionType), algorithmFlowRate)
+      }
 
       graph.updateEdge(id, edge)
     })

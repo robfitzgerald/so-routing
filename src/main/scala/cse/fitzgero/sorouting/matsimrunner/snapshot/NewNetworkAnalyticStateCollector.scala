@@ -5,7 +5,7 @@ import java.io.{File, PrintWriter}
 import cse.fitzgero.sorouting.matsimrunner.network.Network
 import cse.fitzgero.sorouting.matsimrunner.snapshot.linkdata.{AnalyticLinkDataUpdate, NewAnalyticLinkData}
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction._
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeAttribute
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalEdgeFlowAttribute
 
 import scala.util.Try
 import scala.xml.PrettyPrinter
@@ -113,13 +113,13 @@ object NewNetworkAnalyticStateCollector {
       (acc, link) => {
         val relativeCapacity: Double = link._2.capacity * (algorithmFlowRate / MATSimFlowRate)
         val edge = costFunctionType match {
-          case BasicCostFunctionType => new LocalEdgeAttribute(
+          case BasicCostFunctionType => new LocalEdgeFlowAttribute(
             None,
             Some(relativeCapacity),
             Some(link._2.freespeed),
             Some(link._2.length)
           ) with BasicCostFunction
-          case BPRCostFunctionType => new LocalEdgeAttribute(
+          case BPRCostFunctionType => new LocalEdgeFlowAttribute(
             None,
             Some(relativeCapacity),
             Some(link._2.freespeed),
