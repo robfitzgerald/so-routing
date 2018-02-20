@@ -20,7 +20,7 @@ case class LocalEdgeSimulationAttribute (drivers: Set[String] = Set(),
 }
 
 object LocalEdgeSimulationAttribute {
-  def modifyDrivers(attr: LocalEdgeSimulationAttribute, driver: String): LocalEdgeSimulationAttribute with CostFunction = {
+  def modifyDrivers(attr: LocalEdgeSimulationAttribute with CostFunction, driver: String): LocalEdgeSimulationAttribute with CostFunction = {
     val updateDrivers: Set[String] =
       if (attr.drivers(driver)) {
         attr.drivers - driver

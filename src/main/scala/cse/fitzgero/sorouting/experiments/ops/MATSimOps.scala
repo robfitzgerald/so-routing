@@ -3,6 +3,7 @@ package cse.fitzgero.sorouting.experiments.ops
 import java.nio.file.{Files, Paths}
 import java.time.LocalTime
 
+import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
@@ -12,6 +13,8 @@ import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.snapshot.NewNetworkAnalyticStateCollector.SnapshotCollector
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithDrivers
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeSimulationAttribute, LocalGraph, LocalGraphOps}
 import org.matsim.api.core.v01.Scenario
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
@@ -74,6 +77,69 @@ object MATSimOps {
     run()
   }
 
+  def MATSimRunUsingGraph(currentDirectory: String, startTime: LocalTime, endTime: LocalTime, timeWindow: Int): List[Double] = {
+
+    val matsimOutputDirectory: String = s"$currentDirectory/matsim"
+    Files.createDirectories(Paths.get(matsimOutputDirectory))
+
+    val matsimConfig: Config = ConfigUtils.loadConfig(s"$currentDirectory/config.xml")
+
+    matsimConfig.controler().setOutputDirectory(matsimOutputDirectory)
+    val scenario: Scenario = ScenarioUtils.loadScenario(matsimConfig)
+    val controler: Controler = new Controler(matsimConfig)
+
+
+    def run(): List[Double] = {
+      val network = XML.load(ExperimentFSOps.networkFileURI(currentDirectory))
+      var graph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithDrivers, network)
+      var currentIteration: Int = 1
+      var timeTracker: TimeTracker = TimeTracker(startTime.format(ExperimentFSOps.HHmmssFormat), endTime.format(ExperimentFSOps.HHmmssFormat))
+      val outputList: ListBuffer[Double] = ListBuffer()
+
+      // add the events handlers
+      controler.addOverridingModule(new AbstractModule(){
+        @Override def install (): Unit = {
+          this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
+            case LinkEventData(e) =>
+              val belongsToTimeGroup = timeTracker.belongsToThisTimeGroup(e)
+              if (!belongsToTimeGroup) {
+                val currentTotalCongestionCost: Double =
+                  if (graph.edges.isEmpty) 0D
+                  else graph.edges.flatMap { _._2.attribute.linkCostFlow }.sum
+
+                outputList.append(currentTotalCongestionCost)
+                timeTracker = timeTracker.advance
+              }
+
+              synchronized {
+                val edgeId = e.linkID.toString
+                graph.edgeById(edgeId) match {
+                  case None =>
+                  case Some(edge) =>
+                    edge.attribute match {
+                      case attr: LocalEdgeSimulationAttribute =>
+                        val updated = LocalEdgeSimulationAttribute.modifyDrivers(attr, e.vehicleID.toString)
+                        graph = graph.updateEdge(edgeId, edge.copy(attribute = updated))
+                    }
+                }
+                //                  currentNetworkState = NewNetworkAnalyticStateCollector.update(currentNetworkState, e)
+              }
+            case NewIteration(i) =>
+              currentIteration = i
+            case o =>
+              println("other link data died here")
+          }))
+        }
+      })
+
+      //start the simulation
+      controler.run()
+
+      outputList.toList
+    }
+
+    run()
+  }
 
 
   /**
