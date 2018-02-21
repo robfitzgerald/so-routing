@@ -77,7 +77,7 @@ object MATSimOps {
     run()
   }
 
-  def MATSimRunUsingGraph(currentDirectory: String, startTime: LocalTime, endTime: LocalTime, timeWindow: Int): List[Double] = {
+  def MATSimRunUsingGraph(currentDirectory: String, startTime: LocalTime, endTime: LocalTime, timeWindow: Int): List[(Int, Double)] = {
 
     val matsimOutputDirectory: String = s"$currentDirectory/matsim"
     Files.createDirectories(Paths.get(matsimOutputDirectory))
@@ -89,12 +89,12 @@ object MATSimOps {
     val controler: Controler = new Controler(matsimConfig)
 
 
-    def run(): List[Double] = {
+    def run(): List[(Int, Double)] = {
       val network = XML.load(ExperimentFSOps.networkFileURI(currentDirectory))
       var graph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithDrivers, network)
       var currentIteration: Int = 1
       var timeTracker: TimeTracker = TimeTracker(startTime.format(ExperimentFSOps.HHmmssFormat), endTime.format(ExperimentFSOps.HHmmssFormat))
-      val outputList: ListBuffer[Double] = ListBuffer()
+      val outputList: ListBuffer[(Int,Double)] = ListBuffer()
 
       // add the events handlers
       controler.addOverridingModule(new AbstractModule(){
@@ -106,8 +106,8 @@ object MATSimOps {
                 val currentTotalCongestionCost: Double =
                   if (graph.edges.isEmpty) 0D
                   else graph.edges.flatMap { _._2.attribute.linkCostFlow }.sum
-
-                outputList.append(currentTotalCongestionCost)
+                val entry = (e.time, currentTotalCongestionCost)
+                outputList.append(entry)
                 timeTracker = timeTracker.advance
               }
 
@@ -154,7 +154,6 @@ object MATSimOps {
     val thisNetworkURI = s"$thisInstanceAbsolutePath/network.xml"
     val thisPopulationURI = s"$thisInstanceAbsolutePath/population.xml"
     Try {
-
       val updatedConfigFile: xml.Elem =
         List(
           ("network", thisNetworkURI),
@@ -197,6 +196,9 @@ object MATSimOps {
       case Failure(e) => throw new IllegalArgumentException(s"XML file deserialization failed when modifying value $currentValue at key $moduleName: ${e.getMessage}")
     }
   }
+
+
+
 
 
 

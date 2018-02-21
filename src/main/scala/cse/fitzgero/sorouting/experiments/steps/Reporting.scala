@@ -10,6 +10,47 @@ import edu.ucdenver.fitzgero.lib.experiment._
 
 object Reporting {
 
+  type GlobalCongestionReportData = {
+    def configLabel: String
+    def experimentBaseDirectory: String
+    def experimentConfigDirectory: String
+  }
+
+  object GlobalCongestionReport extends SyncStep {
+    val name: String = "[Reporting:GlobalCongestionReport] Appends the list of time and congestion sum values to report files"
+    val header: String = "name,type,congestion_sum,congestion_data_libsvm"
+
+    type StepConfig = GlobalCongestionReportData
+
+    override def apply(config: GlobalCongestionReportData, log: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = {
+      val allLogs = log.flatMap{_._2}
+      allLogs.get("experiment.result.global.congestion.data").map {
+        data =>
+          val baseReportFileURI: String = s"${config.experimentBaseDirectory}/congestion.csv"
+          val configReportFileURI: String = s"${config.experimentConfigDirectory}/congestion.csv"
+
+          val t: Try[Map[String, String]] =
+            Try({
+              val experimentType = inspectLog(allLogs)("experiment.type")
+              val sumOfCongestion: String =
+                if (data.isEmpty)
+                  "0"
+                else {
+                  data.split(",").map {
+                    _.split(":")(1).toDouble
+                  }.sum.toString
+                }
+              val row = s"${config.configLabel},$experimentType,$sumOfCongestion,$data"
+              Map(
+                "fs.csv.report.base.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(baseReportFileURI), Some(header)),
+                "fs.csv.report.config.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(configReportFileURI), Some(header))
+              )
+            })
+          ExperimentStepOps.resolveTry(t)
+      }
+    }
+  }
+
   type BasicReportData = {
     def populationSize: Int
     def timeWindow: Int

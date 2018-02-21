@@ -20,7 +20,7 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithFlo
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment._
 
-object SystemOptimalMCTSRouting02 {
+object SystemOptimalMCTSGlobalCongestionRouting {
 
   type SORoutingConfig = {
     def experimentInstanceDirectory: String
@@ -83,13 +83,14 @@ object SystemOptimalMCTSRouting02 {
           ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
 
           // run MATSim one last time to produce a Snapshot file here
-          MATSimOps.MATSimRun(config.experimentInstanceDirectory, config.startTime, endTime, config.timeWindow)
+          val congestionFunction: List[(Int, Double)] = MATSimOps.MATSimRunUsingGraph(config.experimentInstanceDirectory, config.startTime, endTime, config.timeWindow)
 
           val networkAvgTravelTime: String = MATSimOps.getNetworkAvgTravelTime(config.experimentInstanceDirectory)
           val populationTravelTime: String = MATSimOps.getPopulationAvgTravelTime(config.experimentInstanceDirectory)
           val outputLog = result._2.mapValues(_.toString) ++ Map(
             "experiment.result.traveltime.avg.network" -> networkAvgTravelTime,
             "experiment.result.traveltime.avg.population" -> populationTravelTime,
+            "experiment.result.global.congestion.data" -> congestionFunction.map { t => s"${t._1}:${t._2}"}.mkString(","),
             "experiment.type" -> "System Optimal"
           )
 
