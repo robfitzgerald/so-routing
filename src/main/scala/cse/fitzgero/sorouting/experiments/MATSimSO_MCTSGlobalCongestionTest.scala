@@ -11,10 +11,10 @@ import edu.ucdenver.fitzgero.lib.experiment.Experiment
 
 object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSimSimulator {
 
-  val pop: Int = if (args.length > 0) args(0).toInt else 100
+  val pop: Int = if (args.length > 0) args(0).toInt else 1000
   val win: Int = if (args.length > 1) args(1).toInt else 15
-  val route: Double = if (args.length > 2) args(2).toDouble else 0.20D
-  val congestionThreshold: Double = if (args.length > 3) args(3).toDouble else 1.50D
+  val route: Double = if (args.length > 2) args(2).toDouble else 1.00D
+  val congestionThreshold: Double = if (args.length > 3) args(3).toDouble else 1.10D
   val name: String = if (args.length > 4) args(4) else "mctsTest"
   val sourceAssetDirectory: String = if (args.length > 5) args(5) else "data/5x5"
   val sourceAssetName: String = Paths.get(sourceAssetDirectory).getFileName.toString
@@ -65,13 +65,13 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
 
     // algorithm-specific parameters
     k = 4, // the k in KSP
-    kspBounds = Some(KSPBounds.IterationOrTime(10, 20000L)), // the way we determine ending our search for alternative paths in KSP
+    kspBounds = Some(KSPBounds.IterationOrTime(10, 10000L)), // the way we determine ending our search for alternative paths in KSP
     overlapThreshold = 1.0D, // the percentage that alternate paths are allowed to overlap in KSP
 //    coefficientCp = 1e-6, // less exploration for our problem seems to work better
     coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
 //    coefficientCp = 0D, // finds a solution if possible in most situations, best for our case (flat monte carlo, yes?)
     congestionRatioThreshold = congestionThreshold, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
-    computationalLimit = 10000L, // milliseconds
+    computationalLimit = 5000L, // milliseconds
     randomSeed = 0L
   )
 
@@ -81,6 +81,7 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
     ExperimentAssetGenerator.RepeatedPopulation,
     SystemOptimalMCTSGlobalCongestionRouting.Incremental,
     Reporting.AppendToReportCSVFiles,
+    Reporting.GlobalCongestionReport,
     Reporting.AllLogsToTextFile
   ))
 }

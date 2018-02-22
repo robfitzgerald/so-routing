@@ -93,7 +93,7 @@ object MATSimOps {
       val network = XML.load(ExperimentFSOps.networkFileURI(currentDirectory))
       var graph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithDrivers, network)
       var currentIteration: Int = 1
-      var timeTracker: TimeTracker = TimeTracker(startTime.format(ExperimentFSOps.HHmmssFormat), endTime.format(ExperimentFSOps.HHmmssFormat))
+      var timeTracker: TimeTracker = TimeTracker(timeWindow, startTime.format(ExperimentFSOps.HHmmssFormat), endTime.format(ExperimentFSOps.HHmmssFormat))
       val outputList: ListBuffer[(Int,Double)] = ListBuffer()
 
       // add the events handlers

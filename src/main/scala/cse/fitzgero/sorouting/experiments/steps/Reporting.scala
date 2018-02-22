@@ -18,7 +18,7 @@ object Reporting {
 
   object GlobalCongestionReport extends SyncStep {
     val name: String = "[Reporting:GlobalCongestionReport] Appends the list of time and congestion sum values to report files"
-    val header: String = "name,type,congestion_sum,congestion_data_libsvm"
+    val header: String = "name,type,congestion_sum,congestion_data_libsvm\n"
 
     type StepConfig = GlobalCongestionReportData
 
@@ -40,7 +40,7 @@ object Reporting {
                     _.split(":")(1).toDouble
                   }.sum.toString
                 }
-              val row = s"${config.configLabel},$experimentType,$sumOfCongestion,$data"
+              val row = s"${config.configLabel},$experimentType,$sumOfCongestion,$data\n"
               Map(
                 "fs.csv.report.base.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(baseReportFileURI), Some(header)),
                 "fs.csv.report.config.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(configReportFileURI), Some(header))

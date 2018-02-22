@@ -18,7 +18,7 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithFlo
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalGraphOps}
 import edu.ucdenver.fitzgero.lib.experiment.{ExperimentGlobalLog, ExperimentStepLog, StepStatus, SyncStep}
 
-object UserEquilibriumRouting {
+object UserEquilibriumGlobalCongestionRouting {
 
   type MATSimRunnerConfig = {
     def experimentInstanceDirectory: String
