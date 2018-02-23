@@ -33,7 +33,8 @@ object MATSimUEGlobalCongestionTest extends Experiment with App with MATSimSimul
     startTime: LocalTime,
     departTime: LocalTime,
     endTime: Option[LocalTime],
-    timeDeviation: Option[LocalTime]
+    timeDeviation: Option[LocalTime],
+    blockSize: Int
   )
   val config = Config(
     configLabel,
@@ -50,7 +51,8 @@ object MATSimUEGlobalCongestionTest extends Experiment with App with MATSimSimul
     LocalTime.parse("08:00:00"),
     LocalTime.parse("08:15:00"),
     Some(LocalTime.parse("09:00:00")),
-    Some(LocalTime.parse("00:15:00"))
+    Some(LocalTime.parse("00:15:00")),
+    blockSize = 8
   )
 
   // TODO: consolidate config requirements when common elements, parameterize relative paths for reports, populations

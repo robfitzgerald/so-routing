@@ -34,6 +34,7 @@ object SparkCombinationsSORouting {
     def routePercentage: Double
 //    def sparkMaster: String
     def sparkContext: SparkContext
+    def blockSize: Int
   }
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")

@@ -25,6 +25,7 @@ object UserEquilibriumGlobalCongestionRouting {
     def timeWindow: Int
     def startTime: LocalTime
     def endTime: Option[LocalTime]
+    def blockSize: Int
   }
 
   val RoutingAlgorithmTimeout: Duration = 1 hour

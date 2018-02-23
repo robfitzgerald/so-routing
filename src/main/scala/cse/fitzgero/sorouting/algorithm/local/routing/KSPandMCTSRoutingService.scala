@@ -30,6 +30,7 @@ object KSPandMCTSRoutingService extends GraphBatchRoutingAlgorithmService {
     def coefficientCp: Double // 0 means flat mon
     def congestionRatioThreshold: Double
     def computationalLimit: Long // ms.
+    def blockSize: Int
   }
 
   /**

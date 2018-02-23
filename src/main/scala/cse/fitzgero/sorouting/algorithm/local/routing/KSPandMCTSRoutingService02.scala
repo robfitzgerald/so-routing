@@ -32,6 +32,7 @@ object KSPandMCTSRoutingService02 extends GraphBatchRoutingAlgorithmService {
     def congestionRatioThreshold: Double
     def computationalLimit: Long // ms.
     def randomSeed: Long
+    def blockSize: Int
   }
 
   /**

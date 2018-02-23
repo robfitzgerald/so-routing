@@ -30,6 +30,7 @@ object SystemOptimalRouting {
     def endTime: Option[LocalTime]
     def timeWindow: Int
     def routePercentage: Double
+    def blockSize: Int
   }
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")

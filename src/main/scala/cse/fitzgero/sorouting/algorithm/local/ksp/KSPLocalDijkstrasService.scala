@@ -32,7 +32,6 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
     * @return a future resolving to an optional service result
     */
   override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = Future {
-//    println("[KSP] ksp service calling inner algorithm")
     KSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request.od, config) match {
       case Some(result) =>
         val log = Map[String, Long](

@@ -10,6 +10,7 @@ import cse.fitzgero.sorouting.model.roadnetwork.local.LocalODPair
 
 class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
   "runService" when {
+    case class Config(k: Int = 1, kspBounds: Option[KSPBounds] = None, overlapThreshold: Double = 1.0D, blockSize: Int = 8)
     "called with a road network, a set of od pairs, and some ksp config" should {
       "return a map from od pairs to their k-shortest paths" in {
         val graph = TestAssets.GraphWithAlternates
@@ -23,7 +24,7 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
         })
 
         // k shortest paths config
-        val config = KSPLocalDijkstrasConfig(3)
+        val config = Config(3)
 
         MKSPLocalDijkstrasService
           .runService(graph, odPairs, Some(config)) map {
@@ -83,7 +84,7 @@ class MKSPLocalDijkstrasServiceTests extends SORoutingAsyncUnitTestTemplate {
         })
 
         // k shortest paths config
-        val config = KSPLocalDijkstrasConfig(3)
+        val config = Config(3)
 
         MKSPLocalDijkstrasService
           .runService(graph, odPairs, Some(config)) map {

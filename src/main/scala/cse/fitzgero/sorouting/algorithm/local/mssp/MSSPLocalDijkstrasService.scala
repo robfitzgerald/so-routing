@@ -3,12 +3,13 @@ package cse.fitzgero.sorouting.algorithm.local.mssp
 
 import scala.collection.GenSeq
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{Await, Future, Promise}
 import scala.util.{Failure, Success}
 
 import cse.fitzgero.graph.algorithm.GraphBatchRoutingAlgorithmService
 import cse.fitzgero.sorouting.algorithm.local.sssp.{SSSPLocalDijkstrasAlgorithm, SSSPLocalDijkstrasService}
 import cse.fitzgero.sorouting.model.population.{LocalRequest, LocalResponse}
+import scala.concurrent.duration._
 
 object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   // types taken from SSSP
@@ -22,7 +23,12 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   // MSSP types
   override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
-  override type ServiceConfig = Nothing
+  override type ServiceConfig = {
+    def blockSize: Int
+  }
+
+  val DefaultBlockSize: Int = 8
+
   case class ServiceResult(request: ServiceRequest, result: MultipleShortestPathsResult, logs: LoggingClass)
 
 
@@ -33,22 +39,35 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
     * @param config (ignored)
     * @return a map from od pairs to their resulting paths
     */
-  override def runService(graph: Graph, request: ServiceRequest, config: Option[Nothing] = None): Future[Option[ServiceResult]] = {
+  override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig] = None): Future[Option[ServiceResult]] = {
+
+    val blockSize: Int = config match {
+      case Some(conf) => conf.blockSize
+      case None => DefaultBlockSize
+    }
+
+    def groupByParallelBlockSize[T](xs: GenSeq[T], blockSize: Int): List[List[T]] = xs.toList.sliding(blockSize, blockSize).toList
+
+    def runBlocks(blocks: List[List[LocalRequest]], solution: List[SSSPAlgorithmResult] = List()): Future[List[SSSPAlgorithmResult]] =
+      if (blocks.isEmpty) Future(solution)
+      else {
+        Future.sequence(blocks.head.iterator.map(SSSPLocalDijkstrasService.runService(graph, _))) flatMap {
+          blockSolved =>
+            runBlocks(blocks.tail, solution ++ blockSolved.flatten)
+        }
+      }
 
     if (request.isEmpty) {
       Future { None }
     } else {
       val p: Promise[Option[ServiceResult]] = Promise()
 
-      val future: Future[Iterator[Option[SSSPAlgorithmResult]]] =
-        Future.sequence(request.iterator.map(SSSPLocalDijkstrasService.runService(graph, _)))
-
-      future onComplete {
+      runBlocks(groupByParallelBlockSize(request, blockSize)) onComplete {
         case Success(resolved) =>
 
-          val result = resolved.flatten.map(r => {
+          val result = resolved.map(r => {
             LocalResponse(r.request, r.response.path)
-          }).toSeq
+          })
 
           val costEffect: Long = MSSPLocalDijkstsasAlgorithmOps.calculateAddedCost(graph, result).toLong
 

@@ -24,7 +24,10 @@ object KSPSparkCombinatorialRoutingService extends GraphBatchRoutingAlgorithmSer
   override type ServiceRequest = GenSeq[LocalRequest]
   override type LoggingClass = Map[String, Long]
   case class ServiceResult(result: GenSeq[LocalResponse], logs: LoggingClass)
-  override type ServiceConfig = (KSPLocalDijkstrasConfig, SparkContext)
+  type KSPConfig = KSPLocalDijkstrasConfig {
+    def blockSize: Int
+  }
+  override type ServiceConfig = (KSPConfig, SparkContext)
 
   /**
     * run the combinatorial k-shortest-paths optimal routing algorithm as a concurrent service

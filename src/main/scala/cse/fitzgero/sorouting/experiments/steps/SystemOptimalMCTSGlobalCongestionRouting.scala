@@ -35,6 +35,7 @@ object SystemOptimalMCTSGlobalCongestionRouting {
     def congestionRatioThreshold: Double
     def computationalLimit: Long // ms.
     def randomSeed: Long
+    def blockSize: Int
   }
 
   val HHmmssFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")

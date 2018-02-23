@@ -40,6 +40,7 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
     coefficientCp: Double, // 0 means flat monte carlo
     congestionRatioThreshold: Double,
     computationalLimit: Long, // ms
+    blockSize: Int,
     randomSeed: Long
   )
   val config = Config(
@@ -72,6 +73,7 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
 //    coefficientCp = 0D, // finds a solution if possible in most situations, best for our case (flat monte carlo, yes?)
     congestionRatioThreshold = congestionThreshold, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
     computationalLimit = 5000L, // milliseconds
+    blockSize = 8,
     randomSeed = 0L
   )
 

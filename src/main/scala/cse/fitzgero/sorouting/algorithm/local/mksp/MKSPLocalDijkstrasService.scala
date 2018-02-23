@@ -28,7 +28,10 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
     def k: Int
     def kspBounds: Option[KSPBounds]
     def overlapThreshold: Double
+    def blockSize: Int
   }
+
+
 
   /**
     * run multiple k-shortest paths algorithms as a batch service
@@ -40,16 +43,27 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
   override def runService(graph: Graph, request: ServiceRequest, config: Option[ServiceConfig]): Future[Option[ServiceResult]] = {
     if (request.isEmpty)
       Future{ None }
-      // TODO: handle the size==1 case. would we return 1 shortest path, or is it incorrect for mksp to provide that result?
     else {
       val p: Promise[Option[ServiceResult]] = Promise()
-      val future: Future[Iterator[Option[KSPResult]]] =
-        Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config)))
-      println(s"[MKSP] running ${request.size} KSP services")
+      val blockSize: Int = config match {
+        case None => 8
+        case Some(conf) => conf.blockSize
+      }
 
-      future onComplete {
-        case Success(mkspResult) =>
-          val resolved = mkspResult.flatten.toSeq
+      // TODO: these two functions exist in MSSP as well, and could be generalized for some general function over the input type
+      def groupByParallelBlockSize[T](xs: GenSeq[T], blockSize: Int): List[List[T]] = xs.toList.sliding(blockSize, blockSize).toList
+
+      def runBlocks(blocks: List[List[LocalRequest]], solution: List[KSPResult] = List()): Future[List[KSPResult]] =
+        if (blocks.isEmpty) Future(solution)
+        else {
+          Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config))) flatMap {
+            blockSolved =>
+              runBlocks(blocks.tail, solution ++ blockSolved.flatten)
+          }
+        }
+
+      runBlocks(groupByParallelBlockSize(request, blockSize)) onComplete {
+        case Success(resolved) =>
           val result: KSPMap =
             resolved
               .map(kspResult => {
@@ -70,7 +84,6 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
             "algorithm.mksp.local.success" -> 1L
           )
           println(s"[MKSP] completed with ${result.size} results")
-//          Some(ServiceResult(request, result, logs))
           p.success(Some(ServiceResult(request, result, logs)))
         case Failure(e) =>
           println(s"[MKSP] failure due to: ${e.getMessage}")
