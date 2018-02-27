@@ -41,10 +41,10 @@ object KSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
           "algorithm.ksp.local.k.produced" -> result.paths.size
         )
         val serviceResult = ServiceResult(request, result, log)
-//        println(s"[KSP] ksp service halting with Some result for request ${request.id}")
+//        println(s"[KSP] #${request.id} ksp service halting with Some result.")
         Some(serviceResult)
       case None =>
-//        println(s"[KSP] ksp service halting with None result for request ${request.id}")
+        println(s"[KSP-SVC] ${request.id} ksp service halting with None result!")
         None
     }
   }

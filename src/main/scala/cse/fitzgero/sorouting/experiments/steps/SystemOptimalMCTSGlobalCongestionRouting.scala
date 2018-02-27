@@ -53,10 +53,11 @@ object SystemOptimalMCTSGlobalCongestionRouting {
         Try [ExperimentStepLog] {
           // load population.xml as GenSeq[Request], split according to config.routePercentage
           // @ TODO: can we give these files an absolute path? this isn't yet in MATSim, why isn't it relative to the working directory?
-          val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
-          val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
-          val (testGroup, controlGroup) = ExperimentOps.splitPopulation(population, config.routePercentage)
-
+          val (testGroup, controlGroup) =  {
+            val populationXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/population.xml")
+            val population: GenSeq[LocalRequest] = LocalPopulationNormalGenerator.fromXML(populationXML)
+            ExperimentOps.splitPopulation(population, config.routePercentage)
+          }
           // generate time groups from 0 to config.endTime by config.timeWindow
           val endTime = config.endTime match {
             case Some(time) => time
@@ -77,14 +78,18 @@ object SystemOptimalMCTSGlobalCongestionRouting {
             Incremental.incrementalLoopLocal(testGroup, controlGroup, config)
           val result = timeGroups.foldLeft((GenSeq.empty[LocalResponse], Map.empty[String, Long]))(incrementalStep)
 
-          // save final population which is the combined UE/SO population
-          val networkXml: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
-          val graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXml)
-          val populationUESO: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
-          ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
+          println(s"[SO-TEST] completed incremental step, running final MATSim simulation with entire population")
 
-          // run MATSim one last time to produce a Snapshot file here
-          val congestionFunction: List[(Int, Double)] = MATSimOps.MATSimRunUsingGraph(config.experimentInstanceDirectory, config.startTime, endTime, config.timeWindow)
+          // collect congestion information by running a final MATSim simulation for the entire population
+          val congestionFunction: List[(Int, Double)] = {
+            val networkXml: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
+            val graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXml)
+            val populationUESO: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(graph, result._1)
+            ExperimentFSOps.saveXmlDocType(s"${config.experimentInstanceDirectory}/population.xml", populationUESO, ExperimentFSOps.PopulationDocType)
+
+            // run MATSim one last time to produce a Snapshot file here
+            MATSimOps.MATSimRunUsingGraph(config.experimentInstanceDirectory, config.startTime, endTime, config.timeWindow)
+          }
 
           val networkAvgTravelTime: String = MATSimOps.getNetworkAvgTravelTime(config.experimentInstanceDirectory)
           val populationTravelTime: String = MATSimOps.getPopulationAvgTravelTime(config.experimentInstanceDirectory)
@@ -107,63 +112,69 @@ object SystemOptimalMCTSGlobalCongestionRouting {
     protected def incrementalLoopLocal(testGroup: GenSeq[LocalRequest], controlGroup: GenSeq[LocalRequest], config: SORoutingConfig)
       (accumulator : (GenSeq[LocalResponse], Map[String, Long]), timeGroup: TimeGroup): (GenSeq[LocalResponse], Map[String, Long]) = {
 
+      println(s"[SO-INCR] beginning incremental simulation/algorithm loop for group beginning at ${timeGroup.startRange}")
+
       val groupToRouteSO: GenSeq[LocalRequest] = testGroup.filter(ExperimentOps.filterByTimeGroup(timeGroup))
       val groupToRouteUE: GenSeq[LocalRequest] = controlGroup.filter(ExperimentOps.filterByTimeGroup(timeGroup))
 
       if (groupToRouteSO.isEmpty && groupToRouteUE.isEmpty) accumulator
       else {
         // population with solved routes for all times before the current time group
-        val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
-        val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
-        val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, None, BPRCostFunctionType, config.timeWindow)
-        val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
+        val (snapshotDirectory: String, networkXML: xml.Elem) = {
+          val snapshotPopulation: GenSeq[LocalResponse] = accumulator._1
+          val networkXML: xml.Elem = XML.load(s"${config.experimentInstanceDirectory}/network.xml")
+          val previousPopGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, None, BPRCostFunctionType, config.timeWindow)
+          val previousPopXML: xml.Elem = LocalPopulationNormalGenerator.generateXMLResponses(previousPopGraph, snapshotPopulation)
 
-        // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
-        val snapshotDirectory: String = ExperimentFSOps.importAssetsToTempDirectory(config.experimentInstanceDirectory)
-        ExperimentFSOps.saveXmlDocType(
-          s"$snapshotDirectory/population.xml",
-          previousPopXML,
-          ExperimentFSOps.PopulationDocType
-        )
+          // create a temp snapshot directory with the required assets and the previousPopXML population.xml file
+          val snapDir = ExperimentFSOps.importAssetsToTempDirectory(config.experimentInstanceDirectory)
+          ExperimentFSOps.saveXmlDocType(
+            s"$snapDir/population.xml",
+            previousPopXML,
+            ExperimentFSOps.PopulationDocType
+          )
+
+          (snapDir, networkXML)
+        }
 
         // run MATSim on the previous populations
         val snapshotURI: String = MATSimOps.MATSimRun(snapshotDirectory, StartOfDay, timeGroup.startRange, config.timeWindow)
 
-        // TODO: very infrequently, fs is not completed writing the snapshot file. maybe add a bounded spin wait here?
-        val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
-        val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
+        val (updatedResult, updatedLogs) = {
+          // pull snapshot into memory
+          val snapshotXML: xml.Elem = XML.loadFile(snapshotURI)
+          val snapshotGraph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, networkXML, Some(snapshotXML), BPRCostFunctionType, config.timeWindow)
+          ExperimentFSOps.recursiveDelete(snapshotDirectory)
 
-//        println(s"edges with load: ${snapshotGraph.edges.filter(_._2.attribute.linkCostFlow.getOrElse(40.0D) != 40.0D).map(e => (e._1, e._2.attribute.linkCostFlow)).mkString(", ")}")
+          // run routing algorithms (note - running sequentially due to poss. memory issues)
+          println(s"[SO-INCR] running routing services for ${groupToRouteUE.size} UE and ${groupToRouteSO.size} SO requests")
+          val resolvedUE = Await.result(MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE, Some(config)), RoutingAlgorithmTimeout)
+          val resolvedSO = Await.result(KSPandMCTSRoutingService02.runService(snapshotGraph, groupToRouteSO, Some(config)), RoutingAlgorithmTimeout)
 
-        ExperimentFSOps.recursiveDelete(snapshotDirectory)
+          // TODO: these should be encapsulated, but their base trait isn't designed correctly for a generalization on res.result
+          val resultUE: (GenSeq[LocalResponse], Map[String, Long]) =
+            resolvedUE match {
+              case Some(res) => (res.result, res.logs)
+              case None => (GenSeq.empty[LocalResponse], Map.empty[String, Long])
+            }
 
-        val routesUE = MSSPLocalDijkstrasService.runService(snapshotGraph, groupToRouteUE)
-        val routesSO = KSPandMCTSRoutingService02.runService(snapshotGraph, groupToRouteSO, Some(config))
-        val resolvedUE = Await.result(routesUE, RoutingAlgorithmTimeout)
-        val resolvedSO = Await.result(routesSO, RoutingAlgorithmTimeout)
+          val resultSO: (GenSeq[LocalResponse], Map[String, Long]) =
+            resolvedSO match {
+              case Some(res) => (res.result, res.logs)
+              case None => (GenSeq.empty[LocalResponse], Map.empty[String, Long])
+            }
 
-        // TODO: these should be encapsulated, but their base trait isn't designed correctly for a generalization on res.result
-        val resultUE: (GenSeq[LocalResponse], Map[String, Long]) =
-          resolvedUE match {
-            case Some(res) => (res.result, res.logs)
-            case None => (GenSeq.empty[LocalResponse], Map.empty[String, Long])
-          }
+          val result: GenSeq[LocalResponse] = accumulator._1 ++ resultUE._1 ++ resultSO._1
+          val logs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(accumulator._2, resultUE._2), resultSO._2)
 
-        val resultSO: (GenSeq[LocalResponse], Map[String, Long]) =
-          resolvedSO match {
-            case Some(res) => (res.result, res.logs)
-            case None => (GenSeq.empty[LocalResponse], Map.empty[String, Long])
-          }
+          val optimalRoutes: Long =
+            if (resultSO._2.isDefinedAt("algorithm.selection.local.mcts.solution.route.count"))
+              resultSO._2("algorithm.selection.local.mcts.solution.route.count")
+            else 0L
 
-        val updatedResult: GenSeq[LocalResponse] = accumulator._1 ++ resultUE._1 ++ resultSO._1
-        val updatedLogs: Map[String, Long] = ExperimentOps.sumLogs(ExperimentOps.sumLogs(accumulator._2, resultUE._2), resultSO._2)
-
-        val optimalRoutes: Long =
-          if (resultSO._2.isDefinedAt("algorithm.selection.local.mcts.solution.route.count"))
-            resultSO._2("algorithm.selection.local.mcts.solution.route.count")
-          else 0L
-
-        println(s"${LocalDateTime.now} [SO-MCTS] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests and ${resultSO._1.size} optimal requests, ${if (resultSO._1.size == optimalRoutes) "all" else optimalRoutes.toString} of which were found via MCTS.")
+          println(s"${LocalDateTime.now} [SO-INCR] routed group at time ${timeGroup.startRange.format(HHmmssFormat)} with ${resultUE._1.size} selfish requests and ${resultSO._1.size} optimal requests, ${if (resultSO._1.size == optimalRoutes) "all" else optimalRoutes.toString} of which were found via MCTS.")
+          (result, logs)
+        }
 
         (updatedResult, updatedLogs)
       }

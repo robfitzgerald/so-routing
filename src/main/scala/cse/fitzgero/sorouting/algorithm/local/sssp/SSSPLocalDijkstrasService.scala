@@ -31,7 +31,9 @@ object SSSPLocalDijkstrasService extends GraphRoutingAlgorithmService {
           "algorithm.sssp.local.success" -> 1L
         )
         Some(ServiceResult(request, LocalResponse(request, result.path), log))
-      case None => None
+      case None =>
+        println(s"[SSSP] route not found for ${request.id}:${request.requestTime} ${request.od.src}->${request.od.dst}")
+        None
     }
   }
 }

@@ -73,7 +73,7 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
     SSSPLocalDijkstrasAlgorithm.runAlgorithm(graph, request) match {
       case None =>
-//        println("[KSP-ALG] SSSP for true shortest path had None result, halting KSP with None")
+        println(s"[KSP-ALG] #${request.id} SSSP for true shortest path had None result, halting KSP with None")
         // no path between these vertices
         None
       case Some(trueShortestPath) =>
@@ -83,9 +83,10 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
         solution.enqueue(trueShortestPath.path)
         val reversedPath: Path = trueShortestPath.path.reverse
 
+
         @tailrec
         def kShortestPaths(walkback: Path, previousGraph: Graph, iteration: Int = 1): Option[AlgorithmResult] = {
-//          println(s"[KSP-ALG] running request ${request.id} iteration $iteration")
+//          println(s"[KSP-ALG] #${request.id} iteration $iteration")
 
           val failedBoundsTest: Boolean =
             kspBounds match {
@@ -95,18 +96,22 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
               case KSPBounds.IterationOrTime(i, t) => iteration > i || Instant.now.toEpochMilli - startTime > t
             }
 
+//          println(s"[KSP-ALG] #${request.id} failedBoundsTest: $failedBoundsTest")
 
           // base case
           if (failedBoundsTest || walkback.isEmpty) {
             if (solution.isEmpty) {
               // should never reach here since trueShortestPath was found!
-//              println("[KSP] landed in illegal state - no paths in solution after shortest path was found")
+//              println(s"[KSP-ALG] #${request.id} landed in illegal state - solution is empty but a true shortest path was previously found")
               None
             } else {
+//              println(s"[KSP-ALG] #${request.id} taking the top $k paths from the solution set of ${solution.size} alternate paths found")
               val paths: Seq[Path] = solution.dequeueAll.take(k)
               Some(AlgorithmResult(request, paths))
             }
           } else {
+
+            println(s"[KSP-ALG] #${request.id} finding the next alt path")
 
             // find the leading edge in the walkback and remove it from the graph, and
             // re-run a shortest paths algorithm to generate an alternate path spur
@@ -115,56 +120,71 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
             graph.edgeById(thisEdgeId) match {
               case Some(edge) =>
                 val spurSourceVertex: VertexId = edge.src
-                val spurPrefix: Path = walkback.tail.reverse
+                val spurPrefix: Path = if (walkback.tail.nonEmpty) walkback.tail.reverse else Nil
+//                println(s"[KSP-ALG] #${request.id} removing edge $thisEdgeId from graph")
                 val blockedGraph: Graph = previousGraph.removeEdge(thisEdgeId)
                 val spurAlternatives = blockedGraph.outEdges(spurSourceVertex)
-                if (spurAlternatives.isEmpty)
+                if (spurAlternatives.isEmpty) {
+//                  println(s"[KSP-ALG] #${request.id} removed an edge and result was no out edges from this vertex. continuing walkback")
                   kShortestPaths(walkback.tail, blockedGraph, iteration + 1)
-                else {
+                } else {
+//                  println(s"[KSP-ALG] #${request.id} calling SSSP")
                   SSSPLocalDijkstrasAlgorithm.runAlgorithm(blockedGraph, LocalODPair(request.id, spurSourceVertex, request.dst)) match {
                     case None =>
+//                      println(s"[KSP-ALG] #${request.id} was unable to find a shortest path from the current spur vertex. continuing walkback")
                       kShortestPaths(walkback.tail, blockedGraph, iteration + 1)
                     case Some(pathSpur) =>
 
                       // given a path spur, connect it to the remaining walkback to produce a path
                       val alternativePath: Path = spurPrefix ++ pathSpur.path
 
-                      // test for dissimilarity from current solution paths
-                      val alternativePathLabels: Seq[EdgeId] = alternativePath.map(_.edgeId)
-                      val solutionLabels: GenSet[EdgeId] =
-                        solution
-                          .flatMap(_.map(_.edgeId))
-                          .toSet
-                          .par
+//                      // test for dissimilarity from current solution paths
+//                      val alternativePathLabels: Seq[EdgeId] = alternativePath.map(_.edgeId)
+//                      val solutionLabels: GenSet[EdgeId] =
+//                        solution
+//                          .flatMap(_.map(_.edgeId))
+//                          .toSet
+//                          .par
+//
+//                      val dissimilarityValue: Double =
+//                        solutionLabels
+//                          .count(alternativePathLabels.contains(_)).toDouble / solutionLabels.size
+//
+//                      val reasonablyDissimilar: Boolean = dissimilarityValue <= overlapThreshold
 
-                      val dissimilarityValue: Double =
-                        solutionLabels
-                          .count(alternativePathLabels.contains(_)).toDouble / solutionLabels.size
-
-                      val reasonablyDissimilar: Boolean = dissimilarityValue <= overlapThreshold
+                      // TODO: removed dissimilarity test. uncomment above to reintroduce this feature
+                      val reasonablyDissimilar = true
 
                       // modify the solution, graph and walkback based on the dissimilarity result
                       val (graphToRecurse, nextWalkback) = if (reasonablyDissimilar) {
                         solution.enqueue(alternativePath)
                         (blockedGraph, walkback.tail)
                       } else {
+                        // we won't end up here - dissimilarity feature disabled
                         if (pathSpur.path.nonEmpty)
                           (blockedGraph.removeEdge(pathSpur.path.head.edgeId), walkback)
                         else
                           (blockedGraph, walkback)
                       }
-
+//                      println(s"[KSP-ALG] #${request.id} added new alternate path to solution, and continuing search")
                       kShortestPaths(nextWalkback, graphToRecurse, iteration + 1)
                   }
                 }
               case None =>
-                println(s"[KSP] spur edge not found in graph: $thisEdgeId")
+                println(s"[KSP-ALG] #${request.id} spur edge not found in graph: $thisEdgeId")
                 kShortestPaths(walkback.tail, previousGraph, iteration + 1)
             }
           }
         }
 //        println(s"[KSP-ALG] finished setup and calling first recursion for request ${request.id}")
-        kShortestPaths(reversedPath, graph)
+        try {
+          kShortestPaths(reversedPath, graph)
+        } catch {
+          case e: Throwable =>
+            println(s"[KSP-ALG] #${request.id} error thrown")
+            println(e)
+            None
+        }
     }
   }
 }

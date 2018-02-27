@@ -21,17 +21,17 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @return the shortest path
     */
   override def runAlgorithm(graph: Graph, odPair: AlgorithmRequest, config: Option[Nothing] = None): Option[AlgorithmResult] = {
+    val requestName = s"REQ-${odPair.src}#${odPair.dst}"
     if (odPair.src == odPair.dst) {
+      println(s"[SSSP] $requestName src equals dst, returning None for path")
       None
     } else {
-      minSpanningDijkstras(graph, odPair.src, Some(odPair.dst)) match {
-        case None => None // destination was never found
-        case Some(spanningTree) =>
-          backPropagate(graph, spanningTree, odPair.dst) match {
-            case None => None //
-            case Some(path) =>
-              Some(AlgorithmResult(odPair, path))
-          }
+      for {
+        spanningTree <- minSpanningDijkstras(graph, odPair.src, Some(odPair.dst))
+        path <- backPropagate(graph, spanningTree, odPair.dst)
+      } yield {
+//        println(s"[SSSP] $requestName returning shortest path")
+        AlgorithmResult(odPair, path)
       }
     }
   }
@@ -72,20 +72,31 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
         }
         frontier.enqueue(SearchData(e, cost))
       })
+//    println(s"[DIJ] search assets have been set up, with a starting frontier of ${frontier.size} edges")
 
     @tailrec def _dijkstras (
       solution: Map[VertexId, BackPropagateData] = Map.empty[VertexId, BackPropagateData],
       visited: Set[EdgeId] = Set.empty[EdgeId]
     ): Option[Map[VertexId, BackPropagateData]] = {
-      if (frontier.isEmpty)
-        if (destination.isDefined) None // never found the goal
-        else Some(solution) // minimum spanning tree from origin, has no destination
+      if (visited.size > graph.edges.size) {
+        println(s"[DIJ] somehow minimum spanning tree size exceeded size of original graph edge list, returning None for solution")
+        None
+      }
+      else if (frontier.isEmpty) {
+        if (destination.isDefined) {
+          println(s"[DIJ] never found the goal, returning None for solution")
+          None // never found the goal
+        }
+        else {
+          println(s"[DIJ] no goal defined, completed a minimum spanning tree for ALL vertices, returning as result")
+          Some(solution) // minimum spanning tree from origin, has no destination
+        }
+      }
       else {
-        val shortestFrontier: SearchData = frontier.dequeue
 
+        val shortestFrontier: SearchData = frontier.dequeue
         val solutionUpdate: Map[VertexId, BackPropagateData] =
           if (!visited(shortestFrontier.edge.id) && !solution.isDefinedAt(shortestFrontier.edge.dst)) {
-            //            val updatedDistance = solution(shortestFrontier.edge.src).d + shortestFrontier.cost
             solution.updated(shortestFrontier.edge.dst, BackPropagateData(Some(shortestFrontier.edge.id), shortestFrontier.cost))
           } else
             solution
@@ -108,15 +119,19 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
                 case None => None
               }
             ).foreach(e => frontier.enqueue(e) )
-
           _dijkstras(solutionUpdate, visited + shortestFrontier.edge.id)
         }
       }
     }
-
-    _dijkstras(
-      solution = Map(origin -> BackPropagateData(None, 0D))
-    )
+    if (frontier.isEmpty) {
+      println("[DIJ] dijkstras initial state with empty frontier, returning None for solution")
+      None
+    } else {
+//      println("[DIJ] running _dijkstras to generate min spanning tree")
+      _dijkstras(
+        solution = Map(origin -> BackPropagateData(None, 0D))
+      )
+    }
   }
 
   /**
@@ -127,7 +142,6 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
     * @return
     */
   def backPropagate(g: Graph, spanningTree: Map[VertexId, BackPropagateData], destination: VertexId): Option[Path] = {
-
     @tailrec def _backPropagate (
       currentVertex: VertexId,
       result: Path = List()
@@ -135,7 +149,8 @@ object SSSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
       if (spanningTree.isDefinedAt(currentVertex)) {
         val currentNode: BackPropagateData = spanningTree(currentVertex)
         currentNode.π match {
-          case None => Some(result.reverse)
+          case None =>
+            Some(result.reverse)
           case Some(edgeId) =>
             val edge = g.edgeById(edgeId).get
             val cost = edge.attribute.linkCostFlow.get

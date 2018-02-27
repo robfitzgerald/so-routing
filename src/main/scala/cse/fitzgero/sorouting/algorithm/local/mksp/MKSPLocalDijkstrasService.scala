@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.local.mksp
 
+import scala.annotation.tailrec
 import scala.collection.{GenMap, GenSeq}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -51,12 +52,15 @@ object MKSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
       }
 
       // TODO: these two functions exist in MSSP as well, and could be generalized for some general function over the input type
-      def groupByParallelBlockSize[T](xs: GenSeq[T], blockSize: Int): List[List[T]] = xs.toList.sliding(blockSize, blockSize).toList
+      def groupByParallelBlockSize[T](xs: GenSeq[T], blockSize: Int): List[List[T]] = {
+        val result = xs.toList.sliding(blockSize, blockSize).toList
+        result
+      }
 
       def runBlocks(blocks: List[List[LocalRequest]], solution: List[KSPResult] = List()): Future[List[KSPResult]] =
         if (blocks.isEmpty) Future(solution)
         else {
-          Future.sequence(request.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config))) flatMap {
+          Future.sequence(blocks.head.iterator.map(KSPLocalDijkstrasService.runService(graph, _, config))) flatMap {
             blockSolved =>
               runBlocks(blocks.tail, solution ++ blockSolved.flatten)
           }

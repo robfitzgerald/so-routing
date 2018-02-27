@@ -27,7 +27,7 @@ object MSSPLocalDijkstrasService extends GraphBatchRoutingAlgorithmService {
     def blockSize: Int
   }
 
-  val DefaultBlockSize: Int = 8
+  val DefaultBlockSize: Int = 4
 
   case class ServiceResult(request: ServiceRequest, result: MultipleShortestPathsResult, logs: LoggingClass)
 
