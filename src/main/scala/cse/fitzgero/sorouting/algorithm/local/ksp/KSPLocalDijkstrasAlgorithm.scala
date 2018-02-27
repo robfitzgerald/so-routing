@@ -90,10 +90,10 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
 
           val failedBoundsTest: Boolean =
             kspBounds match {
-              case KSPBounds.Iteration(i) => iteration > i
+              case KSPBounds.Iteration(i) => iteration >= i
               case KSPBounds.PathsFound(p) => solution.size > p
               case KSPBounds.Time(t) => Instant.now.toEpochMilli - startTime > t
-              case KSPBounds.IterationOrTime(i, t) => iteration > i || Instant.now.toEpochMilli - startTime > t
+              case KSPBounds.IterationOrTime(i, t) => iteration >= i || Instant.now.toEpochMilli - startTime > t
             }
 
 //          println(s"[KSP-ALG] #${request.id} failedBoundsTest: $failedBoundsTest")
@@ -110,8 +110,6 @@ object KSPLocalDijkstrasAlgorithm extends GraphRoutingAlgorithm {
               Some(AlgorithmResult(request, paths))
             }
           } else {
-
-            println(s"[KSP-ALG] #${request.id} finding the next alt path")
 
             // find the leading edge in the walkback and remove it from the graph, and
             // re-run a shortest paths algorithm to generate an alternate path spur

@@ -52,7 +52,7 @@ object MATSimUEGlobalCongestionTest extends Experiment with App with MATSimSimul
     LocalTime.parse("08:15:00"),
     Some(LocalTime.parse("09:00:00")),
     Some(LocalTime.parse("00:15:00")),
-    blockSize = 8
+    blockSize = 1
   )
 
   // TODO: consolidate config requirements when common elements, parameterize relative paths for reports, populations
