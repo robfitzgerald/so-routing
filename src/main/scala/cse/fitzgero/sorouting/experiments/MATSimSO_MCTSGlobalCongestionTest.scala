@@ -68,10 +68,10 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
     k = 4, // the k in KSP
     kspBounds = Some(KSPBounds.IterationOrTime(10, 5000L)), // the way we determine ending our search for alternative paths in KSP
     overlapThreshold = 1.0D, // the percentage that alternate paths are allowed to overlap in KSP
-    coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality')
+    coefficientCp = 0.7071D, // shown by Kocsis and Szepesvari (2006) to perform well (satisfy the 'Hoeffding inequality'), scaled to current reward values
     congestionRatioThreshold = congestionThreshold, // the amount that the network congestion can increase as a result of a simulation in order to receive a reward in MCTS
-    computationalLimit = 5000L, // milliseconds
-    blockSize = 1,
+    computationalLimit = 10000L, // milliseconds
+    blockSize = 8,
     randomSeed = 0L
   )
 

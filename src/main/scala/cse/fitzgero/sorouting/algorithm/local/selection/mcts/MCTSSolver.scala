@@ -10,14 +10,15 @@ import cse.fitzgero.sorouting.algorithm.local.selection.mcts.Tag._
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 
-class MCTSSolver(
-                  graph: LocalGraph,
-                  request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]],
-                  congestionThreshold: Double,
-                  seed: Long = 0L,
-                  duration: Long = 5000L) extends StandardMCTS[AlternatesSet, Tag] {
+trait MCTSSolver extends StandardMCTS[AlternatesSet, Tag] {
 
-   val globalAlternates: Tag.GlobalAlternates = Tag.repackage(request)
+  def graph: LocalGraph
+  def request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]]
+  def congestionThreshold: Double
+  def seed: Long
+  def duration: Long
+
+  val globalAlternates: Tag.GlobalAlternates = Tag.repackage(request)
 
   /**
     * helper that transforms tags back into OD requests and corresponding paths
@@ -25,12 +26,6 @@ class MCTSSolver(
     * @return
     */
   def unTag(solution: AlternatesSet): GenMap[LocalODPair, List[SORoutingPathSegment]] = Tag.unTagAlternates(solution, globalAlternates)
-
-  override def evaluate(state: AlternatesSet): Double = {
-    val fn: AltPathSelection.EvaluationFunction = AltPathSelection.meanCostDiff(congestionThreshold)
-    fn(AltPathSelection.produceEvaluationTuples(state, globalAlternates, graph))
-  }
-
 
   override def generatePossibleActions(state: AlternatesSet): Seq[Tag] = {
     val noPersonRepeats = globalAlternates.filterNot {
@@ -58,12 +53,4 @@ class MCTSSolver(
   override def actionSelection: ActionSelection[AlternatesSet, Tag] = RandomSelection(random, generatePossibleActions)
   override val random: RandomGenerator = new BuiltInRandomGenerator(Some(seed))
   override val terminationCriterion: TerminationCriterion = TimeTermination(Instant.now, duration)
-}
-
-object MCTSSolver {
-  def apply(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]], congestionThreshold: Double, seed: Long, duration: Long): MCTSSolver =
-    new MCTSSolver(graph, request, congestionThreshold, seed, duration)
-  def apply(graph: LocalGraph, request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]], congestionThreshold: Double): MCTSSolver =
-    new MCTSSolver(graph, request, congestionThreshold)
-
 }

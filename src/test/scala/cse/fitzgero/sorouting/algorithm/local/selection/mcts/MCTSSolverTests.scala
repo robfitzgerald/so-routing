@@ -8,7 +8,7 @@ class MCTSSolverTests extends SORoutingUnitTestTemplate {
   "MCTSSolver" when {
     "run with a simple test case" should {
       "find the solution" in new CombinatorialTestAssets.CombinationSet {
-        val solver = MCTSSolver(
+        val solver = MCTSGlobalCongestionSolver(
           graph = graph,
           request = kspResult,
           seed = 0L,

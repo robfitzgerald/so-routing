@@ -7,5 +7,6 @@ object BasicCongestionFunctionType extends CostFunctionType
   */
 trait BasicCongestionFunction extends CostFunction {
   def costFlow(flow: Double): Option[Double] = Some(1 + math.pow(2, flow))
+  def freeFlowCostFlow: Option[Double] = Some(1)
   def linkCostFlow: Option[Double] = Some(1)
 }

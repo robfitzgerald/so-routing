@@ -7,5 +7,6 @@ object BasicCostFunctionType extends CostFunctionType
   */
 trait BasicCostFunction extends CostFunction {
   def costFlow(flow: Double): Option[Double] = Some(1)
+  def freeFlowCostFlow: Option[Double] = Some(1)
   def linkCostFlow: Option[Double] = Some(1)
 }
