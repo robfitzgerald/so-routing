@@ -19,8 +19,6 @@ trait BPRCostFunction extends CostFunction {
       d <- distance
       f <- freeFlowSpeed
     } yield d / f
-
-
   private lazy val costTerm1: Option[Double] = freeFlowTravelTime
   private lazy val costTerm2: Option[Double] =
     freeFlowTravelTime match {
@@ -43,7 +41,7 @@ trait BPRCostFunction extends CostFunction {
     bprCostFunction(allFlow)
   }
 
-  override def freeFlowCostFlow: Option[Double] = bprCostFunction()
+  override val freeFlowCostFlow: Option[Double] = bprCostFunction()
 
 
   /**
@@ -68,4 +66,38 @@ trait BPRCostFunction extends CostFunction {
     * @return
     */
   override def linkCostFlow: Option[Double] = costFlow(0D)
+
+//  override def capacityCostFlow: Option[Double] =
+//    for {
+//      cap <- capacity
+//      cost <- bprCostFunction(Some(cap))
+//    } yield cost
+
+  /**
+    * using an experimental method, captures a capacity value that sits somewhere slightly to the right of "capacity"
+    * better reflects the idea of cost growing too steeply for this link
+    * finds the spot where the logCostDelta function first dominates the logDelta function, which corresponds to a steep congestion growth
+    * this should terminate for any valid link state, but, it currently has a weak sanity check for infinite loops
+    */
+  override val capacityCostFlow: Option[Double] = {
+    def _findCap(i: Int = 1): Option[Double] = {
+      val logDelta: Double = math.log(i + 1) - math.log(i)
+      for {
+        costUpper <- bprCostFunction(Some(i + 1))
+        costLower <- bprCostFunction(Some(i))
+      } yield {
+        val logCostDelta: Double = math.log(costUpper) - math.log(costLower)
+        if (logCostDelta > logDelta) {
+          costUpper
+        } else {
+          _findCap(i + 1).getOrElse(Double.PositiveInfinity)
+        }
+      }
+    }
+    _findCap()
+  }
+}
+
+object BPRCostFunction {
+  val CapCostFlowRecurseLimit: Int = 10000 // cannot fathom a reasonable limit for this at present (need better ideas about possible data ranges)
 }

@@ -2,6 +2,8 @@ package cse.fitzgero.sorouting.matsimrunner.network
 
 import scala.xml.XML
 
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps
+
 case class Node(id: String, x: Double, y: Double)
 case class Link(id: String, from: String, to: String, length: Double, freespeed: Double, capacity: Double)
 case class Network(nodes: Map[String, Node], links: Map[String, Link])
@@ -36,8 +38,7 @@ object MATSimNetworkToCollection {
           val from: String = attrs("from")
           val to: String = attrs("to")
           val length: Double =
-            if (attrs.isDefinedAt("length"))
-              attrs("length").toDouble
+            if (attrs.isDefinedAt("length")) LocalGraphOps.safeDistance(attrs("length"))
             else euclidianDistance(nodes(from), nodes(to))
           val freespeed: Double = attrs("freespeed").toDouble
           val capacity: Double = attrs("capacity").toDouble

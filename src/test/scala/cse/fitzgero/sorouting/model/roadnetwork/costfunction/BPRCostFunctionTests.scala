@@ -12,10 +12,11 @@ class BPRCostFunctionTests extends SORoutingUnitTestTemplate {
           for {
             testCost <- test.linkCostFlow
           } {
-            testCost should equal (1.0D)
+            testCost should equal(1.0D)
           }
         }
       }
+    }
     "costFlow" when {
       "called with -1 on a link with one flow" should {
         "give the same cost as linkCostFlow for a link with no flow" in {
@@ -35,6 +36,22 @@ class BPRCostFunctionTests extends SORoutingUnitTestTemplate {
         }
       }
     }
+    "capacityCostFlow" when {
+      "demonstration" should {
+        "show values we expect" in {
+          (1 to 10).foreach {
+            n =>
+              val test = new Link(Some(n), Some(8.333), Some(25), Some(100)) with BPRCostFunction
+              for {
+                link <- test.linkCostFlow
+                min <- test.freeFlowCostFlow
+                max <- test.capacityCostFlow
+              } {
+                link should (be <= max and be >= min)
+              }
+          }
+        }
+      }
     }
   }
 }

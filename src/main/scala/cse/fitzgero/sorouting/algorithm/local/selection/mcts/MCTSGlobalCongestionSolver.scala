@@ -27,7 +27,7 @@ class MCTSGlobalCongestionSolver(
     ).sum
 
   override def evaluate(state: AlternatesSet): Double = {
-    val costOffset = MCTSHelpers.evaluateCostOffset(state, globalAlternates, graph)
+    val costOffset = MCTSHelpers.evaluateCostOffsetBySum(state, globalAlternates, graph)
     val resultGlobalCongestion: BigDecimal = costOffset + globalCongestion
     val difference: BigDecimal = resultGlobalCongestion - globalCongestion
 //    val difference: BigDecimal = if (resultGlobalCongestion > globalCongestion) resultGlobalCongestion - globalCongestion else globalCongestion - resultGlobalCongestion

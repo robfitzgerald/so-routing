@@ -25,4 +25,10 @@ trait CostFunction {
     * @return
     */
   def linkCostFlow: Option[Double]
+
+  /**
+    * evaluates the cost of the current link, based on the provided capacity value
+    * @return
+    */
+  def capacityCostFlow: Option[Double]
 }

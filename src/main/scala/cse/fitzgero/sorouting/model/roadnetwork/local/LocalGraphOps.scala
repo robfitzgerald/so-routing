@@ -1,5 +1,6 @@
 package cse.fitzgero.sorouting.model.roadnetwork.local
 
+import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction._
 
 object LocalGraphOps {
@@ -50,9 +51,9 @@ object LocalGraphOps {
       val src: String = linkData("from").toString
       val dst: String = linkData("to").toString
       val flow: Option[Double] = flowData.get(id)
-      val capacity: Option[Double] = linkData.get("capacity").map(_.toDouble)
-      val freespeed: Option[Double] = linkData.get("freespeed").map(_.toDouble)
-      val length: Option[Double] = linkData.get("length").map(_.toDouble)
+      val capacity: Option[Double] = linkData.get("capacity").map(toPosNonZeroValue)
+      val freespeed: Option[Double] = linkData.get("freespeed").map(toPosNonZeroValue)
+      val length: Option[Double] = linkData.get("length").map(safeDistance)
 
       val edge: LocalEdge = graphFlowType match {
         case EdgesWithFlows => LocalEdge(id, src, dst, flow, capacity, freespeed, length, Some(costFunctionType), algorithmFlowRate)
@@ -61,5 +62,36 @@ object LocalGraphOps {
 
       graph.updateEdge(id, edge)
     })
+  }
+
+  val MinNetworkDistance: Double = 10D
+
+  def safeDistance(d: String): Double = {
+    val value = d.toDouble
+    if (value <= MinNetworkDistance) MinNetworkDistance else value
+  }
+
+  private def toPosNonZeroValue(d: String): Double = {
+    val value = d.toDouble
+    if (value <= 0D) Double.MinPositiveValue else value
+  }
+
+  /**
+    * adds flows to a graph
+    * @param edgesAndFlows edge ids and flows to add to that edge
+    * @param graph the graph to modify
+    * @return an updated graph
+    */
+  def updateGraph(edgesAndFlows: Map[SORoutingPathSegment.EdgeId, Int], graph: LocalGraph): LocalGraph = {
+    edgesAndFlows.foldLeft(graph){
+      (g, data) => {
+        g.edgeById(data._1) match {
+          case None => g
+          case Some(e) =>
+            val updated = LocalEdge.modifyFlow(e, data._2)
+            g.updateEdge(data._1, updated)
+        }
+      }
+    }
   }
 }
