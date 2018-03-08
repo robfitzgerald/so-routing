@@ -42,6 +42,7 @@ object Reporting {
                 }
               val row = s"${config.configLabel},$experimentType,$sumOfCongestion,$data\n"
               Map(
+                "experiment.result.global.congestion.sum" -> sumOfCongestion,
                 "fs.csv.report.base.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(baseReportFileURI), Some(header)),
                 "fs.csv.report.config.congestion" -> ExperimentOps.writeLogToPath(row, Paths.get(configReportFileURI), Some(header))
               )
@@ -76,9 +77,10 @@ object Reporting {
       * @return success|failure tuples
       */
     def apply(conf: StepConfig, categoryLog: ExperimentGlobalLog): Option[(StepStatus, ExperimentStepLog)] = Some {
-      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,congestionThreshold,,network avg travel time,population avg travel time,expected cost effect,,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal,not embarrassingly solvable requests\n"
+      val header: String = "experiment type,source dir,instance dir,population size,optimal route population size,route percentage,time window,congestionThreshold,,global congestion sum,population avg travel time,expected cost effect,,has alternate paths,mcts run count,mcts found complete solution,selfish had overlap,optimal had overlap,mcts routes found,selfish overlap count,optimal overlap count,selfish same as optimal,not embarrassingly solvable requests\n"
       val baseReportFileURI: String = s"${conf.experimentBaseDirectory}/report.csv"
       val configReportFileURI: String = s"${conf.experimentConfigDirectory}/report.csv"
+
 
       val log: Map[String, String] = categoryLog.flatMap(_._2)
       val safeLog = inspectLog(log)_
@@ -92,7 +94,8 @@ object Reporting {
         conf.timeWindow,
         conf.congestionRatioThreshold.toString,
         "",
-        safeLog("experiment.result.traveltime.avg.network"),
+//        safeLog("experiment.result.traveltime.avg.network"),
+        safeLog("experiment.result.global.congestion.sum"),
         safeLog("experiment.result.traveltime.avg.population"),
         getExpectedCostEffect(log),
         "",

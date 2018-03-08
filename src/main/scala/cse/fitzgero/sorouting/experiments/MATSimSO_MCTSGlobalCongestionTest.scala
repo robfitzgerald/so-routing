@@ -80,8 +80,8 @@ object MATSimSO_MCTSGlobalCongestionTest extends Experiment with App with MATSim
     ExperimentAssetGenerator.SetupInstanceDirectory,
     ExperimentAssetGenerator.RepeatedPopulation,
     SystemOptimalMCTSGlobalCongestionRouting.Incremental,
-    Reporting.AppendToReportCSVFiles,
     Reporting.GlobalCongestionReport,
+    Reporting.AppendToReportCSVFiles,
     Reporting.AllLogsToTextFile
   ))
 }

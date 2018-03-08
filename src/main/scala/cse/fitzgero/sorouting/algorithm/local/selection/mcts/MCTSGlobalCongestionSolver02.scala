@@ -54,14 +54,18 @@ class MCTSGlobalCongestionSolver02(
 //    val percent = ratio * (bounds.max / bounds.min)
 //    val percent = bounds.min / costPerMaxCongestion
 //    val reward: Double = 1D - percent.toDouble
-//    val reward: Double = MCTSHelpers.evaluateRewardSumForAll(state, globalAlternates, graph) match {
-//      case None => 0D
-//      case Some(r) => r
-//    }
-    val reward: Double = MCTSHelpers.evaluateRewardSumForChanged(state, globalAlternates, graph) match {
+    val reward: Double = MCTSHelpers.evaluateRewardSumForAll(state, globalAlternates, graph) match {
       case None => 0D
       case Some(r) => r
     }
+//    val reward: Double = MCTSHelpers.evaluateRewardSumForChanged(state, globalAlternates, graph) match {
+//      case None => 0D
+//      case Some(r) => r
+//    }
+//    val reward: Double = MCTSHelpers.evaluateNegLogRewardSumForChanged(state, globalAlternates, graph) match {
+//      case None => 0D
+//      case Some(r) => r
+//    }
 
 //    val resultGlobalCongestionNormalized: BigDecimal = costOffset + globalCongestionNormalized
 //    val resultGlobalCongestion: BigDecimal = costOffset + globalCongestion

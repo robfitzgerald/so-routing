@@ -25,12 +25,23 @@ object MCTSHelpers {
       (a, b) => GraphMinMaxCongestion(multiplicativeIdentity(a.min) * multiplicativeIdentity(b.min), multiplicativeIdentity(a.max) * multiplicativeIdentity(b.max))
     }
 
+
+  def relativeRewardOf(edge: LocalEdge): Option[Double] = {
+    for {
+      cost <- edge.attribute.linkCostFlow
+      max <- edge.attribute.capacityCostFlow
+    } yield {
+      //      if (cost<min) 1.0D - shouldn't be possible yo. but, cost can exceed max, so < 0.0D is still possible (though not desired)
+      math.max(0.0D, 1D-(cost/max))
+    }
+  }
+
   /**
     * evaluates the current congestion as a reward function from [0,1]
     * @param edge
     * @return
     */
-  def rewardOf(edge: LocalEdge): Option[Double] = {
+  def absoluteRewardOf(edge: LocalEdge): Option[Double] = {
     for {
       cost <- edge.attribute.linkCostFlow
       min <- edge.attribute.freeFlowCostFlow
@@ -43,16 +54,50 @@ object MCTSHelpers {
   }
 
   /**
+    * evaluates the current congestion as a reward function from [0,1] with a steeper shape from the equation -ln(rewardPercentage/4)
+    * @param edge
+    * @param denom
+    * @return
+    */
+  def negLogRewardOf(denom: Double = 4, lowerBound: Double = 0.0183D)(edge: LocalEdge): Option[Double] = {
+    for {
+      cost <- edge.attribute.linkCostFlow
+      min <- edge.attribute.freeFlowCostFlow
+      max <- edge.attribute.capacityCostFlow
+      if min != max
+    } yield {
+
+      val relativeCost: Double = (cost-min)/(max-min)
+//      val withBounds: Double = inverseRewardPercentage))
+      math.min(1.0D, math.max(Double.MinPositiveValue, -(math.log(relativeCost) / denom)))
+    }
+  }
+
+  /**
     * 20180305 - attempting based on new capacityCostFlow evaluation, and bounds [0,1] from rewardOf(LocalEdge)
     * @param theseAlts the tags of the selected alternate paths to evaluate a reward for
     * @param globalAlts the collection of tags mapped to edge sets
     * @param graph the current road network state
     * @return a reward, in the range [0,1]
     */
+  def evaluateNegLogRewardSumForAll(theseAlts: AlternatesSet, globalAlts: GlobalAlternates, graph: LocalGraph): Option[Double] = {
+    val edgesAndFlows = edgesAndFlowsIn(allPathSegmentsIn(theseAlts, globalAlts))
+    val updatedGraph = LocalGraphOps.updateGraph(edgesAndFlows, graph)
+    evaluateRewardSum(updatedGraph.edges, negLogRewardOf())
+  }
+
+  def evaluateNegLogRewardSumForChanged(theseAlts: AlternatesSet, globalAlts: GlobalAlternates, graph: LocalGraph): Option[Double] = {
+    val edgesAndFlows = edgesAndFlowsIn(allPathSegmentsIn(theseAlts, globalAlts))
+    val updatedGraph = LocalGraphOps.updateGraph(edgesAndFlows, graph)
+    val lookup = edgesAndFlows.keySet
+    val edgesToEvaluate = updatedGraph.edges.filter{ e => lookup(e._1) }
+    evaluateRewardSum(edgesToEvaluate, negLogRewardOf())
+  }
+
   def evaluateRewardSumForAll(theseAlts: AlternatesSet, globalAlts: GlobalAlternates, graph: LocalGraph): Option[Double] = {
     val edgesAndFlows = edgesAndFlowsIn(allPathSegmentsIn(theseAlts, globalAlts))
     val updatedGraph = LocalGraphOps.updateGraph(edgesAndFlows, graph)
-    evaluateRewardSum(updatedGraph.edges)
+    evaluateRewardSum(updatedGraph.edges, absoluteRewardOf)
   }
 
   def evaluateRewardSumForChanged(theseAlts: AlternatesSet, globalAlts: GlobalAlternates, graph: LocalGraph): Option[Double] = {
@@ -60,13 +105,13 @@ object MCTSHelpers {
     val updatedGraph = LocalGraphOps.updateGraph(edgesAndFlows, graph)
     val lookup = edgesAndFlows.keySet
     val edgesToEvaluate = updatedGraph.edges.filter{ e => lookup(e._1) }
-    evaluateRewardSum(edgesToEvaluate)
+    evaluateRewardSum(edgesToEvaluate, absoluteRewardOf) // relative/absolute reward function?
   }
 
-  def evaluateRewardSum(edges: GenMap[String, LocalEdge]): Option[Double] =
+  def evaluateRewardSum(edges: GenMap[String, LocalEdge], rewardFn: (LocalEdge) => Option[Double]): Option[Double] =
     (for {
       e <- edges
-      reward <- rewardOf(e._2)
+      reward <- rewardFn(e._2)
     } yield {
       (reward, 1)
     }).toList match {

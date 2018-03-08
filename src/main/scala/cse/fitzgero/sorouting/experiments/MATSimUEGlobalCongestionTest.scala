@@ -62,8 +62,8 @@ object MATSimUEGlobalCongestionTest extends Experiment with App with MATSimSimul
     ExperimentAssetGenerator.SetupInstanceDirectory,
     ExperimentAssetGenerator.RepeatedPopulation,
     UserEquilibriumGlobalCongestionRouting.Incremental,
-    Reporting.AppendToReportCSVFiles,
     Reporting.GlobalCongestionReport,
+    Reporting.AppendToReportCSVFiles,
     Reporting.AllLogsToTextFile
   ))
 }

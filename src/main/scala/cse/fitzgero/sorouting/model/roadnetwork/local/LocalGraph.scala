@@ -16,7 +16,7 @@ class LocalGraph (
   override type Vertex = LocalVertex
   override type Edge = LocalEdge
 
-  def adjacencies: GenMap[String, GenMap[String, String]] = adjList
+  def adjacencies: GenMap[VertexId, GenMap[EdgeId, VertexId]] = adjList
   def edges: GenMap[String, LocalEdge] = edgeList
   def vertices: GenMap[String, LocalVertex] = vertexList
 

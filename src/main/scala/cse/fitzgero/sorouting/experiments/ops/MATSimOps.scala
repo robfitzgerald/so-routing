@@ -85,7 +85,7 @@ object MATSimOps {
     val matsimConfig: Config = ConfigUtils.loadConfig(s"$currentDirectory/config.xml")
 
     matsimConfig.controler().setOutputDirectory(matsimOutputDirectory)
-    val scenario: Scenario = ScenarioUtils.loadScenario(matsimConfig)
+    // val scenario: Scenario = ScenarioUtils.loadScenario(matsimConfig)
     val controler: Controler = new Controler(matsimConfig)
 
 
