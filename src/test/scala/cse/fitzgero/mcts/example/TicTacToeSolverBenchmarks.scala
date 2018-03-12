@@ -1,6 +1,6 @@
 package cse.fitzgero.mcts.example
 
-import cse.fitzgero.mcts.MonteCarloTree
+import cse.fitzgero.mcts.tree.MonteCarloTree
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 
 class TicTacToeSolverBenchmarks extends SORoutingUnitTestTemplate {

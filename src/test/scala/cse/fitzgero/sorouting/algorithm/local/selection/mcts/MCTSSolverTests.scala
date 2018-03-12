@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.local.selection.mcts
 
-import cse.fitzgero.mcts.MonteCarloTree
+import cse.fitzgero.mcts.tree.MonteCarloTree
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.local.selection.CombinatorialTestAssets
 

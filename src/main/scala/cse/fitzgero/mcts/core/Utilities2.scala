@@ -3,11 +3,11 @@ package cse.fitzgero.mcts.core
 import scala.annotation.tailrec
 import scala.collection.GenSeq
 
-import cse.fitzgero.mcts.tree.MonteCarloTree
+import cse.fitzgero.mcts.tree._
 
-object Utilities {
+object Utilities2 {
 
-  def hasUnexploredActions[S,A](generatePossibleActions: (S) => Seq[A])(node: MonteCarloTree[S,A]): Boolean = {
+  def hasUnexploredActions[S,A,N <: MonteCarloTreeTop[S,A,_,_]](generatePossibleActions: (S) => Seq[A])(node: N): Boolean = {
     val explored: GenSeq[A] = node.children match {
       case None => Seq[A]()
       case Some(c) => c.keys.toSeq
@@ -16,16 +16,16 @@ object Utilities {
   }
 
 
-  def bestGame[S,A](bestChild: (MonteCarloTree[S,A], Double) => Option[MonteCarloTree[S,A]])(root: MonteCarloTree[S,A]): Seq[A] =
+  def bestGame[S,A,N <: MonteCarloTreeTop[S,A,_,_]](bestChild: (N, Double) => Option[N])(root: N): Seq[A] =
     if (root.hasNoChildren) Seq()
     else {
       @tailrec
-      def _bestGame(node: MonteCarloTree[S,A], solution: Seq[A] = Seq.empty[A]): Seq[A] = {
+      def _bestGame(node: N, solution: Seq[A] = Seq.empty[A]): Seq[A] = {
         if (node.hasNoChildren) solution
         else {
           bestChild(node, 0D) match {
             case None => solution
-            case Some(child: MonteCarloTree[S,A]) =>
+            case Some(child) =>
               child.action match {
                 case None => solution
                 case Some(action) =>

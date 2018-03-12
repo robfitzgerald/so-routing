@@ -1,18 +1,18 @@
 package cse.fitzgero.mcts.core
 
-import cse.fitzgero.mcts.tree.MonteCarloTree
+import cse.fitzgero.mcts.tree._
 
-trait SamplingFunction {
-  def evaluate[S,A](monteCarloTree: MonteCarloTree[S,A], Cp: Double): Double
+trait SamplingFunction2 {
+  def evaluate[S,A](monteCarloTree: MonteCarloTree2[S,A], Cp: Double): Double
 }
 
-class UCTSamplingFunction extends SamplingFunction {
+class UCTSamplingFunction extends SamplingFunction2 {
   /**
     * Upper Confidence Bound For Trees sampling method
     * @param node the node to evaluate
     * @return
     */
-  def evaluate[S,A](node: MonteCarloTree[S,A], Cp: Double): Double = {
+  def evaluate[S,A](node: MonteCarloTree2[S,A], Cp: Double): Double = {
     val parentVisits: Long = node.parent() match {
       case None => 0L
       case Some(parent) => parent.visits

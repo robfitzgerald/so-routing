@@ -1,4 +1,4 @@
-package cse.fitzgero.mcts
+package cse.fitzgero.mcts.tree
 
 import scala.collection.GenMap
 

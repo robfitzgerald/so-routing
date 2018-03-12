@@ -2,7 +2,7 @@ package cse.fitzgero.mcts.core
 
 import java.time.Instant
 
-import cse.fitzgero.mcts.MonteCarloTree
+import cse.fitzgero.mcts.tree.MonteCarloTree
 
 trait TerminationCriterion {
   def terminationCheck[S,A](monteCarloTree: MonteCarloTree[S,A]): Boolean
