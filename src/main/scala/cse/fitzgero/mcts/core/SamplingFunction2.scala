@@ -6,7 +6,7 @@ trait SamplingFunction2 {
   def evaluate[S,A](monteCarloTree: MonteCarloTree2[S,A], Cp: Double): Double
 }
 
-class UCTSamplingFunction extends SamplingFunction2 {
+class UCTSamplingFunction2 extends SamplingFunction2 {
   /**
     * Upper Confidence Bound For Trees sampling method
     * @param node the node to evaluate
@@ -33,6 +33,6 @@ class UCTSamplingFunction extends SamplingFunction2 {
   }
 }
 
-object UCTSamplingFunction {
-  def apply(): UCTSamplingFunction = new UCTSamplingFunction
+object UCTSamplingFunction2 {
+  def apply(): UCTSamplingFunction2 = new UCTSamplingFunction2
 }

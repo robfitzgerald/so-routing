@@ -9,7 +9,7 @@ import scala.collection.GenMap
   * @tparam R a reward type (for default MCTS, that would be a real number)
   * @tparam N the derived type (F-Bounded Polymorphic type)
   */
-abstract class MonteCarloTreeTop[S,A,R,N <: MonteCarloTreeTop[S,A,R,N]] {
+trait MonteCarloTreeTop[S,A,R,N <: MonteCarloTreeTop[S,A,R,N]] {
 
   ////// user defined values
   // these are idempotent throughout the lifetime of the tree

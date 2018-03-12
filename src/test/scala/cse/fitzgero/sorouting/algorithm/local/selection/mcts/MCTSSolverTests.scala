@@ -1,6 +1,6 @@
 package cse.fitzgero.sorouting.algorithm.local.selection.mcts
 
-import cse.fitzgero.mcts.tree.MonteCarloTree
+import cse.fitzgero.mcts.tree._
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 import cse.fitzgero.sorouting.algorithm.local.selection.CombinatorialTestAssets
 
@@ -15,7 +15,7 @@ class MCTSSolverTests extends SORoutingUnitTestTemplate {
           duration = 1000L,
           congestionThreshold = 3D
         )
-        val tree: MonteCarloTree[Tag.AlternatesSet, Tag] = solver.run()
+        val tree: MonteCarloTree2[Tag.AlternatesSet, Tag] = solver.run()
         println(tree.printTree(printDepth = 3))
         println(solver.bestGame(tree))
         println(solver.unTag(solver.bestGame(tree)))

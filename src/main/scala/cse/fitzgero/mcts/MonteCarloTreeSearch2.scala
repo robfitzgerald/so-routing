@@ -6,7 +6,7 @@ import cse.fitzgero.mcts.tree._
 trait MonteCarloTreeSearch2[S,A,R] {
 
   type Tree <: MonteCarloTreeTop[S,A,R,_]
-  
+
   ////////// domain and user-provided operations. to be implemented by the user //////////
 
   /**
@@ -50,6 +50,13 @@ trait MonteCarloTreeSearch2[S,A,R] {
     * @return
     */
   def startState: S
+
+  /**
+    * generates a root node for this game
+    * @param state the start state for this game
+    * @return
+    */
+  def startNode(state: S): Tree
 
   /**
     * exploration coefficient. 0.7071D has been shown by Kocsis and Szepesvari (2006) to satisfy the 'Hoeffding inequality'
@@ -114,7 +121,7 @@ trait MonteCarloTreeSearch2[S,A,R] {
     * run this Monte Carlo Tree Search
     * @return the tree at the end of the search
     */
-  final def run(root: Tree): Tree = {
+  final def run(root: Tree = startNode(startState)): Tree = {
     while (terminationCriterion.terminationCheck[S,A,Tree](root)) {
       val v_t = treePolicy(root, Cp)
       val ∆ = defaultPolicy(v_t)

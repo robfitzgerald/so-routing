@@ -8,7 +8,9 @@ import cse.fitzgero.mcts.tree._
 trait StandardMCTS2[S,A] extends MonteCarloTreeSearch2[S,A,Double] {
 
   override type Tree = MonteCarloTree2[S,A]
-  
+
+  override def startNode(s: S): MonteCarloTree2[S, A] = MonteCarloTree2(s)
+
   @tailrec
   override protected final def treePolicy(node: Tree, Cp: Double): Tree = {
     if (stateIsNonTerminal(node.state)) {

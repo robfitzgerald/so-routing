@@ -5,12 +5,12 @@ import java.time.Instant
 import scala.collection.{GenMap, GenSeq}
 
 import cse.fitzgero.mcts.core._
-import cse.fitzgero.mcts.variant.StandardMCTS
+import cse.fitzgero.mcts.variant._
 import cse.fitzgero.sorouting.algorithm.local.selection.mcts.Tag._
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
 
-trait MCTSSolver extends StandardMCTS[AlternatesSet, Tag] {
+trait MCTSSolver extends StandardMCTS2[AlternatesSet, Tag] {
 
   def graph: LocalGraph
   def request: GenMap[LocalODPair, GenSeq[List[SORoutingPathSegment]]]
@@ -49,8 +49,8 @@ trait MCTSSolver extends StandardMCTS[AlternatesSet, Tag] {
 
   // utilities
   override def startState: AlternatesSet = Seq()
-  override def samplingMethod: SamplingFunction = UCTSamplingFunction()
+  override def samplingMethod: SamplingFunction2 = UCTSamplingFunction2()
   override def actionSelection: ActionSelection[AlternatesSet, Tag] = RandomSelection(random, generatePossibleActions)
   override val random: RandomGenerator = new BuiltInRandomGenerator(Some(seed))
-  override val terminationCriterion: TerminationCriterion = TimeTermination(Instant.now, duration)
+  override val terminationCriterion: TerminationCriterion2 = TimeTermination2(Instant.now, duration)
 }

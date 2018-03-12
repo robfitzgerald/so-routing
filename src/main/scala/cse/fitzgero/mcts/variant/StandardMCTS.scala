@@ -2,7 +2,7 @@ package cse.fitzgero.mcts.variant
 import scala.annotation.tailrec
 
 import cse.fitzgero.mcts.MonteCarloTreeSearch
-import cse.fitzgero.mcts.tree.MonteCarloTree
+import cse.fitzgero.mcts.tree._
 
 trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
 
