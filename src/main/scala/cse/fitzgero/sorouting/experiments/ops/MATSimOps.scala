@@ -3,6 +3,7 @@ package cse.fitzgero.sorouting.experiments.ops
 import java.nio.file.{Files, Paths}
 import java.time.LocalTime
 
+import scala.collection.GenMap
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.util.matching.Regex
@@ -13,8 +14,8 @@ import cse.fitzgero.sorouting.matsimrunner.network.MATSimNetworkToCollection
 import cse.fitzgero.sorouting.matsimrunner.snapshot.NewNetworkAnalyticStateCollector.SnapshotCollector
 import cse.fitzgero.sorouting.matsimrunner.snapshot._
 import cse.fitzgero.sorouting.model.roadnetwork.costfunction.BPRCostFunctionType
-import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.EdgesWithDrivers
-import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeSimulationAttribute, LocalGraph, LocalGraphOps}
+import cse.fitzgero.sorouting.model.roadnetwork.local.LocalGraphOps.{EdgesWithDrivers, EdgesWithFlows}
+import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalEdgeFlowAttribute, LocalEdgeSimulationAttribute, LocalGraph, LocalGraphOps}
 import org.matsim.api.core.v01.Scenario
 import org.matsim.core.config.{Config, ConfigUtils}
 import org.matsim.core.controler.{AbstractModule, Controler}
@@ -122,7 +123,6 @@ object MATSimOps {
                         graph = graph.updateEdge(edgeId, edge.copy(attribute = updated))
                     }
                 }
-                //                  currentNetworkState = NewNetworkAnalyticStateCollector.update(currentNetworkState, e)
               }
             case NewIteration(i) =>
               currentIteration = i
@@ -136,6 +136,88 @@ object MATSimOps {
       controler.run()
 
       outputList.toList
+    }
+
+    run()
+  }
+
+
+  def MATSimRunGenerateSensorSimulationData(currentDirectory: String, startTime: LocalTime, endTime: LocalTime, sensorIntervalSecs: Int = 15 * 60): GenMap[String, Seq[(Int, Double)]] = {
+
+    val matsimOutputDirectory: String = s"$currentDirectory/matsim-sensorsim"
+    Files.createDirectories(Paths.get(matsimOutputDirectory))
+    val matsimConfig: Config = ConfigUtils.loadConfig(s"$currentDirectory/config.xml")
+    matsimConfig.controler().setOutputDirectory(matsimOutputDirectory)
+    val controler: Controler = new Controler(matsimConfig)
+
+    def run(): GenMap[String, Seq[(Int, Double)]] = {
+      val network = XML.load(ExperimentFSOps.networkFileURI(currentDirectory))
+      var graph: LocalGraph = LocalGraphOps.readMATSimXML(EdgesWithFlows, network)
+      var currentIteration: Int = 1
+      var timeTracker: TimeTracker = TimeTracker(sensorIntervalSecs, startTime.format(ExperimentFSOps.HHmmssFormat), endTime.format(ExperimentFSOps.HHmmssFormat))
+      // Map[EdgeId, [(simTime, flowVal)]]
+      val output: collection.mutable.Map[String, Seq[(Int, Double)]] =
+        graph
+          .edges
+          .foldLeft(collection.mutable.Map[String, Seq[(Int, Double)]]()){
+            (acc, edge) =>
+              acc.updated(edge._1, Seq())
+          }
+//      var intervalStartTime: Int = 0
+
+      // add the events handlers
+      controler.addOverridingModule(new AbstractModule(){
+        @Override def install (): Unit = {
+          this.addEventHandlerBinding().toInstance(new SnapshotEventHandler({
+            case e: LinkEnterData =>
+
+              // update model
+              if (!timeTracker.belongsToThisTimeGroup(e)) {
+                graph.edges.foreach {
+                  edge =>
+                    edge._2.attribute.flow match {
+                      case Some(flow) =>
+                        val nextFlow: Seq[(Int, Double)] = output(edge._1) :+ (e.time, flow)
+                        output.update(edge._1, nextFlow)
+                      case None => ()
+                    }
+                }
+
+
+                graph = LocalGraphOps.readMATSimXML(EdgesWithFlows, network)
+//                val currentTotalCongestionCost: Double =
+//                  if (graph.edges.isEmpty) 0D
+//                  else graph.edges.flatMap { _._2.attribute.linkCostFlow }.sum
+//                val entry = (e.time, currentTotalCongestionCost)
+                timeTracker = timeTracker.advance
+              }
+
+              synchronized {
+                val edgeId = e.linkID.toString
+                graph.edgeById(edgeId) match {
+                  case None =>
+                  case Some(edge) =>
+                    edge.attribute match {
+                      case attr: LocalEdgeFlowAttribute =>
+                        val updated = LocalEdgeFlowAttribute.modifyFlow(attr, 1)
+                        graph = graph.updateEdge(edgeId, edge.copy(attribute = updated))
+                      case _ => ()
+                    }
+                }
+              }
+            case _: LinkLeaveData => ()
+            case NewIteration(i) =>
+              currentIteration = i
+            case o =>
+              println("other link data died here")
+          }))
+        }
+      })
+
+      //start the simulation
+      controler.run()
+
+      output.toMap
     }
 
     run()
