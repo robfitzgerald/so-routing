@@ -6,12 +6,14 @@ object TestAssets {
     type Action = String
     type Reward = Double
 
-    class Tree(override val state: State, override val action: Option[Action], override var reward: Reward) extends MonteCarloTreeTop[State,Action,Reward,Tree] {
-      def update(other: Reward): Unit = {
-        this.updateReward(
-          (myReward: Double) =>
-            if (myReward < other) Some(other) else None
-        )
+    class Tree(override val state: State, override val action: Option[Action], override var reward: Reward) extends MonteCarloTree[State,Action,Reward,Tree] {
+      def update[T](other: T): Unit = other match {
+        case x: Double =>
+          this.updateReward(
+            (myReward: Double) =>
+              if (myReward < x) Some(x) else None
+          )
+        case _ => ()
       }
     }
 

@@ -2,7 +2,7 @@ package cse.fitzgero.mcts.tree
 
 import cse.fitzgero.sorouting.SORoutingUnitTestTemplate
 
-class MonteCarloTreeTopTests extends SORoutingUnitTestTemplate {
+class MonteCarloTreeTests extends SORoutingUnitTestTemplate {
   "MonteCarloTreeTop" when {
 
     "called with simple State, Action, and Reward types" should {

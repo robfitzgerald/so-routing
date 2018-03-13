@@ -1,13 +1,19 @@
 package cse.fitzgero.mcts.variant
+
 import scala.annotation.tailrec
 
 import cse.fitzgero.mcts.MonteCarloTreeSearch
 import cse.fitzgero.mcts.tree._
+import cse.fitzgero.mcts.reward.scalar.UCTScalarStandardReward._
 
-trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
+trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A,Double,Coefficients] {
+
+  override type Tree = MCTreeStandardReward[S,A]
+
+  override def startNode(s: S): MCTreeStandardReward[S, A] = MCTreeStandardReward(s)
 
   @tailrec
-  override protected final def treePolicy(node: MonteCarloTree[S, A], Cp: Double): MonteCarloTree[S, A] = {
+  override protected final def treePolicy(node: Tree, Cp: Double): Tree = {
     if (stateIsNonTerminal(node.state)) {
       if (hasUnexploredActions(node)) {
         expand(node) match {
@@ -21,13 +27,13 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
             treePolicy(bestChild, Cp)
         }
       }
-    } else {
+    } else /* terminal board state */ {
       node
     }
   }
 
 
-  override protected final def defaultPolicy(monteCarloTree: MonteCarloTree[S,A]): Double = {
+  override protected final def defaultPolicy(monteCarloTree: Tree): Double = {
     if (stateIsNonTerminal(monteCarloTree.state)) {
 
       // simulate moves until a terminal game state is found, then evaluate
@@ -53,26 +59,27 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
   }
 
   @tailrec
-  override protected final def backup(node: MonteCarloTree[S, A], delta: Double): MonteCarloTree[S, A] = {
+  override protected final def backup(node: Tree, delta: Double): Tree = {
     node.parent() match {
       case None =>
-        node.updateReward(delta)
+        node.update(delta)
+        node
       case Some(parent) =>
         // v has a parent, so we want to update v and recurse on parent
-        node.updateReward(delta)
+        node.update(delta)
         backup(parent, delta)
     }
   }
 
-  override protected final def bestChild(node: MonteCarloTree[S,A], Cp: Double): Option[MonteCarloTree[S,A]] = {
+  override protected final def bestChild(node: Tree, Cp: Double): Option[Tree] = {
     if (node.hasNoChildren) { None }
     else {
       node.children map {
         _.map {
           tuple =>
           // produce a tuple for each valid child that is (cost, child)
-          val child: MonteCarloTree[S,A] = tuple._2()
-          (samplingMethod.evaluate(child, Cp), child)
+          val child: Tree = tuple._2()
+          (samplingMethod.evaluate(child, Coefficients(Cp)), child)
         }.maxBy{_._1}
           // take the child associated with the tuple that has evaluates with the maximal reward
           ._2
@@ -80,13 +87,13 @@ trait StandardMCTS[S,A] extends MonteCarloTreeSearch[S,A] {
     }
   }
 
-  override protected final def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]] = {
+  override protected final def expand(node: Tree): Option[Tree] = {
     for {
       action <- actionSelection.selectAction(generatePossibleActions(node.state))
     } yield {
       val newState = applyAction(node.state, action)
-      val newNode = MonteCarloTree(newState, Some(action), None, node)
-      node.addChild(action, newNode)
+      val newNode = MCTreeStandardReward(newState, Some(action))
+      node.addChild(newNode)
       newNode
     }
   }

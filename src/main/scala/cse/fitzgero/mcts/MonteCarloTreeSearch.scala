@@ -1,13 +1,17 @@
 package cse.fitzgero.mcts
 
+import cse.fitzgero.mcts.reward.MCTSAlgorithm
 import cse.fitzgero.mcts.core._
-import cse.fitzgero.mcts.tree.MonteCarloTree
+import cse.fitzgero.mcts.reward.scalar.UCTScalarStandardReward
+import cse.fitzgero.mcts.tree._
 
-trait MonteCarloTreeSearch[S,A] {
+trait MonteCarloTreeSearch[S,A,R,C] {
+
+  type Tree <: MonteCarloTree[S,A,R,_]
 
   ////////// domain and user-provided operations. to be implemented by the user //////////
 
-  /**
+  /**\
     * given a state, generate all valid actions that can be performed
     * @param state the given state
     * @return a sequence of actions
@@ -27,7 +31,7 @@ trait MonteCarloTreeSearch[S,A] {
     * @param state a terminal game state
     * @return
     */
-  def evaluate(state: S): Double
+  def evaluate(state: S): R
 
   /**
     * recognizes non-terminal game states
@@ -50,6 +54,13 @@ trait MonteCarloTreeSearch[S,A] {
   def startState: S
 
   /**
+    * generates a root node for this game
+    * @param state the start state for this game
+    * @return
+    */
+  def startNode(state: S): Tree
+
+  /**
     * exploration coefficient. 0.7071D has been shown by Kocsis and Szepesvari (2006) to satisfy the 'Hoeffding inequality'
     * @return
     */
@@ -57,7 +68,7 @@ trait MonteCarloTreeSearch[S,A] {
 
   //////// utility operations. provided by the MCTS library ////////////
 
-  protected def samplingMethod: SamplingFunction
+  protected def samplingMethod: MCTSAlgorithm[Tree, C]
   protected def terminationCriterion: TerminationCriterion
   protected def actionSelection: ActionSelection[S,A]
   protected def random: RandomGenerator
@@ -70,7 +81,7 @@ trait MonteCarloTreeSearch[S,A] {
     * @param Cp the exploration coefficient, which is user-set
     * @return
     */
-  protected def treePolicy(node: MonteCarloTree[S,A], Cp: Double): MonteCarloTree[S,A]
+  protected def treePolicy(node: Tree, Cp: Double): Tree
 
 
   /**
@@ -78,7 +89,7 @@ trait MonteCarloTreeSearch[S,A] {
     * @param node the search node picked by the tree policy in the current iteration
     * @return
     */
-  protected def defaultPolicy(node: MonteCarloTree[S,A]): Double
+  protected def defaultPolicy(node: Tree): R
 
   /**
     * updates the reward at this node, and back-propagates the reward to this node's parent, if applicable
@@ -86,14 +97,14 @@ trait MonteCarloTreeSearch[S,A] {
     * @param delta the reward to apply
     * @return
     */
-  protected def backup(node: MonteCarloTree[S,A], delta: Double): MonteCarloTree[S,A]
+  protected def backup(node: Tree, delta: R): Tree
 
   /**
     * chooses a child to expand via a provided selection method and attaches that new node to the tree
     * @param node the parent node we are expanding from
     * @return the new node of the tree
     */
-  protected def expand(node: MonteCarloTree[S,A]): Option[MonteCarloTree[S,A]]
+  protected def expand(node: Tree): Option[Tree]
 
   /**
     * find the best child of a parent node based on the selection policy of this MCTS algorithm
@@ -101,19 +112,19 @@ trait MonteCarloTreeSearch[S,A] {
     * @param Cp the exploration coefficient, which is user-set, or is 0 if we are seeking the best choice based on our generated knowledge
     * @return the best child, based on the evaluate function provided by the user
     */
-  protected def bestChild(node: MonteCarloTree[S,A], Cp: Double): Option[MonteCarloTree[S,A]]
+  protected def bestChild(node: Tree, Cp: Double): Option[Tree]
 
   //////// implemented members //////////
 
-  final protected def hasUnexploredActions: (MonteCarloTree[S,A]) => Boolean = Utilities.hasUnexploredActions[S,A](generatePossibleActions)
+  final protected def hasUnexploredActions: (Tree) => Boolean = Utilities.hasUnexploredActions[S,A,Tree](generatePossibleActions)
 
 
   /**
     * run this Monte Carlo Tree Search
     * @return the tree at the end of the search
     */
-  final def run(root: MonteCarloTree[S,A] = MonteCarloTree[S,A](state = startState)): MonteCarloTree[S,A] = {
-    while (terminationCriterion.terminationCheck(root)) {
+  final def run(root: Tree = startNode(startState)): Tree = {
+    while (terminationCriterion.terminationCheck[S,A,Tree](root)) {
       val v_t = treePolicy(root, Cp)
       val ∆ = defaultPolicy(v_t)
       backup(v_t, ∆)
@@ -125,5 +136,5 @@ trait MonteCarloTreeSearch[S,A] {
     * find the path of best moves through the generated tree
     * @return the sequence of best moves through the game
     */
-  final def bestGame: (MonteCarloTree[S,A]) => Seq[A] = Utilities.bestGame[S,A](bestChild)
+  final def bestGame: (Tree) => Seq[A] = Utilities.bestGame[S,A,Tree](bestChild)
 }

@@ -15,7 +15,7 @@ class MCTSSolverTests extends SORoutingUnitTestTemplate {
           duration = 1000L,
           congestionThreshold = 3D
         )
-        val tree: MonteCarloTree2[Tag.AlternatesSet, Tag] = solver.run()
+        val tree: MCTreeStandardReward[Tag.AlternatesSet, Tag] = solver.run()
         println(tree.printTree(printDepth = 3))
         println(solver.bestGame(tree))
         println(solver.unTag(solver.bestGame(tree)))

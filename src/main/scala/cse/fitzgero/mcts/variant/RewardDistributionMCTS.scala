@@ -2,14 +2,16 @@ package cse.fitzgero.mcts.variant
 
 import scala.annotation.tailrec
 
-import cse.fitzgero.mcts.MonteCarloTreeSearch2
+import cse.fitzgero.mcts.MonteCarloTreeSearch
+import cse.fitzgero.mcts.math.Distribution
 import cse.fitzgero.mcts.tree._
+import cse.fitzgero.mcts.reward.distribution.SPMCTSDistributionReward._
 
-trait StandardMCTS2[S,A] extends MonteCarloTreeSearch2[S,A,Double] {
+trait RewardDistributionMCTS[S,A] extends MonteCarloTreeSearch[S,A,Distribution,Coefficients] {
 
-  override type Tree = MonteCarloTree2[S,A]
+  override type Tree = MCTreeWithDistribution[S,A]
 
-  override def startNode(s: S): MonteCarloTree2[S, A] = MonteCarloTree2(s)
+  override def startNode(s: S): MCTreeWithDistribution[S, A] = MCTreeWithDistribution(s)
 
   @tailrec
   override protected final def treePolicy(node: Tree, Cp: Double): Tree = {
@@ -26,23 +28,23 @@ trait StandardMCTS2[S,A] extends MonteCarloTreeSearch2[S,A,Double] {
             treePolicy(bestChild, Cp)
         }
       }
-    } else {
+    } else /* terminal board state */ {
       node
     }
   }
 
 
-  override protected final def defaultPolicy(monteCarloTree: Tree): Double = {
+  override protected final def defaultPolicy(monteCarloTree: Tree): Distribution = {
     if (stateIsNonTerminal(monteCarloTree.state)) {
 
       // simulate moves until a terminal game state is found, then evaluate
       @tailrec
-      def _defaultPolicy(state: S): Double = {
+      def _defaultPolicy(state: S): Distribution = {
         if (stateIsNonTerminal(state)) {
-          selectAction(generatePossibleActions(state)) map { applyAction(state,_) } match {
+           selectAction(generatePossibleActions(state)) map { applyAction(state,_) } match {
             case None =>
               // should never reach this line if State and Actions are well defined
-              Double.MaxValue
+              throw new IllegalStateException(s"Applying action to state $state but it produced an empty state. your applyAction and generatePossibleActions are not well-defined on all inputs.")
             case Some(nextState) =>
               _defaultPolicy(nextState)
           }
@@ -58,7 +60,7 @@ trait StandardMCTS2[S,A] extends MonteCarloTreeSearch2[S,A,Double] {
   }
 
   @tailrec
-  override protected final def backup(node: Tree, delta: Double): Tree = {
+  override protected final def backup(node: Tree, delta: Distribution): Tree = {
     node.parent() match {
       case None =>
         node.update(delta)
@@ -91,7 +93,7 @@ trait StandardMCTS2[S,A] extends MonteCarloTreeSearch2[S,A,Double] {
       action <- actionSelection.selectAction(generatePossibleActions(node.state))
     } yield {
       val newState = applyAction(node.state, action)
-      val newNode = MonteCarloTree2(newState, Some(action))
+      val newNode = MCTreeWithDistribution(newState, Some(action))
       node.addChild(newNode)
       newNode
     }

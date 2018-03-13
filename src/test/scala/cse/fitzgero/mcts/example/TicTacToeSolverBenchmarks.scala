@@ -22,7 +22,8 @@ class TicTacToeSolverBenchmarks extends SORoutingUnitTestTemplate {
             val solver = TicTacToeSolver(duration = duration, seed = 1L, Cp = 0.717D)
             val tree = solver.run()
             val report = s"$duration,${tree.visits},${tree.reward},${tree.reward / tree.visits},${solver.bestGame(tree).mkString(" -> ")}"
-            (report, tree.printBestTree(9, solver.evaluate))
+//            (report, tree.printBestTree(9, solver.evaluate))
+            (report, tree.toString)
           }
           println("milliseconds,iterations,reward,average_reward,moves")
           println(results.map{_._1}.mkString("\n"))
