@@ -1,4 +1,4 @@
-package cse.fitzgero.mcts.reward.banditpolicy
+package cse.fitzgero.mcts.algorithm.samplingpolicy.banditfunction
 
 object UCT {
   def apply(reward: Double, childVisits: Long, parentVisits: Long, Cp: Double): Double = {

@@ -17,7 +17,11 @@ class StandardMCTSSolver(
                   val seed: Long = 0L,
                   val duration: Long = 5000L) extends MCTSSolver {
 
-  override def evaluate(state: AlternatesSet): Double = {
+  override def getSearchCoefficients(tree: Tree): Coefficients = Coefficients(0.707D)
+
+  override def getDecisionCoefficients(tree: Tree): Coefficients = Coefficients(0D)
+
+  override def evaluateTerminal(state: AlternatesSet): Double = {
     val fn: MCTSHelpers.EvaluationFunction = MCTSHelpers.meanCostDiff(congestionThreshold)
     fn(MCTSHelpers.produceEvaluationTuples(state, globalAlternates, graph))
   }

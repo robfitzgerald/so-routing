@@ -82,6 +82,20 @@ trait MonteCarloTree[S,A,R,N <: MonteCarloTree[S,A,R,N]] {
     }
   }
 
+  /**
+    * children nodes are wrapped in a closure. this function unpacks them for the user. created while sorting out a type error.
+    * @return
+    */
+  def childrenNodes: GenMap[A, N] =
+    children match {
+      case None => Map()
+      case Some(childrenClosure) =>
+        for {
+          tuple <- childrenClosure
+        } yield (tuple._1, tuple._2())
+    }
+
+
   def hasChildren: Boolean = children.nonEmpty
   def hasNoChildren: Boolean = children.isEmpty
 

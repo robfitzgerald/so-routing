@@ -5,6 +5,7 @@ import java.time.Instant
 import scala.collection.{GenMap, GenSeq}
 
 import cse.fitzgero.mcts.core._
+import cse.fitzgero.mcts.tree.MCTreeStandardReward
 import cse.fitzgero.mcts.variant.StandardMCTS
 import cse.fitzgero.sorouting.algorithm.local.selection.mcts.Tag._
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
@@ -17,6 +18,11 @@ class MCTSGlobalCongestionSolver(
                   val seed: Long = 0L,
                   val duration: Long = 5000L) extends MCTSSolver {
 
+  override def getSearchCoefficients(tree: Tree): Coefficients = Coefficients(0.707D)
+
+  override def getDecisionCoefficients(tree: Tree): Coefficients = Coefficients(0D)
+
+
   val globalCongestion: BigDecimal = (
     for {
       edge <- graph.edges
@@ -26,7 +32,7 @@ class MCTSGlobalCongestionSolver(
     }
     ).sum
 
-  override def evaluate(state: AlternatesSet): Double = {
+  override def evaluateTerminal(state: AlternatesSet): Double = {
     val costOffset = MCTSHelpers.evaluateCostOffsetBySum(state, globalAlternates, graph)
     val resultGlobalCongestion: BigDecimal = costOffset + globalCongestion
     val difference: BigDecimal = resultGlobalCongestion - globalCongestion

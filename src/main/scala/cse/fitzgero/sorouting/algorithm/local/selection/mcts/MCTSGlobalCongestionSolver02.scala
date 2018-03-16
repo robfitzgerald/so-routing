@@ -2,6 +2,7 @@ package cse.fitzgero.sorouting.algorithm.local.selection.mcts
 
 import scala.collection.{GenMap, GenSeq}
 
+import cse.fitzgero.mcts.tree.MCTreeStandardReward
 import cse.fitzgero.sorouting.algorithm.local.selection.mcts.Tag._
 import cse.fitzgero.sorouting.model.path.SORoutingPathSegment
 import cse.fitzgero.sorouting.model.roadnetwork.local.{LocalGraph, LocalODPair}
@@ -12,6 +13,10 @@ class MCTSGlobalCongestionSolver02(
                   val congestionThreshold: Double,
                   val seed: Long = 0L,
                   val duration: Long = 5000L) extends MCTSSolver {
+
+  override def getSearchCoefficients(tree: MCTreeStandardReward[AlternatesSet, Tag]): Coefficients = Coefficients(0.707D)
+
+  override def getDecisionCoefficients(tree: MCTreeStandardReward[AlternatesSet, Tag]): Coefficients = Coefficients(0D)
 
   // for any road network, we can always calculate the cost-flow of the entire network with all flows at 0, and it will be a lower bounds for any possible congestion state.
   // for our reward value, we could look at something like
@@ -43,7 +48,7 @@ class MCTSGlobalCongestionSolver02(
 
 //  val transform: (BigDecimal) => Double = MCTSGlobalCongestionSolver02.doubleCongestionUpperBoundTransform(unassignedCongestionSum)
 
-  override def evaluate(state: AlternatesSet): Double = {
+  override def evaluateTerminal(state: AlternatesSet): Double = {
 
 //    val costOffsetSum = MCTSHelpers.evaluateCostOffsetBySum(state, globalAlternates, graph)
 //    val costOffsetProduct = MCTSHelpers.evaluateCostOffsetByProduct(state, globalAlternates, graph)

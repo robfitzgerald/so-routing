@@ -1,9 +1,9 @@
-package cse.fitzgero.mcts.reward.banditpolicy
+package cse.fitzgero.mcts.algorithm.samplingpolicy.banditfunction
 
 import cse.fitzgero.mcts.math.Distribution
 
 object SP_UCT {
-  def apply(reward: Distribution, childVisits: Long, parentVisits: Long, Cp: Double, D: Double): Double = {
+  def apply(reward: Distribution, childVisits: Long, parentVisits: Long, Cp: Double, D: Double): Distribution = {
 
     val exploitation: Double =
       if (childVisits == 0)
@@ -30,6 +30,6 @@ object SP_UCT {
         math.sqrt(variance + (D / childVisits))
     }
 
-    exploitation + exploration + possibleDeviation
+    Distribution(exploitation + exploration + possibleDeviation)
   }
 }

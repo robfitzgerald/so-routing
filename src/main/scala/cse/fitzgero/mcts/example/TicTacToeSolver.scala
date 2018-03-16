@@ -5,7 +5,7 @@ import java.time.Instant
 import cse.fitzgero.mcts.core._
 import cse.fitzgero.mcts.example.TicTacToe.Board._
 import cse.fitzgero.mcts.example.TicTacToe._
-import cse.fitzgero.mcts.reward.scalar.UCTScalarStandardReward
+import cse.fitzgero.mcts.algorithm.samplingpolicy.scalar.UCTScalarStandardReward
 import cse.fitzgero.mcts.variant._
 
 
@@ -16,13 +16,16 @@ class TicTacToeSolver(
   override def applyAction(state: Board, action: Move): Board = state.applyMove(action)
 
   // we are creating the best move set for X
-  override def evaluate(state: Board): Double =
+  override def evaluateTerminal(state: Board): Double =
     Board.gameState(state) match {
       case Stalemate => 0D
       case XWins => 1D // if (state.currentPlayer == X) 1D else 0D
       case OWins => 0D // if (state.currentPlayer == O) 1D else 0D
       case _ => throw new IllegalStateException("evaluating a non-terminal board state")
     }
+
+  def getDecisionCoefficients(tree: Tree): Coefficients = Coefficients(0.707D)
+  def getSearchCoefficients(tree: Tree): Coefficients = Coefficients(0D)
 
   override def generatePossibleActions(state: Board): Seq[Move] = Board.possibleMoves(state)
 
@@ -36,7 +39,7 @@ class TicTacToeSolver(
 
   override def startState: Board = Board(X)
   override def random: RandomGenerator = new BuiltInRandomGenerator(Some(seed))
-  override val samplingMethod =  UCTScalarStandardReward()
+//  override val samplingMethod =  UCTScalarStandardReward()
   override val terminationCriterion = TimeTermination(Instant.now, duration)
   override val actionSelection = RandomSelection(random, generatePossibleActions)
 

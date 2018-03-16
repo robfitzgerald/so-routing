@@ -1,5 +1,7 @@
 package cse.fitzgero.mcts.tree
 
+import cse.fitzgero.mcts.algorithm.samplingpolicy.scalar.UCTScalarStandardReward
+
 /**
   * standard Monte Carlo Tree, storing a Reward as a Double.
  *
@@ -11,7 +13,7 @@ package cse.fitzgero.mcts.tree
 class MCTreeStandardReward[S, A] (
   override val action: Option[A],
   override val state: S
-)extends MonteCarloTree [S,A,Double,MCTreeStandardReward[S, A]]{
+)extends MonteCarloTree [S,A,Double,MCTreeStandardReward[S, A]] {
   var reward: Double = 0D
   override def update[T](reward: T): Unit = reward match {
     case x: Double => updateReward((r: Double) => Some(r + x))
